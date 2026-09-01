@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+*.egg-info/
+
+# Data - large raw logs shouldn't bloat the repo; keep small samples only
+data/*.log
+!data/*_sample.log
+
+# OS/editor
+.DS_Store
+.vscode/
+.idea/
+*.swp
+
+# Environment
+.env
