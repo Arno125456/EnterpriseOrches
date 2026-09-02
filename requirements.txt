@@ -1,3 +1,8 @@
-pulp>=2.8            # Free, open-source MILP modeling + CBC solver (offline baseline)
-ortools>=9.9          # Optional: CP-SAT for time-limited near-optimal comparison
-pytest>=8.0            # Test framework
+# PoC dependencies — Python 3.11+
+pulp>=2.8            # MILP + LP modelling. CBC ships with it:
+                     #   python -c "import pulp; print(pulp.listSolvers(onlyAvailable=True))"
+numpy>=1.26          # subgradient updates, instance generation
+pytest>=8.0          # test framework
+
+# ortools was listed in v1 as an optional CP-SAT comparison. Dropped from the PoC —
+# CBC is sufficient at the instance sizes here, and a second solver answers none of T1-T4.
