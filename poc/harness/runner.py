@@ -40,7 +40,8 @@ from poc.formulation.types import AllocationResult
 from poc.instances.generator import ProblemInstance, generate
 from poc.tracks import (exact_milp, static_baseline, track_a_greedy,
                         track_a_m1, track_b_cold, track_b_lagr,
-                        track_c_lp, track_c_multi)
+                        track_c_consolidate, track_c_lp,
+                        track_c_multi)
 
 # Condition name -> module exposing allocate(tasks, pools, profiles, budget, seed).
 STRATEGIES = {
@@ -52,6 +53,7 @@ STRATEGIES = {
     "B-cold": track_b_cold,
     "C": track_c_lp,
     "C2": track_c_multi,
+    "C+cons": track_c_consolidate,
 }
 
 # Named, with the reason, so a run's output can state what it did not measure.

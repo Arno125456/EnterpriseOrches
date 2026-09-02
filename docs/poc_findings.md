@@ -538,13 +538,12 @@ fragile — and the lookahead is worth much more. This also **overturns F11's ca
 A+M1's advantage narrows under pressure; that was a property of the uniform generator, not
 of the mechanism. Still no measurable runtime cost.
 
-### One thing that got worse, and is worth watching
+### One thing that got worse — since diagnosed and fixed, see F17
 
 Track C's **maximum** gap on structured instances is **100.85%** — a solution costing twice
-the optimum. Its mean is 18.69%, so this is a tail, not typical. But a track whose worst
-case is 2× optimum is not one to put in front of an advisor without knowing why. The
-suspect is the repair pass under a heavy-tailed load: one very large task lands badly and
-drags a whole large instance open. Not diagnosed.
+the optimum. The cause turned out not to be the repair pass but the LP itself: it prices
+profiles by rate and cannot see that a large profile's integer instance will sit mostly
+empty. F17 has the full diagnosis and a fix that halves Track C's mean gap.
 
 ### What this still does not answer
 
@@ -843,6 +842,89 @@ over the same three instances.
 | **Track A / A+M1** | Fast but 8–15% off and worsening with scale. Cheap enough to keep as a warm start or fallback; not the answer |
 | **Track B** | Best bound in the log (F7) and ~100× slower than exact as an allocator (F13). A bound generator, not an allocator |
 | **MILP** | Optimal and cheap below ~32 tasks. The heuristics only justify themselves beyond that |
+
+
+---
+
+## F17 — Track C's worst case, diagnosed and fixed. The LP cannot see rounding waste.
+
+F12 recorded a 100.85% maximum gap for Track C and left it undiagnosed. It is now
+diagnosed, and the cause refines F6.
+
+### The failure, in full
+
+Structured generator, 8 tasks, seed 3, tightness 1.0:
+
+```
+optimum   395.2   n={m1:1, m2:1}   4 of 8 GPUs
+track C   793.8   n={m2:2, m3:1}   8 of 8 GPUs
+LP bound  303.5
+
+m1: gpu=2  thr=15.57  price=199.20   price/thr=12.79
+m3: gpu=4  thr=33.54  price=401.74   price/thr=11.98   <- better rate
+```
+
+Three tasks (`t5, t2, t6`, total load **7.88**) are ineligible for `m2`. The LP sent them to
+`m3` because `m3` has the better price per unit throughput — 11.98 against 12.79. **In the
+relaxation that is correct**: `n[m3] = 7.88/33.54 = 0.235` instances costs 94.4, cheaper
+than `m1`'s 0.506 instances at 100.8.
+
+Integrally it is a disaster. `m3` costs a whole 401.74 instance to carry 7.88 units,
+**wasting 76% of it**, where `m1` would have cost 199.20.
+
+**The LP prices profiles by rate; an integer allocation pays for whole instances.** The
+larger the profile, the wider that gap. This is the integrality gap of §1.7 with a concrete
+face on it.
+
+### This refines F6, which was too optimistic
+
+F6 found the LP returns an integral routing 96% of the time and concluded that rounding the
+routing is "nearly free". Mechanically true — but the routing is integral **and still
+wrong**, because it was chosen under a relaxation that never sees large-profile waste. The
+cheapness of rounding says nothing about the quality of what is being rounded.
+
+### The fix, and why single-move relocate cannot do it
+
+`core/consolidation.py`: relocate **every** task on one profile to another, together. Moving
+one task off an underused profile leaves the instance open and still paid for, so every
+single-move neighbourhood sees a local optimum. Only closing the instance recovers its price.
+
+Measured, as condition `C+cons`:
+
+| | C | C+cons |
+|---|---|---|
+| uniform, 8 tasks — mean gap | 14.58% | **7.21%** |
+| uniform — matched optimum | 16 | **23** |
+| structured, 8 tasks — mean gap | 19.05% | **9.66%** |
+| structured — matched optimum | 17 | **24** |
+| structured — **max gap** | **100.85%** | **44.01%** |
+| runtime | 0.030 s | 0.026 s |
+| bound | unchanged | unchanged |
+
+**It halves Track C's mean gap on both generators at no runtime cost.** It does not change
+feasibility — it improves cost, it does not rescue a failed allocation — and it cannot
+change the bound, which is a relaxation property.
+
+At scale the gain is smaller (uniform 4.25% → 3.35%, structured 15.86% → 13.52%) simply
+because Track C is already close there. The pass matters most where Track C is worst.
+
+### The limitation, which is not a bug
+
+This neighbourhood is *"all tasks on a profile → one other profile"*. The adversarial
+fixture needs *"**some** tasks on a profile"* — `t1` and `t2` to `m2` while `t3` stays on
+`m1`, because `t3` is eligible only for `m1`. The intersection of destinations over all of
+`m1`'s tasks is empty, so no move exists and the pass correctly leaves greedy's 300 alone.
+
+**Two different multi-move neighbourhoods, and this implements one of them.** F1's fixture
+and F17's failure are the same phenomenon from opposite ends — one where consolidating is
+right, one where de-consolidating is. A subset-move neighbourhood would cover both and is
+not built. There is a test asserting the fixture is *unchanged*, so the limitation cannot be
+mistaken for a regression.
+
+### Scope
+
+v2 §6.5 defers relocate/consolidate to T4. The pass lives in `core/` and is wired only into
+a separate condition, so no existing track changes behaviour and T4 can still price it.
 
 
 ---
