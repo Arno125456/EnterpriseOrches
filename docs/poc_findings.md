@@ -670,9 +670,10 @@ which is itself F13's finding.
 
 ### Track C is the only heuristic that works at scale
 
-Its gap **improves monotonically** with size on both generators — 8.15% → 1.16% on uniform,
-22.53% → 2.86% on structured — while its runtime stays essentially flat, 0.06 s to 0.23 s
-across a 16× increase in tasks.
+Its gap improves with size on both generators here — 8.15% → 1.16% on uniform, 22.53% →
+2.86% on structured — while its runtime stays essentially flat, 0.06 s to 0.23 s across a
+16× increase in tasks. *(The monotonicity is a tightness-1.0 artefact; off the knife edge
+the gap sits in a 2–5% band without a clean trend. See F16.)*
 
 At 64–128 tasks on uniform instances that is a **~100× speedup over the exact solver for
 roughly 1% cost** (11 s → 0.11 s). That is exactly what Objective 1.2.2 asks a non-exact
@@ -769,6 +770,79 @@ are reliably solvable at size.
 Anything measured only at ×1.00 is measured on a cliff edge. **T3's sweep should extend
 above the reference, not just below it.** That is a change to the experimental design, and
 it belongs to 089.
+
+
+---
+
+## F16 — The scale comparison, off the knife edge. Track C earns Objective 1.2.2.
+
+Re-run of F14 at **1.25× the reference budget**, where F15 showed every track can actually
+compete. 3 seeds per row. `inf` is A/A+M1/C.
+
+**uniform** — all tracks feasible on every instance, so the gap columns are comparable
+
+| tasks | MILP s | C s | C gap | A gap | A+M1 gap | inf |
+|---|---|---|---|---|---|---|
+| 16 | 0.106 | 0.054 | 5.09% | 10.95% | 10.95% | 0/0/0 |
+| 32 | 0.252 | 0.079 | 5.20% | 8.48% | 8.48% | 0/0/0 |
+| 64 | 5.127 | 0.086 | **2.47%** | 12.79% | 12.79% | 0/0/0 |
+| 128 | **17.750** | **0.162** | **4.58%** | 15.38% | 15.38% | 0/0/0 |
+
+**structured** — greedy still fails here, so read the caveat below before comparing columns
+
+| tasks | MILP s | C s | C gap | A gap | A+M1 gap | inf |
+|---|---|---|---|---|---|---|
+| 16 | 0.198 | 0.077 | 23.64% | 8.31% | 37.39% | 2/0/0 |
+| 32 | 0.250 | 0.112 | 12.40% | 34.52% | 25.65% | 2/1/0 |
+| 64 | 0.337 | 0.096 | 11.55% | 27.42% | 27.42% | 1/1/0 |
+| 128 | 0.343 | 0.188 | **3.44%** | 17.96% | 17.96% | 1/1/0 |
+
+### The result Objective 1.2.2 actually asked for
+
+On uniform instances at 128 tasks: the exact solver takes **17.75 s**, Track C takes
+**0.162 s** and lands **4.58%** above optimum. That is a **~110× speedup for under 5% cost**,
+with every track feasible so the comparison is like-for-like.
+
+That is the first clean statement in this log of the form the project's objective requires:
+a non-exact alternative that is dramatically cheaper than the MILP at a bounded quality
+cost. It holds on the instance family where the MILP is actually expensive — which is the
+only family where the question matters.
+
+**Track C beats greedy at every size, and the margin widens.** 5.09% against 10.95% at 16
+tasks; 4.58% against 15.38% at 128. Greedy gets *worse* with scale (10.95% → 15.38%) while
+Track C does not.
+
+### Correcting F14 again: "improves monotonically" was also a tightness-1.0 artefact
+
+F14 said Track C's gap improves monotonically with size. At 1.25× it does not — 5.09, 5.20,
+2.47, 4.58 on uniform. The supportable claim is that **Track C's gap stays in a 2–5% band
+and does not degrade with scale**, which is what matters and is weaker than what F14 said.
+
+### A flaw in my own comparison script, on the structured rows
+
+The structured gap columns average over **different subsets of instances**, because greedy
+was infeasible on some and the ad-hoc script excluded failures per condition rather than
+per instance. At 16 tasks, Track A's 8.31% is the average over the single instance it
+solved, while A+M1's 37.39% is over all three. **A+M1 is not worse than A there** — it is
+being scored on harder instances that A simply failed.
+
+`harness/metrics.py` was written specifically to prevent this: it excludes unsolvable
+instances from every aggregate and counts infeasible runs beside the gap rather than
+averaging over them. The scale scripts bypassed it for speed and reintroduced the exact bias
+the module exists to stop. **The structured rows should be re-run through the harness before
+any of them is quoted.**
+
+The uniform rows are unaffected — nothing was infeasible, so every condition is averaged
+over the same three instances.
+
+### Where this leaves the tracks
+
+| | verdict |
+|---|---|
+| **Track C** | The result. ~110× faster than exact at 128 tasks for under 5%, flat runtime, feasible everywhere on uniform |
+| **Track A / A+M1** | Fast but 8–15% off and worsening with scale. Cheap enough to keep as a warm start or fallback; not the answer |
+| **Track B** | Best bound in the log (F7) and ~100× slower than exact as an allocator (F13). A bound generator, not an allocator |
+| **MILP** | Optimal and cheap below ~32 tasks. The heuristics only justify themselves beyond that |
 
 
 ---

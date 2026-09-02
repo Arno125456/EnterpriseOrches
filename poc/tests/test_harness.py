@@ -172,3 +172,40 @@ def test_track_b_integrates_with_the_harness():
             assert b.lower_bound <= record.optimum + 1e-6
         if b.lower_bound is not None and c.lower_bound is not None:
             assert b.lower_bound >= c.lower_bound - 1e-6, "Lagrangian bound below LP bound"
+
+
+def test_scale_sweep_clears_the_anchor_cliff():
+    """F15: at budget_multiplier 1.0 the tracks fall off a cliff that is not about scale.
+
+    The default must sit above the reference allocation, or every scale study measures the
+    cliff instead of the scaling.
+    """
+    from poc.harness.runner import scale_sweep
+
+    tight = scale_sweep([(24, 6)], range(3), strategies=["A"], budget_multiplier=1.0)
+    loose = scale_sweep([(24, 6)], range(3), strategies=["A"], budget_multiplier=1.25)
+
+    tight_ok = sum(1 for r in tight if r.conditions["A"].feasible)
+    loose_ok = sum(1 for r in loose if r.conditions["A"].feasible)
+    assert loose_ok >= tight_ok, "loosening the budget must never reduce feasibility"
+
+
+def test_scale_sweep_results_go_through_metrics():
+    """The bias guard: every condition must be scored over the same instance set.
+
+    The first scale runs were ad-hoc scripts that averaged each condition over whichever
+    instances it happened to solve, which flatters whichever track fails most (F16).
+    Routing through summarise() makes that structurally impossible.
+    """
+    from poc.harness.runner import scale_sweep
+
+    records = scale_sweep([(16, 6), (24, 6)], range(2),
+                          strategies=["MILP", "A", "A+M1", "C"])
+    summaries = metrics.summarise(records)
+    solvable = sum(1 for r in records if r.solvable)
+
+    assert solvable > 0
+    for summary in summaries.values():
+        assert summary.instances == solvable, (
+            f"{summary.condition} scored over {summary.instances} of {solvable}")
+        assert summary.feasible + summary.infeasible == summary.instances
