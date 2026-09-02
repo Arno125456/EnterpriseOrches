@@ -644,6 +644,80 @@ it is an engineering question, not a research one.
 
 ---
 
+## F14 — At scale the ordering inverts: Track C wins, the greedy tracks collapse
+
+5 seeds per row, tightness 1.0. `inf` counts instances the MILP solved and the condition
+could not. Track B is absent past 32 tasks — at 34 s per instance it was not runnable here,
+which is itself F13's finding.
+
+**uniform**
+
+| tasks/prof | MILP s | C s | C gap | C inf | A gap | A inf | A+M1 gap | M inf |
+|---|---|---|---|---|---|---|---|---|
+| 16 / 6 | 0.125 | 0.056 | 8.15% | 1 | 9.49% | 1 | 9.49% | 1 |
+| 32 / 8 | 0.222 | 0.106 | 3.90% | 1 | 7.27% | 2 | 7.23% | 1 |
+| 64 / 10 | 11.288 | 0.114 | **0.53%** | 3 | — | **5** | — | **5** |
+| 128 / 12 | 10.997 | 0.110 | **1.16%** | 3 | — | **5** | — | **5** |
+
+**structured**
+
+| tasks/prof | MILP s | C s | C gap | C inf | A gap | A inf | A+M1 gap | M inf |
+|---|---|---|---|---|---|---|---|---|
+| 16 / 6 | 0.194 | 0.102 | 22.53% | **0** | 8.31% | 4 | 4.15% | 3 |
+| 32 / 8 | 0.281 | 0.119 | 8.28% | **0** | — | 5 | — | 5 |
+| 64 / 10 | 0.215 | 0.124 | 6.98% | 1 | — | 5 | — | 4 |
+| 128 / 12 | 1.365 | 0.228 | **2.86%** | **0** | — | 5 | — | 5 |
+
+### Track C is the only heuristic that works at scale
+
+Its gap **improves monotonically** with size on both generators — 8.15% → 1.16% on uniform,
+22.53% → 2.86% on structured — while its runtime stays essentially flat, 0.06 s to 0.23 s
+across a 16× increase in tasks.
+
+At 64–128 tasks on uniform instances that is a **~100× speedup over the exact solver for
+roughly 1% cost** (11 s → 0.11 s). That is exactly what Objective 1.2.2 asks a non-exact
+alternative to deliver, and it is the first result in this log that delivers it.
+
+The likely reason the gap shrinks: the integrality gap is a *rounding* penalty, and rounding
+error amortises over more tasks. With 8 tasks one badly-rounded profile is a large fraction
+of total cost; with 128 it is not.
+
+### The greedy tracks collapse completely
+
+Track A fails on **all 5 instances** at 64 and 128 tasks on uniform, and from 32 tasks
+upward on structured. A+M1 delays it but does not prevent it. At scale they do not produce
+worse answers — they produce **no answers**.
+
+This is F3's mechanism becoming fatal rather than merely costly. Cost-only ranking exhausts
+the GPU budget, and with more tasks there are more chances to strand one. The one-step
+lookahead cannot see far enough ahead when there are 128 tasks to place.
+
+### I have to withdraw a correction I made
+
+Two commits ago I amended §5.9 of the PoC plan to say Track C was **"contradicted by
+measurement — weakest of the three tracks"**, on the strength of the 8-task results. That
+was wrong, and it was wrong in the most instructive way: it was a confident conclusion drawn
+from the only regime that had been measured.
+
+At scale Track C is the **strongest** heuristic — the only one that returns answers at all
+past 32 tasks, at ~1–3% of optimum and near-constant runtime. §5.9 has been amended again,
+and this time it names the regime.
+
+### What T4's answer actually is
+
+| regime | best heuristic | why |
+|---|---|---|
+| ≤ 8 tasks | Track B on quality | 0.9% gap — but the MILP is 32 ms and optimal, so no heuristic is needed |
+| 16–32 tasks | Track C | greedy is failing, B costs 100× the MILP |
+| 64+ tasks | **Track C, decisively** | greedy returns nothing; MILP costs 100× more for ~1% |
+
+**No heuristic is justified below ~32 tasks** — the MILP is faster and optimal. Above it,
+exactly one of the three tracks earns its place, and it is not the one the 8-task data
+favoured.
+
+
+---
+
 ## What these findings do not establish
 
 Restating §5.7, because early numbers invite over-reading:

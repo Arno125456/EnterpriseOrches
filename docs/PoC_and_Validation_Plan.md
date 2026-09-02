@@ -360,7 +360,7 @@ because the proposal's Ch.3 depends on the formulation existing.
 |---|---|
 | §3.1.7 Track A | Provisional — T2 confirmed the coupling failure (F1); T4 now leans toward simplifying rather than expanding it (F10) |
 | §3.1.7 Track B | Provisional — built relaxing (C1); its bound is 6× tighter than the LP's, so T1's "cut the track" outcome did not fire. The (C3) arm remains unbuilt (F7) |
-| §3.1.7 Track C | **Contradicted by measurement.** Weakest of the three tracks on both cost and feasibility, and worst exactly where the budget binds — it failed every solvable instance at tightness 0.6. Worth keeping for its bound, which Track B beats 6× (findings F11) |
+| §3.1.7 Track C | **Regime-dependent, and the earlier note here was wrong.** At 8 tasks it is the weakest track (F11). At 64+ tasks it is the only heuristic that returns an answer at all, at 1-3% of optimum with near-flat runtime — a ~100x speedup over the exact solver (F14). An earlier revision of this row called it "weakest" on 8-task data alone; that was a confident conclusion from the only regime measured |
 | §3.5 Shared Resource Ledger | **Requires rewrite.** Capacity is consumed by instances, not per-task assignments |
 | §4.1 Data Model | Requires `n[m]` instance variables; current model has none |
 | §4.2.1 Shared Decision Rule | Capacity filter does not apply as written; per-task consumption is not the constraint |
