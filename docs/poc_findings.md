@@ -1,5 +1,11 @@
 # PoC Findings — running log
 
+> **Start with [`poc_findings_summary.md`](poc_findings_summary.md).** This file is the
+> chronological record, and several findings here are corrected by later ones — F14 by F15
+> and F16, F6 by F17, F7's headline by F12. The history is kept deliberately, but the
+> summary states what is currently believed. Do not quote a number from this log without
+> checking the summary's "corrected" table first.
+
 **Status: preliminary.** Recorded 2 September 2026, in Week 1 of the §5.4 schedule. These
 are early readings from the harness, not the deliverables. D5/D6 are due 15 Sep, D9 22 Sep,
 D10 26 Sep, and the consolidated report D11 on 29 Sep.
