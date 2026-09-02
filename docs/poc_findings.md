@@ -241,7 +241,7 @@ the fairness wrinkle noted in F4: Track C now gets two attempts, Track A one.
 
 ---
 
-## F7 — T1: the Lagrangian bound is 6× tighter than the LP bound
+## F7 — T1: the Lagrangian bound is consistently tighter than the LP bound
 
 **The bound result is clean. The cost and feasibility results are confounded — read both
 halves of this finding.**
@@ -261,6 +261,9 @@ below contaminates it.
 |---|---|---|
 | mean bound gap below the true optimum | **2.40%** | 15.21% |
 | invalid bounds (above the optimum) | **0** | 0 |
+
+*The 6× ratio here is the uniform generator's. On the structured generator it is 2.8×
+(8.39% against 23.47%) — see F12. "Consistently tighter" is robust; the multiplier is not.*
 
 Over a separate 30-instance check, the Lagrangian bound was **strictly tighter than the LP
 bound on 30 of 30**, never looser, never equal. On the hand-verified fixture it reaches
@@ -470,6 +473,89 @@ claim about 8-task instances and nothing more.
 
 ---
 
+## F12 — Re-run on a second, structurally different generator: most findings survive
+
+The standing objection to everything above was that it all came from one generator written
+by the same hand as the tracks and the metrics. `instances/structured_generator.py` was
+built to disagree wherever it plausibly could — sublinear throughput against linear price
+(so large profiles are bad value per GPU, inverting the original's near-neutrality),
+lognormal loads instead of uniform, GPU tiers {1,2,4,8}, floors clustered on a minority of
+tasks. Measured difference: loads 7× more heavy-tailed, pool sizes skewed the opposite way.
+
+Same conditions, same harness, same anchor. 8 tasks, 4 profiles, seeds 0–24, tightness
+0.6–1.0.
+
+```
+                UNIFORM (63 solvable)          STRUCTURED (75 solvable)
+cond      infeas  =opt   gap%   bound%   infeas  =opt   gap%   bound%
+STATIC        36     7  23.06        -       44     7  25.48        -
+A             26    23  10.28        -       29    23  14.78        -
+A+M1          17    28   9.59        -        2    42  11.34        -
+B              5    54   0.95     2.44        1    65   1.76     8.39
+C             26    16  14.58    15.21       22    18  18.69    23.47
+```
+
+Zero invariant violations on either generator.
+
+### What survived
+
+**Track B's dominance (F10/F11).** 1 infeasible of 75, 65 exact optima, 1.76% mean gap. It
+still beats every heuristic on both cost and feasibility, on instances built to be
+structurally hostile to the first generator's assumptions. This is the strongest evidence
+in the whole log, and it is the finding I most expected to break.
+
+**The Lagrangian bound beats the LP bound (F7).** Still true everywhere — but see the
+correction below.
+
+**STATIC is much worse (F9).** 25.48% gap, 44 of 75 infeasible. Optimisation is doing real
+work under both structures.
+
+**Neither A nor C clearly wins (F4).** Greedy is cheaper (14.78% vs 18.69%), Track C is more
+often feasible (22 failures vs 29). The same inconclusive split as before, for the same
+reason: they are differently bad rather than one being better.
+
+### The correction: "6× tighter" was a generator-specific number
+
+F7's headline said the Lagrangian bound is **6× tighter** than the LP bound. That is the
+uniform generator's number (2.44% against 15.21%). On the structured generator the ratio is
+**2.8×** (8.39% against 23.47%).
+
+Both bounds loosen on the harder instances, and Track B's loosens proportionally more. The
+robust claim is **"consistently tighter, by a factor between roughly 3 and 6 depending on
+instance structure"** — not "6×". T1's conclusion is unaffected: the "cut Track B" outcome
+still does not fire, because the bounds never converge. But the multiplier should not be
+quoted without the qualifier, and I had quoted it.
+
+### The upgrade: A+M1 is far more valuable than the first generator suggested
+
+| | uniform | structured |
+|---|---|---|
+| infeasible, A → A+M1 | 26 → 17 (−35%) | **29 → 2 (−93%)** |
+| exact optima, A → A+M1 | 23 → 28 | **23 → 42** |
+
+On instances with heavy-tailed loads and expensive large profiles, feasibility is far more
+fragile — and the lookahead is worth much more. This also **overturns F11's caveat** that
+A+M1's advantage narrows under pressure; that was a property of the uniform generator, not
+of the mechanism. Still no measurable runtime cost.
+
+### One thing that got worse, and is worth watching
+
+Track C's **maximum** gap on structured instances is **100.85%** — a solution costing twice
+the optimum. Its mean is 18.69%, so this is a tail, not typical. But a track whose worst
+case is 2× optimum is not one to put in front of an advisor without knowing why. The
+suspect is the repair pass under a heavy-tailed load: one very large task lands badly and
+drags a whole large instance open. Not diagnosed.
+
+### What this still does not answer
+
+The scale objection, untouched. Both generators run at 8 tasks and 4 profiles. Note that
+the exact MILP's runtime already **doubled** on the structured instances (37 ms → 80 ms)
+while Track B's fell slightly — the first hint that instance structure, not just size,
+drives the solver cost that the whole heuristic premise depends on.
+
+
+---
+
 ## What these findings do not establish
 
 Restating §5.7, because early numbers invite over-reading:
@@ -481,10 +567,11 @@ Restating §5.7, because early numbers invite over-reading:
   (F7). The (C3) alternative is unbuilt and unmeasured, so T1 is half-answered at best.
 - **Nothing statistical.** 25 seeds per point, no confidence intervals, no significance
   testing. The head-to-head margins in F4 are tendencies, not results.
-- **One generator, chosen by one author.** Profile and task distributions, the budget
-  anchor, the tracks, and the metrics were all written by the same hand. That is the setup
-  in which unconscious selection is hardest to see. A second generator with different
-  structure is the only real check, and none exists.
+- **Two generators now, but both chosen by one author.** F12 re-ran everything on
+  deliberately different structure and most findings held. That answers the sharpest form
+  of the objection but not all of it: the same hand still wrote both, plus the anchor, the
+  tracks and the metrics. Real workload data remains the only full answer, and it is out of
+  PoC scope by §5.1.
 - **Nothing about drift, execution, or the domain.** Out of PoC scope entirely.
 
 No statement of the form "our approach reduces cost by X%" is supported by any of this.
