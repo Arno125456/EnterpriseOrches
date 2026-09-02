@@ -240,5 +240,6 @@ No statement of the form "our approach reduces cost by X%" is supported by any o
 | 2 | Does the M1 analogue get built, and what is it? | 035 | F3, and T4's meaning |
 | 3 | Which constraint does Track B relax? (T1/O2) | 075 | Track B existing at all |
 | 4 | Reword O6: the rounding policy is a non-question, the repair pass is not (F6) | 075 | Where Track C effort goes |
-| 6 | Equalise attempts between Track A and Track C, or accept the asymmetry? | 035 + 089 | Whether T4 is like-for-like |
-| 5 | O1 — per-invocation cost term. Currently defaulted to "no" | Team | The objective everywhere |
+| 5 | Equalise attempts between Track A and Track C, or accept the asymmetry? | 035 + 089 | Whether T4 is like-for-like |
+| 6 | O1 — per-invocation cost term. Currently defaulted to "no" | Team | The objective everywhere |
+| 7 | What does the STATIC baseline allocate? v2 never says | Advisor + 089 | §4.7's fifth condition |
