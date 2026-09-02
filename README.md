@@ -5,8 +5,9 @@ Senior capstone project — team of 5, advised by Prof. Tossaphol.
 **Start here:** [`CLAUDE.md`](CLAUDE.md) is the working summary and the guardrails.
 [`docs/System_Architecture_v2.md`](docs/System_Architecture_v2.md) is the full design
 reference; [`docs/PoC_and_Validation_Plan.md`](docs/PoC_and_Validation_Plan.md) is what
-September is for. If code and a document disagree, the document is not automatically right —
-flag the mismatch and resolve it explicitly, don't silently follow either one.
+September is for; [`docs/pipeline.md`](docs/pipeline.md) is the end-to-end ASCII diagram
+of the PoC pipeline. If code and a document disagree, the document is not automatically
+right — flag the mismatch and resolve it explicitly, don't silently follow either one.
 
 ## What this project is
 
