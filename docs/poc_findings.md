@@ -87,7 +87,7 @@ value, since 1.0 is the *loosest* budget. That inversion is §6.4's.
 
 ---
 
-## F3 — Both heuristics are infeasible on ~42% of solvable instances
+## F3 — Both heuristics are infeasible on a third to a half of solvable instances
 
 This is the largest problem currently visible, and it is not the one the plan expected to
 be largest.
@@ -96,18 +96,18 @@ be largest.
 |---|---|---|---|
 | 0.5 | 1 | 1 | 1 |
 | 0.6 | 3 | 2 | 3 |
-| 0.7 | 6 | 3 | 3 |
-| 0.8 | 13 | 7 | 7 |
-| 0.9 | 16 | 7 | 8 |
-| 1.0 | 25 | **7** | **5** |
+| 0.7 | 6 | 3 | 2 |
+| 0.8 | 13 | 7 | 6 |
+| 0.9 | 16 | 7 | 6 |
+| 1.0 | 25 | **7** | **3** |
 
-27 of 64 for each track. Note the last row: **both tracks fail on instances at the loosest
-budget the generator produces**, where a feasible allocation is guaranteed to exist by
-construction.
+Track A fails 27 of 64, Track C 21 of 64. Note the last row: **both tracks fail at the
+loosest budget the generator produces**, where a feasible allocation is guaranteed to exist
+by construction.
 
-Of the 27 failures, **22 are the same instances for both tracks**; 5 are specific to each.
-So this is mostly a property of the instances and of the shared decision rule, not of
-either track's own logic.
+17 of those failures are shared; 10 are Track A only and 4 are Track C only. So it is
+mostly a property of the instances and of the shared decision rule, not of either track's
+own logic.
 
 **Why.** `select_profile` ranks on `admit.extra_cost` — price — and never looks at
 `extra_gpus`. Both tracks therefore buy cheap-but-GPU-hungry profiles early, exhaust the
@@ -133,40 +133,44 @@ Over solvable instances, cost gap above the exact optimum, feasible runs only:
 
 | tightness | A mean gap% | C mean gap% | LP bound gap% |
 |---|---|---|---|
-| 0.7 | 10.87 | 14.86 | 11.72 |
-| 0.8 | 8.26 | 10.26 | 15.13 |
-| 0.9 | 10.00 | 10.00 | 15.02 |
-| 1.0 | 11.56 | 17.67 | 15.83 |
+| 0.7 | 10.87 | 11.14 | 13.72 |
+| 0.8 | 8.26 | 8.79 | 15.79 |
+| 0.9 | 10.00 | 10.22 | 14.90 |
+| 1.0 | 11.56 | 16.25 | 15.92 |
 
-Head-to-head on the 32 instances where both produced a feasible answer:
+Head-to-head on the 33 instances where both produced a feasible answer:
 
 | | count |
 |---|---|
 | Track A strictly cheaper | 7 |
-| Track C strictly cheaper | 1 |
+| Track C strictly cheaper | 2 |
 | tied | 24 |
 
-**Plain greedy is not losing to LP-rounding — it is slightly ahead.** On the fixture built
-to defeat it, greedy loses by 7%; on instances not built for that purpose, it wins or ties
-31 times out of 32.
+**Plain greedy is not losing to LP-rounding — it is marginally ahead on cost.** On the
+fixture built to defeat it, greedy loses by 7%; on instances not built for that purpose it
+wins or ties 31 times out of 33.
+
+Where Track C is clearly better is **feasibility**: it fails 21 times to Track A's 27, and
+only 3 times at the loosest budget against Track A's 7.
 
 **Consequence, per §5.3's T4 table:** the first outcome — "greedy within a few percent of
 LP-rounding → the full AGH machinery likely does not pay; simplify or cut Track A". Note
-what this does and does not say. It does not say greedy is good; both tracks sit 8–17%
-above optimum and fail 42% of the time. It says the *elaborate* Track A is hard to justify
-when the plain version already matches a solver call.
+what this does and does not say. It does not say greedy is good; both tracks sit 8–16%
+above optimum and fail often. It says the *elaborate* Track A is hard to justify on cost
+when the plain version already matches a solver call — while the solver call is the more
+reliable of the two at actually returning an answer.
 
-**Caveat, and it is a real one.** Track C's cost depends on a rounding policy that is O6's
-arbitrary default (argmax fractional weight, repair in decreasing load order), chosen so
-the track could be built at all. A better rounding policy could move these numbers.
-Track C's *bound* is policy-independent; its *cost* is not.
+**Caveat.** Track C gets two realisation attempts per instance to Track A's one (see F6).
+That is a small multi-start, and Track A is denied multi-start by the scope guard. The
+comparison is not strictly like-for-like and the team should decide whether to equalise it
+before T4 is read.
 
 ---
 
 ## F5 — The LP integrality gap is large, as §1.7 predicts
 
 Mean gap between the LP bound and the true optimum: **~15%**, stable across tightness
-(11.7 / 15.1 / 15.0 / 15.8).
+(13.7 / 15.8 / 14.9 / 15.9).
 
 §1.7 says the integrality gap lives in (C2), because `n[m]` must cover a ceiling of
 aggregate load over throughput and the LP returns fractional instance counts. A 15% gap is
@@ -177,6 +181,38 @@ has to beat the LP.
 some of that 15%. If Track B's bound lands at the LP bound, §5.3's T1 table fires its last
 row and the track should be cut or rejustified. That test is now cheap to run — the harness
 records `bound_gap` for any track that reports a bound.
+
+---
+
+## F6 — The LP returns an integral routing. O6 is largely a non-question.
+
+O6 asks for "the LP rounding policy". Two alternative policies were built to answer it —
+one restricting to profiles the LP had opened (`n[m] > 0`), one taking the most
+GPU-efficient profile among those with LP weight. Both were **deleted**, because across 76
+instances they produced routings byte-identical to plain argmax, every single time.
+
+The reason is structural. Measured over 80 LP solutions at 8 tasks / 4 profiles:
+
+| quantity | value |
+|---|---|
+| `x[t][m]` values integral (0 or 1) | **99.5%** |
+| LP solutions with fully integral `x` | **96%** (77 of 80) |
+| `n[m]` values fractional | 53.4% |
+
+The LP has no reason to split a task. `n[m]` is continuous in the relaxation, so it can buy
+exactly the capacity a whole task needs. **All the fractionality — and therefore the entire
+integrality gap — sits in `n[m]`**, exactly where §1.7 predicts it.
+
+**Consequence for 075:** effort spent designing a rounding policy for the routing is close
+to wasted. What determines Track C's cost is the **repair pass** that runs when the LP's
+integral routing stops fitting once `n[m]` must be a whole number and (C3) binds. That is
+the piece worth designing, and O6 should probably be reworded to say so.
+
+**What did help.** Realising each candidate routing in two task orders — large-first and
+small-first — cut infeasibility from 27 of 64 to 21, and mean gap from 14.6% to 13.2%. The
+entire gain came from the second *order*, not from any policy. That is also what creates
+the fairness wrinkle noted in F4: Track C now gets two attempts, Track A one.
+
 
 ---
 
@@ -203,5 +239,6 @@ No statement of the form "our approach reduces cost by X%" is supported by any o
 | 1 | Sign off (or reject) the F2 anchor change | 083 | T3's whole sweep |
 | 2 | Does the M1 analogue get built, and what is it? | 035 | F3, and T4's meaning |
 | 3 | Which constraint does Track B relax? (T1/O2) | 075 | Track B existing at all |
-| 4 | Is O6's rounding policy worth improving before T4 is read? | 075 | F4's fairness to Track C |
+| 4 | Reword O6: the rounding policy is a non-question, the repair pass is not (F6) | 075 | Where Track C effort goes |
+| 6 | Equalise attempts between Track A and Track C, or accept the asymmetry? | 035 + 089 | Whether T4 is like-for-like |
 | 5 | O1 — per-invocation cost term. Currently defaulted to "no" | Team | The objective everywhere |

@@ -12,20 +12,45 @@ Rounding is not incidental here. The LP returns fractional n[m]. Rounding down b
 rounding up may break (C3); and rounding one profile up changes headroom that affects
 whether another profile's rounding is feasible. It is an algorithm, not a policy switch.
 
-O6 IS NOT SETTLED, AND THIS IS NOT THE ANSWER.
+O6 IS LARGELY A NON-QUESTION, AND THAT IS A MEASURED RESULT.
 
-The policy implemented here is the obvious default, chosen so the track could be built and
-its bound measured — not because it was compared against alternatives:
+O6 asks for "the LP rounding policy". Two alternative policies were built to answer it —
+one restricting to profiles the LP had opened (n[m] > 0), one taking the most GPU-efficient
+profile among those with LP weight — and both were deleted, because on 76 instances they
+produced routings byte-identical to plain argmax, every time.
 
-    route each task to the profile carrying its largest fractional x[t][m],
-    ties broken on profile id; then repair any task whose choice no longer fits.
+The reason is structural, not a quirk of the generator. Measured over 80 LP solutions at
+8 tasks / 4 profiles:
 
-Tasks are repaired in decreasing load order, on the reasoning that the large tasks are the
-ones that force new instances, so placing them while the budget still has room leaves the
-small ones something to slot into. That is a guess, not a result. Alternatives nobody has
-tried yet: rounding n first and fitting routing to it, LP-guided randomised rounding, or
-repairing in LP-confidence order. T3/T4 resolve this — until then treat Track C's cost as
-a function of an arbitrary choice, while its BOUND is solid and policy-independent.
+    x[t][m] integral (0 or 1)        99.5% of values
+    LP solutions with fully integral x   96%   (77 of 80)
+    n[m] fractional                    53.4% of values
+
+The LP hands back an integral ROUTING almost always. It has no reason to split a task:
+n[m] is continuous in the relaxation, so it can buy exactly the capacity a whole task
+needs. All the fractionality — and therefore the entire integrality gap — sits in n[m],
+exactly where §1.7 predicts it.
+
+The consequence for 075: effort spent on rounding policy is close to wasted. What actually
+determines Track C's cost is the REPAIR pass that runs when the LP's integral routing does
+not fit once n[m] must be a whole number and (C3) binds. That is the piece worth designing.
+
+What did help, and it is worth knowing why: realising each candidate in two task orders
+(large-first and small-first) cut infeasibility from 27 of 64 solvable instances to 21, and
+mean gap from 14.6% to 13.2%. That gain is entirely from the second ORDER, not from any
+policy.
+
+FAIRNESS, STATED PLAINLY BECAUSE T4 TURNS ON IT. Two realisation orders is a small
+multi-start, and Track A is forbidden multi-start by the scope guard (v2 §6.5) precisely
+because T4 exists to decide whether that machinery pays. Track C currently gets two
+attempts and Track A gets one. That should be a decision, not an accident: set
+REALISATION_ORDERS to a single entry for the strictly single-shot comparison.
+
+The repair pass still ranks on extra_cost, per §5.2.1, and is deliberately NOT made
+budget-aware — that is the M1 analogue (O2) that T4 exists to evaluate.
+
+Track C's BOUND is unaffected by any of this and remains policy-independent. Only its cost
+moves.
 """
 
 from __future__ import annotations
@@ -47,7 +72,7 @@ def _marginal_cost(profile_id: str, admit) -> float:
 
 
 def _solve_relaxation(tasks, pools, profiles, budget):
-    """Return (fractional_x, bound) or (None, None) if the LP itself is infeasible."""
+    """Return (fractional_x, fractional_n, bound), or (None, None, None) if infeasible."""
     problem = pulp.LpProblem("TwoLevelAllocation_LP", pulp.LpMinimize)
 
     x = {(t.id, m): pulp.LpVariable(
@@ -68,23 +93,61 @@ def _solve_relaxation(tasks, pools, profiles, budget):
 
     problem.solve(pulp.PULP_CBC_CMD(msg=0))
     if pulp.LpStatus[problem.status] != "Optimal":
-        return None, None
+        return None, None, None
 
-    fractional = {key: (var.value() or 0.0) for key, var in x.items()}
-    return fractional, pulp.value(problem.objective)
+    fractional_x = {key: (var.value() or 0.0) for key, var in x.items()}
+    fractional_n = {m: (var.value() or 0.0) for m, var in n.items()}
+    return fractional_x, fractional_n, pulp.value(problem.objective)
 
 
-def _round_routing(tasks, pools, fractional) -> dict[TaskId, str]:
-    """O6's default: argmax fractional weight, ties broken on profile id.
+def _by_largest_weight(tasks, pools, profiles, frac_x, frac_n) -> dict[TaskId, str]:
+    """Argmax fractional weight. The obvious policy, and the one O6 named first.
 
     Expressed as a min over (-weight, id) so the id tie-break is a plain string compare —
     ties are the common case when the LP splits a task evenly.
     """
     return {
         task.id: min(pools[task.id],
-                     key=lambda m: (-fractional.get((task.id, m), 0.0), m))
+                     key=lambda m: (-frac_x.get((task.id, m), 0.0), m))
         for task in tasks
     }
+
+
+# Tried in order; the cheapest feasible realisation wins.
+#
+# There is one policy because two others were built, measured, and deleted — see the
+# module docstring. The tuple stays so adding a fourth is a one-line change, and so that
+# any future addition has to justify itself against the same measurement.
+ROUNDING_POLICIES = (
+    ("largest-weight", _by_largest_weight),
+)
+
+# Task orders each candidate routing is realised in. Large-first is the bin-packing
+# instinct; small-first sometimes fits the tail into headroom the big tasks opened.
+REALISATION_ORDERS = (
+    ("large-first", lambda t: (-t.load, t.id)),
+    ("small-first", lambda t: (t.load, t.id)),
+)
+
+
+def _realise(routing, tasks, pools, profiles, budget, order_key):
+    """Turn a rounded routing into a provisioning state, repairing what no longer fits.
+
+    Returns (state, routing) or (None, blocking_task_id).
+    """
+    state = ProvisioningState(profiles, budget)
+    realised: dict[TaskId, str] = {}
+
+    for task in sorted(tasks, key=order_key):
+        choice = routing[task.id]
+        if state.cost_to_admit(task, choice) is None:
+            choice = select_profile(task, pools[task.id], state, _marginal_cost)
+        if choice is None:
+            return None, task.id
+        state.admit(task, choice)
+        realised[task.id] = choice
+
+    return state, realised
 
 
 def allocate(tasks: list[Task],
@@ -103,8 +166,8 @@ def allocate(tasks: list[Task],
                            task.id, "C1"),
                 time.perf_counter() - started)
 
-    fractional, bound = _solve_relaxation(tasks, pools, profiles, budget)
-    if fractional is None:
+    frac_x, frac_n, bound = _solve_relaxation(tasks, pools, profiles, budget)
+    if frac_x is None:
         # The LP is a relaxation: if it is infeasible, so is the integer problem.
         return AllocationResult.failure(
             STRATEGY,
@@ -112,29 +175,31 @@ def allocate(tasks: list[Task],
                        None, "C3"),
             time.perf_counter() - started)
 
-    rounded = _round_routing(tasks, pools, fractional)
-    state = ProvisioningState(profiles, budget)
-    routing: dict[TaskId, str] = {}
+    best_state, best_routing = None, None
+    blocking = None
 
-    # Large tasks first: they are the ones that force new instances.
-    for task in sorted(tasks, key=lambda t: (-t.load, t.id)):
-        choice = rounded[task.id]
-        if state.cost_to_admit(task, choice) is None:
-            choice = select_profile(task, pools[task.id], state, _marginal_cost)
-        if choice is None:
-            return AllocationResult.failure(
-                STRATEGY,
-                Infeasible("rounding repair failed — no profile admissible within budget",
-                           task.id, "C3"),
-                time.perf_counter() - started)
-        state.admit(task, choice)
-        routing[task.id] = choice
+    for _, policy in ROUNDING_POLICIES:
+        candidate = policy(tasks, pools, profiles, frac_x, frac_n)
+        for _, order_key in REALISATION_ORDERS:
+            state, outcome = _realise(candidate, tasks, pools, profiles, budget, order_key)
+            if state is None:
+                blocking = blocking or outcome
+                continue
+            if best_state is None or state.total_cost() < best_state.total_cost():
+                best_state, best_routing = state, outcome
+
+    if best_state is None:
+        return AllocationResult.failure(
+            STRATEGY,
+            Infeasible("every rounding policy failed repair — no profile admissible "
+                       "within budget", blocking, "C3"),
+            time.perf_counter() - started)
 
     result = AllocationResult(
-        routing=routing,
-        provisioning=state.build_provisioning(),
-        total_cost=state.total_cost(),
-        gpus_used=state.gpus_used(),
+        routing=best_routing,
+        provisioning=best_state.build_provisioning(),
+        total_cost=best_state.total_cost(),
+        gpus_used=best_state.gpus_used(),
         strategy=STRATEGY,
         lower_bound=bound,
         compute_time=time.perf_counter() - started,
