@@ -17,7 +17,8 @@ import pytest
 
 from poc.formulation import invariants
 from poc.instances.generator import generate
-from poc.tracks import exact_milp, track_a_greedy, track_c_lp
+from poc.tracks import (exact_milp, static_baseline, track_a_greedy,
+                        track_a_m1, track_c_lp)
 
 
 def brute_force(tasks, pools, profiles, budget):
@@ -92,7 +93,8 @@ def test_infeasible_names_the_binding_constraint():
 
 # --- heuristic tracks vs ground truth (build steps 7 and 9) ----------------------
 
-HEURISTICS = [("A", track_a_greedy), ("C", track_c_lp)]
+HEURISTICS = [("A", track_a_greedy), ("A+M1", track_a_m1),
+              ("C", track_c_lp), ("STATIC", static_baseline)]
 
 
 @pytest.mark.parametrize("name,track", HEURISTICS)

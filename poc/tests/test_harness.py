@@ -15,6 +15,11 @@ from poc.harness.runner import STRATEGIES, UNAVAILABLE, run_conditions, sweep
 from poc.instances.fixtures import adversarial_3t2p as fx
 from poc.instances.generator import ProblemInstance, generate
 
+# Track B runs ~1.7s per instance against microseconds for the others, so the sweep tests
+# name the conditions they actually need. Track B's own correctness lives in
+# test_track_b.py; test_track_b_integrates_with_the_harness below covers the wiring.
+FAST = ["MILP", "STATIC", "A", "A+M1", "C", "C2"]
+
 
 @pytest.fixture
 def fixture_instance():
@@ -44,12 +49,39 @@ def test_every_condition_gets_the_identical_instance(fixture_instance):
 
 
 def test_unknown_condition_names_why_it_is_missing():
-    """Track B is absent for a reason, and asking for it should say the reason."""
+    """Asking for a condition that does not exist should say why, not just fail.
+
+    MURAKKAB is the interesting case: it is absent not because it is unbuilt but because
+    §1's formulation IS Murakkab's model, so the MILP condition already is it. A second
+    entry would report the same number twice and imply a comparison that does not exist.
+    """
     inst = generate(4, 3, 1.0, seed=0)
-    with pytest.raises(ValueError, match="T1"):
-        run_conditions(inst, strategies=["MILP", "B"])
-    assert "B" in UNAVAILABLE and "STATIC" in UNAVAILABLE
-    assert "B" not in STRATEGIES
+    with pytest.raises(ValueError, match="MILP"):
+        run_conditions(inst, strategies=["MILP", "MURAKKAB"])
+    assert "MURAKKAB" in UNAVAILABLE
+    assert "MURAKKAB" not in STRATEGIES
+
+
+def test_all_five_evaluation_conditions_are_present():
+    """§4.7 names Tracks A, B, C, a static baseline and the exact MILP. Plus A+M1, which
+    §4.7 does not name — it is the M1 analogue kept separate so T4 can price it."""
+    for condition in ("MILP", "STATIC", "A", "A+M1", "B", "C", "C2"):
+        assert condition in STRATEGIES, condition
+
+
+def test_track_c_gets_the_same_single_attempt_as_track_a():
+    """T4 fairness (findings F6). C must be single-shot; C2 carries the extra attempt."""
+    from poc.tracks import track_c_lp, track_c_multi
+    inst = generate(8, 4, 0.8, seed=3)
+    tasks, pools, profiles, budget = inst.unpack()
+
+    single = track_c_lp.allocate(tasks, pools, profiles, budget)
+    multi = track_c_multi.allocate(tasks, pools, profiles, budget)
+
+    assert single.strategy == "C" and multi.strategy == "C2"
+    if single.feasible and multi.feasible:
+        assert multi.total_cost <= single.total_cost + 1e-6, (
+            "more attempts must never produce a worse answer")
 
 
 def test_gap_is_none_without_an_optimum(fixture_instance):
@@ -68,7 +100,8 @@ def test_greedy_has_no_bound_gap(fixture_instance):
 
 def test_summary_excludes_unsolvable_instances():
     """A gap against an unknown optimum is not a number."""
-    records = sweep(n_tasks=6, n_profiles=3, tightness_values=[0.3, 1.0], seeds=range(6))
+    records = sweep(n_tasks=6, n_profiles=3, tightness_values=[0.3, 1.0],
+                    seeds=range(6), strategies=FAST)
     summaries = metrics.summarise(records)
     solvable = sum(1 for r in records if r.solvable)
 
@@ -79,7 +112,8 @@ def test_summary_excludes_unsolvable_instances():
 
 def test_infeasible_runs_are_counted_not_averaged():
     """A track that only solves the easy instances must not post the best mean gap."""
-    records = sweep(n_tasks=8, n_profiles=4, tightness_values=[0.8], seeds=range(15))
+    records = sweep(n_tasks=8, n_profiles=4, tightness_values=[0.8],
+                    seeds=range(15), strategies=FAST)
     summaries = metrics.summarise(records)
 
     for summary in summaries.values():
@@ -95,7 +129,8 @@ def test_infeasible_runs_are_counted_not_averaged():
 def test_solvability_is_monotone_in_tightness():
     """The T3 view. Loosening the budget can only ever help."""
     tightness = [0.5, 0.7, 0.9, 1.0]
-    records = sweep(n_tasks=8, n_profiles=4, tightness_values=tightness, seeds=range(10))
+    records = sweep(n_tasks=8, n_profiles=4, tightness_values=tightness,
+                    seeds=range(10), strategies=FAST)
     counts = metrics.solvability(records)
 
     solvable = [counts[t][0] for t in tightness]
@@ -105,15 +140,35 @@ def test_solvability_is_monotone_in_tightness():
 
 def test_no_track_ever_violates_an_invariant_across_a_sweep():
     """The highest-value test in the PoC (§6.6), run over the whole sweep at once."""
-    records = sweep(n_tasks=7, n_profiles=4,
-                    tightness_values=[0.6, 0.8, 1.0], seeds=range(10))
+    records = sweep(n_tasks=7, n_profiles=4, tightness_values=[0.6, 0.8, 1.0],
+                    seeds=range(10), strategies=FAST)
     offenders = [(r.instance.seed, name, c.violations)
                  for r in records for name, c in r.conditions.items() if c.violations]
     assert offenders == []
 
 
 def test_table_renders_without_an_optimum_column_lie():
-    records = sweep(n_tasks=6, n_profiles=3, tightness_values=[1.0], seeds=range(5))
+    records = sweep(n_tasks=6, n_profiles=3, tightness_values=[1.0],
+                    seeds=range(5), strategies=FAST)
     table = metrics.format_table(metrics.summarise(records))
     assert "MILP" in table and "infeas" in table
     assert len(table.splitlines()) == 2 + len(metrics.summarise(records))
+
+
+def test_track_b_integrates_with_the_harness():
+    """One small B-inclusive run, so the wiring is covered without paying for it 150 times.
+
+    The bound comparison this makes possible is T1's actual question, so it is asserted
+    here as well as in test_track_b.py.
+    """
+    records = sweep(n_tasks=5, n_profiles=3, tightness_values=[1.0], seeds=range(3),
+                    strategies=["MILP", "B", "C"])
+    for record in records:
+        if not record.solvable:
+            continue
+        b, c = record.conditions["B"].result, record.conditions["C"].result
+        assert not record.conditions["B"].violations
+        if b.lower_bound is not None:
+            assert b.lower_bound <= record.optimum + 1e-6
+        if b.lower_bound is not None and c.lower_bound is not None:
+            assert b.lower_bound >= c.lower_bound - 1e-6, "Lagrangian bound below LP bound"

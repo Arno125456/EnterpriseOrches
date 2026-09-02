@@ -109,8 +109,9 @@ usage-based rather than purely provisioning-based:
           + Σ_t Σ_m  x[t][m] · varcost(t, m)
 ```
 
-Whether this term exists is **[OPEN]** — it does not change the problem class, only the
-objective's shape.
+**[CLOSED — 2 September 2026: no.]** The objective is provisioning cost only. This term is
+not implemented and `ProfileSpec` carries no `varcost` field. Reopening it changes the
+objective signature everywhere; it does not change the problem class.
 
 ### 1.6 Constraints
 
@@ -758,9 +759,24 @@ harness can record failures as data instead of crashing.
 generate(n_tasks, n_profiles, budget_tightness, seed) -> Instance
 ```
 
-`budget_tightness ∈ (0, 1]` — the budget as a fraction of the GPUs needed by a naive
-one-instance-per-profile solution. This is the **primary experimental axis** (PoC test T3);
-the comparison has no signal where the budget is loose.
+`budget_tightness ∈ (0, 1]` — the budget as a fraction of the GPUs used by a **reference
+allocation**: every task routed to its most GPU-efficient eligible profile (lowest
+`gpu(m)/thr(m)`), with instance counts derived from the routed load. This is the **primary
+experimental axis** (PoC test T3); the comparison has no signal where the budget is loose.
+
+Because the reference is a real achievable allocation rather than a bound, `tightness = 1.0`
+is feasible by construction, and decreasing tightness binds monotonically into infeasibility.
+That is the property the sweep needs.
+
+*Amended after PoC measurement — see `poc_findings.md` F2.* This section previously anchored
+the budget to "a naive one-instance-per-profile solution", `Σ_m gpu(m)`. That anchor does not
+depend on the tasks, so a batch of 8 tasks routinely needs more instances than one-per-profile
+and the budget landed below feasibility almost everywhere: 0 of 25 instances were solvable at
+tightness 0.3–0.4 and only 16 of 25 at 1.0. T3 had no room to sweep. The reference-allocation
+anchor gives 25 of 25 solvable at 1.0.
+
+Note the parameter name runs backwards against its value: 1.0 is the *loosest* budget. Kept
+for continuity with the original text.
 
 The generator must guarantee `C(t)` is non-empty for every task, or the instance is discarded
 and regenerated.
@@ -802,12 +818,12 @@ catches that class of bug regardless of source.
 
 | ID | Item | Resolved by | Severity |
 |---|---|---|---|
-| O1 | Does the objective include a per-invocation term? | Team decision | Low |
-| O2 | Which constraint does Track B relax? | **PoC T1** | High |
-| O3 | Is Track B's bound strictly better than Track C's? | **PoC T1** | High |
+| O1 | Does the objective include a per-invocation term? **Closed: no** — provisioning cost only. Confirmed 2 Sep 2026 | Team decision | Closed |
+| O2 | Which constraint does Track B relax? **Built against (C1)** on §1.8's prediction, so T1 has something to measure — the assumption is not yet a finding, and relaxing (C3) remains unmeasured | **PoC T1** | High |
+| O3 | Is Track B's bound strictly better than Track C's? **Preliminary: yes**, strictly tighter on 30 of 30 instances, and tight on the fixture (findings F7) | **PoC T1** | High |
 | O4 | Can greedy be fooled by aggregate coupling? | **PoC T2** | High |
 | O5 | Step-size schedule, tolerance, iteration cap | **PoC T1** | Medium |
-| O6 | LP rounding policy | **PoC T3/T4** | Medium |
+| O6 | ~~LP rounding policy~~ → **Track C's repair pass**. Answered in part: the LP returns an integral routing 96% of the time, so rounding the routing is nearly free; the cost is decided by the repair that runs once `n[m]` must be integral (findings F6) | **PoC T3/T4** | Medium |
 | O7 | Where does the budget bind? | **PoC T3** | High |
 | O8 | Is Track A worth its complexity? | **PoC T4** | High |
 | O9 | Is scoped re-optimisation well-defined under (C2)? | Semester 2 | Medium |

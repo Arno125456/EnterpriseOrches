@@ -129,6 +129,10 @@ Do not reorder. Each step is verifiable before the next.
 | 9 | `tracks/track_a_greedy.py` | Satisfies I1–I5; **returns 300 on the fixture** |
 | 10 | `harness/` | Reproduces a known result end-to-end |
 
+All ten steps are built. Conditions beyond the ten: `STATIC` (no-optimisation baseline),
+`A+M1` (feasibility lookahead), `C2` (Track C with the extra realisation attempt). Run
+`python -m poc.harness.runner`; results in `docs/poc_findings.md`.
+
 **Build the exact solver before any heuristic.** Nothing can be checked for correctness without
 ground truth.
 
@@ -186,7 +190,8 @@ def allocate(tasks, pools, profiles, budget, seed=0) -> AllocationResult
 - Drift detection, re-optimisation, J9
 - Zookeeper / LogHub domain data — synthetic instances only
 - Track A's relocate, consolidate, or elaborate multi-start — **T4 decides whether these are
-  worth building.** Build plain greedy only.
+  worth building.** `track_a_greedy.py` stays plain greedy. The M1 analogue lives in
+  `track_a_m1.py` as a *separate condition* so T4 can price it rather than have it assumed.
 - Monitoring, fallback, framework integration
 
 > If a module does not help answer T1, T2, T3, or T4, it does not belong in the PoC.
@@ -212,17 +217,17 @@ rather than picking silently.
 
 | ID | Question |
 |---|---|
-| O2 | Which constraint does Track B relax? §1.8 predicts (C1), giving per-profile subproblems. Confirm |
-| O3 | Is Track B's bound strictly better than Track C's LP bound? |
-| O4 | Can greedy be defeated by aggregate coupling? *(fixture above predicts yes)* |
-| O5 | Step-size schedule, tolerance, iteration cap for Track B |
-| O6 | LP rounding policy for Track C |
-| O7 | Where does the budget bind? Primary axis of the generator |
+| O2 | Which constraint does Track B relax? **Built against (C1)** per §1.8. Still an assumption — relaxing (C3) is unmeasured |
+| O3 | Is Track B's bound strictly better than Track C's LP bound? **Preliminary: yes, 30/30** |
+| O4 | Can greedy be defeated by aggregate coupling? **Yes** — fixture confirmed, and it fails on feasibility far more often than on cost |
+| O5 | Step-size schedule, tolerance, iteration cap for Track B — still open, values in `track_b_lagr.py` are untuned defaults |
+| O6 | ~~LP rounding policy~~ → **the repair pass**. The LP returns integral routings 96% of the time |
+| O7 | Where does the budget bind? Primary axis of the generator — anchor amended, see findings F2 |
 | O8 | Is Track A worth its complexity? |
 
-Also open, and **needs a human decision before step 1**:
-
-| O1 | Does the objective include a per-invocation term `Σ x[t][m]·varcost(t,m)`? Changes the objective signature everywhere. Default assumption: **no**, provisioning cost only |
+**O1 is closed (2 September 2026): no per-invocation term.** The objective is provisioning
+cost only, and `ProfileSpec` carries no `varcost` field. Reopening it changes the objective
+signature everywhere.
 
 ---
 

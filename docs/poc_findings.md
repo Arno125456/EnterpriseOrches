@@ -55,7 +55,7 @@ instances not built for that purpose, and it does not agree.
 
 ---
 
-## F2 — §6.4's budget anchor does not work, and T3 could not sweep against it [FIXED, NEEDS SIGN-OFF]
+## F2 — §6.4's budget anchor did not work, and T3 could not sweep against it [FIXED, SIGNED OFF]
 
 §6.4 anchors the budget to "a naive one-instance-per-profile solution", `Σ_m gpu(m)`.
 Implemented literally, then measured — solvable = the exact MILP found any allocation, out
@@ -80,9 +80,8 @@ allocation rather than a bound, a budget equal to it always admits a solution:
 `budget_tightness` keeps its §6.4 meaning — a fraction of an anchor — so the sweep reads
 the same way. Only the anchor changed.
 
-**This deviates from the written spec.** It is documented at the top of
-`poc/instances/generator.py` with the measurements that forced it, and **needs 083's
-sign-off**. A separate wrinkle left alone: the parameter name runs backwards against its
+**Signed off 2 September 2026**, and §6.4 in `System_Architecture_v2.md` has been amended
+to match, with the measurements that forced it. A separate wrinkle left alone: the parameter name runs backwards against its
 value, since 1.0 is the *loosest* budget. That inversion is §6.4's.
 
 ---
@@ -216,6 +215,46 @@ the fairness wrinkle noted in F4: Track C now gets two attempts, Track A one.
 
 ---
 
+## F7 — T1, preliminary: the Lagrangian bound beats the LP bound, on every instance tried
+
+**Read the caveat in the next paragraph before quoting this one.** Track B was built
+relaxing **(C1)**, the assignment constraints, because that is what §1.8 predicts for
+capacitated facility location. That choice is an *assumption adopted so T1 had something to
+measure*, not a result: relaxing (C3) has not been implemented or measured, so T1's first
+question — "along what axis does it decompose" — is answered only in the sense that (C1)
+does decompose per profile, as predicted.
+
+What is measured is O3, and it is clean. Over 30 solvable instances (8 tasks, 4 profiles):
+
+| | count |
+|---|---|
+| Lagrangian bound **strictly tighter** than the LP bound | **30** |
+| strictly looser | 0 |
+| equal | 0 |
+| **invalid** (bound above the true optimum) | **0** |
+
+On the hand-verified fixture the Lagrangian bound reaches **280 — the exact optimum** —
+against the LP's 190.8.
+
+**Consequence, per §5.3's T1 table:** the row to watch was *"Lagrangian bound = LP bound
+consistently → Track B provides nothing Track C does not; it should be cut or
+rejustified"*. **That row does not fire.** On this evidence Track B earns its place, and
+§5.2.3 stands as written.
+
+**The cost side is the catch.** Track B runs ~1.7 s per instance against microseconds for
+Track A and ~30 ms for Track C — roughly 50× Track C for the same size of problem. The
+subproblem is an exact knapsack DP per profile per iteration, up to 120 iterations. At PoC
+scale that is irrelevant; it is exactly the trade T4 should be pricing, and it is the first
+place to look if instances grow.
+
+**Other caveats.** The step-size schedule, tolerance and iteration cap (O5) are untuned
+defaults. The knapsack scales float loads to integers in the *permissive* direction —
+weights down, capacity up — which can only understate the bound, so the validity result
+above is not an artefact of favourable rounding.
+
+
+---
+
 ## What these findings do not establish
 
 Restating §5.7, because early numbers invite over-reading:
@@ -223,7 +262,8 @@ Restating §5.7, because early numbers invite over-reading:
 - **Nothing about real workloads.** All instances are synthetic, from one generator whose
   distributions were chosen by hand.
 - **Nothing at scale.** 8 tasks, 4 profiles, sized for exact solvability.
-- **Nothing about Track B.** It does not exist yet; T1 and T3's bound comparison are open.
+- **Nothing about which constraint Track B *should* relax.** It relaxes (C1) by assumption
+  (F7). The (C3) alternative is unbuilt and unmeasured, so T1 is half-answered at best.
 - **Nothing statistical.** 25 seeds per point, no confidence intervals, no significance
   testing. The head-to-head 7–1 in F4 is a tendency, not a result.
 - **Nothing about drift, execution, or the domain.** Out of PoC scope entirely.
@@ -232,14 +272,46 @@ No statement of the form "our approach reduces cost by X%" is supported by any o
 
 ---
 
-## Decisions this log is waiting on
+## Decisions taken, 2 September 2026
 
-| # | Decision | Owner | Blocks |
+All seven were answered in one pass. Recorded here with what was built as a result.
+
+| # | Decision | Answer | Built |
 |---|---|---|---|
-| 1 | Sign off (or reject) the F2 anchor change | 083 | T3's whole sweep |
-| 2 | Does the M1 analogue get built, and what is it? | 035 | F3, and T4's meaning |
-| 3 | Which constraint does Track B relax? (T1/O2) | 075 | Track B existing at all |
-| 4 | Reword O6: the rounding policy is a non-question, the repair pass is not (F6) | 075 | Where Track C effort goes |
-| 5 | Equalise attempts between Track A and Track C, or accept the asymmetry? | 035 + 089 | Whether T4 is like-for-like |
-| 6 | O1 — per-invocation cost term. Currently defaulted to "no" | Team | The objective everywhere |
-| 7 | What does the STATIC baseline allocate? v2 never says | Advisor + 089 | §4.7's fifth condition |
+| 1 | F2 anchor change | **Accepted** | §6.4 amended in `System_Architecture_v2.md` |
+| 2 | The M1 analogue | **Build it, as a separate condition** | `tracks/track_a_m1.py`, condition `A+M1`. Plain Track A untouched, so T4 prices the machinery instead of assuming it |
+| 3 | Which constraint Track B relaxes | **(C1), per §1.8's prediction** | `tracks/track_b_lagr.py`. Flagged in-module as an assumption, not a finding — see F7 |
+| 4 | Reword O6 | **Done** | O6 now points at the repair pass, per F6 |
+| 5 | Attempt parity | **Equalise, report the variant separately** | `C` is single-shot like `A`; `C2` carries the extra realisation order as its own row |
+| 6 | O1, per-invocation cost term | **Closed: no** | Provisioning cost only. `ProfileSpec` has no `varcost` field |
+| 7 | The STATIC baseline | **Build no-optimisation; Murakkab is not separate** | `tracks/static_baseline.py`. See the note below |
+
+### On the Murakkab condition
+
+The instruction was to build both a Murakkab baseline and a no-optimisation baseline. Only
+one of those is a distinct thing to build.
+
+Per §9's reference map, what this project takes from Murakkab is the capacity model and the
+MILP baseline, and the formulation in §1 **is** Murakkab's model. So §4.7's own requirement
+— "re-run Murakkab under matched conditions" — is satisfied by running `exact_milp`.
+Registering a second condition that calls the same solver would print the same number twice
+and imply an independent comparison that does not exist.
+
+`MURAKKAB` is therefore listed in the harness's `UNAVAILABLE` map with that reasoning
+attached, so anyone asking for it gets the explanation rather than silence.
+
+**If the team means something narrower** — Murakkab's own published heuristic rather than
+its exact solve — that is a genuinely different condition, and specifying it needs the
+paper open. Flagging it rather than guessing.
+
+---
+
+## Still open
+
+| # | Item | Owner |
+|---|---|---|
+| O5 | Track B's step-size schedule, tolerance, iteration cap — current values are untuned | 075 |
+| — | Relaxing (C3) instead of (C1), so T1's decomposition question is actually tested | 075 |
+| — | Reconcile `track_a_m1.py` against Cheng & Nguyen's real M1 | 035 |
+| — | Whether Murakkab's published heuristic is a separate condition (see above) | Advisor |
+| O8 | Is Track A worth its complexity? T4 proper, once the conditions above settle | 035 + 089 |

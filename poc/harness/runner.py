@@ -14,11 +14,17 @@ Determinism: every track takes seed; randomised orderings derive from it, so run
 exactly (principle P10).
 
 WHAT IS NOT HERE. §4.7 lists five conditions: Tracks A, B, C, a static baseline, and the
-exact MILP. Two are missing and the registry says so out loud rather than quietly running
-three:
+exact MILP. The registry names what it is not running, out loud, so a partial run never
+passes itself off as the full set:
 
-    B       not built — which constraint it relaxes is T1's question (O2)
-    STATIC  not built — v1 named it; v2 never specifies what "static" allocates
+    MURAKKAB  not separate — the §1 formulation is Murakkab's model, so the MILP
+              condition IS the Murakkab baseline (see static_baseline.py)
+
+Track B relaxes (C1) on §1.8's prediction rather than on a T1 result. That assumption is
+documented in track_b_lagr.py; the harness records its bound so T1 can be read off it.
+
+A+M1 is a condition §4.7 does not list. It is the M1 analogue T4's table calls for, kept
+separate from A so the machinery can be priced rather than assumed (see track_a_m1.py).
 
 `invariants.check` runs on every result before it is recorded, per §6.6.
 """
@@ -31,19 +37,26 @@ from dataclasses import dataclass
 from poc.formulation import invariants
 from poc.formulation.types import AllocationResult
 from poc.instances.generator import ProblemInstance, generate
-from poc.tracks import exact_milp, track_a_greedy, track_c_lp
+from poc.tracks import (exact_milp, static_baseline, track_a_greedy,
+                        track_a_m1, track_b_lagr, track_c_lp,
+                        track_c_multi)
 
 # Condition name -> module exposing allocate(tasks, pools, profiles, budget, seed).
 STRATEGIES = {
-    "MILP": exact_milp,
+    "MILP": exact_milp,          # also the Murakkab condition — see UNAVAILABLE["MURAKKAB"]
+    "STATIC": static_baseline,
     "A": track_a_greedy,
+    "A+M1": track_a_m1,
+    "B": track_b_lagr,
     "C": track_c_lp,
+    "C2": track_c_multi,
 }
 
 # Named, with the reason, so a run's output can state what it did not measure.
 UNAVAILABLE = {
-    "B": "not built — the constraint Track B relaxes is T1's question (O2)",
-    "STATIC": "not built — v1 named a static baseline; v2 never specifies what it does",
+    "MURAKKAB": ("not a separate condition — §1's formulation IS Murakkab's model, so "
+                 "re-running Murakkab under matched conditions means running MILP. A "
+                 "second entry would report the same number twice"),
 }
 
 

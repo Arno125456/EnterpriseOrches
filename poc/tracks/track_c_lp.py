@@ -154,14 +154,23 @@ def allocate(tasks: list[Task],
              pools: dict[TaskId, list[str]],
              profiles: dict[str, ProfileSpec],
              budget: int,
-             seed: int = 0) -> AllocationResult:
-    """seed is accepted for interface parity (P5); this track is deterministic."""
+             seed: int = 0,
+             orders=None,
+             strategy: str = STRATEGY) -> AllocationResult:
+    """seed is accepted for interface parity (P5); this track is deterministic.
+
+    `orders` defaults to ONE realisation order, giving Track C the same single attempt per
+    instance that plain Track A gets. That is the headline T4 comparison. tracks/track_c_multi
+    runs all of REALISATION_ORDERS and is reported as its own condition, so the value of the
+    extra attempt is visible as a row in the table rather than baked into Track C.
+    """
+    orders = REALISATION_ORDERS[:1] if orders is None else orders
     started = time.perf_counter()
 
     for task in tasks:
         if not pools.get(task.id):
             return AllocationResult.failure(
-                STRATEGY,
+                strategy,
                 Infeasible("empty candidate pool — registry or floors too strict",
                            task.id, "C1"),
                 time.perf_counter() - started)
@@ -170,7 +179,7 @@ def allocate(tasks: list[Task],
     if frac_x is None:
         # The LP is a relaxation: if it is infeasible, so is the integer problem.
         return AllocationResult.failure(
-            STRATEGY,
+            strategy,
             Infeasible("LP relaxation infeasible — no allocation fits the GPU budget",
                        None, "C3"),
             time.perf_counter() - started)
@@ -180,7 +189,7 @@ def allocate(tasks: list[Task],
 
     for _, policy in ROUNDING_POLICIES:
         candidate = policy(tasks, pools, profiles, frac_x, frac_n)
-        for _, order_key in REALISATION_ORDERS:
+        for _, order_key in orders:
             state, outcome = _realise(candidate, tasks, pools, profiles, budget, order_key)
             if state is None:
                 blocking = blocking or outcome
@@ -190,7 +199,7 @@ def allocate(tasks: list[Task],
 
     if best_state is None:
         return AllocationResult.failure(
-            STRATEGY,
+            strategy,
             Infeasible("every rounding policy failed repair — no profile admissible "
                        "within budget", blocking, "C3"),
             time.perf_counter() - started)
@@ -200,7 +209,7 @@ def allocate(tasks: list[Task],
         provisioning=best_state.build_provisioning(),
         total_cost=best_state.total_cost(),
         gpus_used=best_state.gpus_used(),
-        strategy=STRATEGY,
+        strategy=strategy,
         lower_bound=bound,
         compute_time=time.perf_counter() - started,
         feasible=True,
