@@ -57,26 +57,26 @@ data/                     LogHub samples + prepared batches — Semester 2, not 
 scripts/                  Data prep
 ```
 
-`poc/` is currently a documented skeleton. Every module carries its spec reference, build
-step, and owner; the algorithm bodies raise `NotImplementedError` until built in order.
+Build steps 1-4 are done and tested. The remaining modules carry their spec reference,
+build step, and owner, with bodies raising `NotImplementedError` until built in order.
 
 ## Build order
 
 Do not reorder — each step is verifiable before the next, and **the exact solver comes before
 any heuristic** because nothing else can be checked for correctness without ground truth.
 
-| # | Build | Verify by |
-|---|---|---|
-| 1 | `formulation/types.py` | Types instantiate |
-| 2 | `formulation/invariants.py` | Hand-built valid and violating results |
-| 3 | `instances/generator.py` | Instances well-formed; every `C(t)` non-empty |
-| 4 | `tracks/exact_milp.py` | **Returns 280 on `adversarial_3t2p`** |
-| 5 | `core/provisioning.py` | admit/release/snapshot/restore; budget rejection |
-| 6 | `core/decision_rule.py` | Known pools, known picks; all-infeasible returns None |
-| 7 | `tracks/track_c_lp.py` | Bound ≤ MILP optimum; satisfies I1-I5 |
-| 8 | `tracks/track_b_lagr.py` | Bound ≤ optimum; compare to LP bound (T1) |
-| 9 | `tracks/track_a_greedy.py` | Satisfies I1-I5; **returns 300 on `adversarial_3t2p`** |
-| 10 | `harness/` | Reproduces a known result end-to-end |
+| # | Build | Verify by | Status |
+|---|---|---|---|
+| 1 | `formulation/types.py` | Types instantiate | Done |
+| 2 | `formulation/invariants.py` | Hand-built valid and violating results | Done |
+| 3 | `instances/generator.py` | Instances well-formed; every `C(t)` non-empty | Done |
+| 4 | `tracks/exact_milp.py` | **Returns 280 on `adversarial_3t2p`** | Done — also matches independent brute force on 36 random instances |
+| 5 | `core/provisioning.py` | admit/release/snapshot/restore; budget rejection | |
+| 6 | `core/decision_rule.py` | Known pools, known picks; all-infeasible returns None | |
+| 7 | `tracks/track_c_lp.py` | Bound ≤ MILP optimum; satisfies I1-I5 | |
+| 8 | `tracks/track_b_lagr.py` | Bound ≤ optimum; compare to LP bound (T1) | |
+| 9 | `tracks/track_a_greedy.py` | Satisfies I1-I5; **returns 300 on `adversarial_3t2p`** | |
+| 10 | `harness/` | Reproduces a known result end-to-end | |
 
 ## Getting started
 
@@ -96,6 +96,13 @@ Not built, deliberately: Executor Registry, Profiling Subsystem, Execution Engin
 detection and re-optimisation, Zookeeper/LogHub domain data, monitoring, fallback, framework
 integration, and Track A's relocate/consolidate/elaborate multi-start. Full list in
 `CLAUDE.md`.
+
+## O1, and how it was settled
+
+The objective is **provisioning cost only** — no per-invocation `Σ x[t][m]·varcost(t,m)`
+term. That is `CLAUDE.md`'s stated default, adopted so build step 1 could proceed; it is a
+default, not a team decision. It is recorded in `poc/formulation/types.py` where it bites.
+If the team adopts usage-based pricing, the objective signature changes everywhere.
 
 ## Settled — do not reintroduce
 

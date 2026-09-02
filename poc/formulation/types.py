@@ -1,28 +1,129 @@
 """
-Data model — Task, ProfileSpec, AllocationResult, Infeasible, Observation.
+Data model — Task, ProfileSpec, AllocationResult, Infeasible, AdmitCost, Observation.
 
 Spec: docs/System_Architecture_v2.md §5.1.
 Build step 1. Verified by: types instantiate; no logic to test.
 Owner: 083
 
-Fields are specified in full in §5.1. Reproduced here as the contract, not restated
-in prose:
+O1 IS RESOLVED HERE AS "NO". The objective is provisioning cost only:
 
-    TaskId          workflowId, taskName
-    Task            id, taskType, load, relFloor, latCeil, successors
-                    (successors are execution ordering only — not in the optimisation)
-    ProfileSpec     id, declaredType, throughput, gpus, price, reliability, latency,
-                    observations
-    Instance        profileId, count                        # n[m]
-    AllocationResult routing (x), provisioning (n), totalCost, gpusUsed, lowerBound,
-                    strategy, iterations, restarts, converged, computeTime, feasible
-    Infeasible      reason, blockingTask, constraint in {"C1","C2","C3"}
-    Observation     taskId, profileId, latency, success, cost, timestamp
+    minimize  Σ_m n[m] · price(m)
 
-BLOCKED ON O1 — does the objective include a per-invocation term
-`Σ x[t][m]·varcost(t,m)`? It changes the objective signature everywhere, so it is a
-human decision before this file is written. Default assumption: no, provisioning cost
-only. See CLAUDE.md "Open questions".
+There is no per-invocation `Σ x[t][m]·varcost(t,m)` term, and ProfileSpec carries no
+varcost field. This follows CLAUDE.md's stated default, but it is a default, not a team
+decision — if the team adopts usage-based pricing, this file and every objective
+downstream change together. See CLAUDE.md "Open questions", O1.
+
+Two conventions worth stating, because §4.1 and §6.3 phrase them differently:
+
+  * A track returns AllocationResult with feasible=False rather than raising or returning
+    a bare Infeasible, so the harness records failures as data (CLAUDE.md conventions).
+    The Infeasible detail rides along on `.infeasible` so the reason, blocking task and
+    violated constraint are not lost. Use AllocationResult.failure() to build one.
+  * Field names are snake_case, matching the module contracts in §6.3
+    (cost_to_admit, build_provisioning), not the camelCase of the §5.1 sketch.
 """
 
-# Build step 1 — not yet written. Blocked on O1 (see docstring above).
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from datetime import datetime
+
+
+@dataclass(frozen=True, order=True)
+class TaskId:
+    """Tasks are identified per workflow — two workflows may share a task name."""
+
+    workflow_id: str
+    task_name: str
+
+    def __str__(self) -> str:
+        return f"{self.workflow_id}/{self.task_name}"
+
+
+@dataclass(frozen=True)
+class Task:
+    id: TaskId
+    task_type: str
+    load: float
+    rel_floor: float
+    lat_ceil: float
+    successors: tuple[TaskId, ...] = ()
+    # successors are execution ordering only. Precedence does not enter the
+    # optimisation — v2 §1.9, and settled in CLAUDE.md.
+
+
+@dataclass(frozen=True)
+class ProfileSpec:
+    """The unit that gets provisioned: a (model, hardware tier, config) triple."""
+
+    id: str
+    declared_type: str
+    throughput: float       # thr(m)
+    gpus: int               # gpu(m)
+    price: float            # price(m)
+    reliability: float      # rel(m)
+    latency: float          # lat(m) — task-independent in the current model
+    observations: int = 0   # backing the EMA; 0 means unprofiled
+
+
+@dataclass(frozen=True)
+class Instance:
+    profile_id: str
+    count: int              # n[m]
+
+
+@dataclass(frozen=True)
+class AdmitCost:
+    """What routing one task to one profile costs against the current state.
+
+    Spec: v2 §4.4. extra_instances == 0 when existing headroom already covers the task —
+    that state-dependence is the aggregate-coupling problem.
+    """
+
+    extra_instances: int
+    extra_gpus: int
+    extra_cost: float
+
+
+@dataclass(frozen=True)
+class Infeasible:
+    reason: str
+    blocking_task: TaskId | None = None
+    constraint: str | None = None       # "C1" | "C2" | "C3"
+
+
+@dataclass
+class AllocationResult:
+    routing: dict[TaskId, str]          # x
+    provisioning: dict[str, int]        # n
+    total_cost: float
+    gpus_used: int
+    strategy: str                       # "A" | "B" | "C" | "MILP" | "STATIC"
+    lower_bound: float | None = None    # Tracks B, C
+    iterations: int | None = None       # Track B
+    restarts: int | None = None         # Track A
+    converged: bool | None = None       # Track B
+    compute_time: float = 0.0
+    feasible: bool = True
+    infeasible: Infeasible | None = None
+
+    @classmethod
+    def failure(cls, strategy: str, detail: Infeasible,
+                compute_time: float = 0.0) -> AllocationResult:
+        """A complete-or-nothing failure. Partial assignments are never valid output (P9)."""
+        return cls(routing={}, provisioning={}, total_cost=0.0, gpus_used=0,
+                   strategy=strategy, compute_time=compute_time,
+                   feasible=False, infeasible=detail)
+
+
+@dataclass(frozen=True)
+class Observation:
+    task_id: TaskId
+    profile_id: str
+    latency: float
+    success: bool
+    cost: float
+    timestamp: datetime
+    # Phase C is out of PoC scope (v2 §6.5). Defined so the data model is complete;
+    # nothing in the PoC emits one.

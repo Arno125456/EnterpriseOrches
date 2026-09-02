@@ -60,3 +60,35 @@ OPTIMUM = {
 # six orderings. Asserted at build step 9 — a different number means the myopia is not
 # being reproduced, which is itself a bug.
 GREEDY_EXPECTED_COST = 300
+
+
+def build():
+    """Return (tasks, pools, profiles, budget) as formulation types.
+
+    An adapter only — the numbers above are the fixture and are not touched here.
+    C(t) is taken from POOLS rather than recomputed, so a test that wants to check the
+    floors derive the same pools can do that independently (test_invariants does).
+    """
+    from poc.formulation.types import ProfileSpec, Task, TaskId
+
+    ids = {name: TaskId("wf", name) for name in TASKS}
+    tasks = [
+        Task(id=ids[name], task_type="generic", load=float(spec["load"]),
+             rel_floor=spec["rel_floor"], lat_ceil=float(spec["lat_ceil"]))
+        for name, spec in TASKS.items()
+    ]
+    pools = {ids[name]: list(POOLS[name]) for name in TASKS}
+    profiles = {
+        pid: ProfileSpec(id=pid, declared_type="generic",
+                         throughput=float(spec["throughput"]), gpus=spec["gpus"],
+                         price=float(spec["price"]), reliability=spec["reliability"],
+                         latency=float(spec["latency"]))
+        for pid, spec in PROFILES.items()
+    }
+    return tasks, pools, profiles, BUDGET
+
+
+def task_id(name):
+    """'t1' -> TaskId('wf', 't1'). For writing expectations readably in tests."""
+    from poc.formulation.types import TaskId
+    return TaskId("wf", name)
