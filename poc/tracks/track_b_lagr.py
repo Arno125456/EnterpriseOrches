@@ -195,13 +195,24 @@ def allocate(tasks: list[Task],
              pools: dict[TaskId, list[str]],
              profiles: dict[str, ProfileSpec],
              budget: int,
-             seed: int = 0) -> AllocationResult:
+             seed: int = 0,
+             warm_start: bool = True,
+             strategy: str = STRATEGY) -> AllocationResult:
+    """warm_start seeds the incumbent with plain greedy's answer.
+
+    IT IS ON BY DEFAULT AND IT CONFOUNDS THE A-vs-B COMPARISON. With it on, Track B can
+    never be worse than Track A and can never be infeasible where Track A was feasible —
+    both hold by construction, not by merit. The subgradient step rule genuinely wants an
+    incumbent upper bound, so this is the standard thing to do and the default stays; but
+    any T4 statement of the form "B beats A" must be read off warm_start=False, which
+    tracks/track_b_cold.py exposes as its own condition.
+    """
     started = time.perf_counter()
 
     for task in tasks:
         if not pools.get(task.id):
             return AllocationResult.failure(
-                STRATEGY,
+                strategy,
                 Infeasible("empty candidate pool — registry or floors too strict",
                            task.id, "C1"),
                 time.perf_counter() - started)
@@ -209,12 +220,13 @@ def allocate(tasks: list[Task],
     eligible_for = {m: [t for t in tasks if m in pools[t.id]] for m in profiles}
     lam: dict[TaskId, float] = {t.id: 0.0 for t in tasks}
 
-    # An incumbent is needed for the step rule. Plain greedy supplies it; the classic
-    # subgradient method needs some upper bound and this is the cheapest honest one.
-    # Track B is not credited with greedy's answer unless it fails to beat it.
-    incumbent = track_a_greedy.allocate(tasks, pools, profiles, budget, seed=seed)
-    best_result = incumbent if incumbent.feasible else None
-    upper_bound = incumbent.total_cost if incumbent.feasible else None
+    # An incumbent is needed for the step rule. See the confound warning in the docstring.
+    if warm_start:
+        incumbent = track_a_greedy.allocate(tasks, pools, profiles, budget, seed=seed)
+        best_result = incumbent if incumbent.feasible else None
+        upper_bound = incumbent.total_cost if incumbent.feasible else None
+    else:
+        best_result, upper_bound = None, None
 
     best_bound = -math.inf
     alpha = INITIAL_STEP_SCALE
@@ -245,7 +257,7 @@ def allocate(tasks: list[Task],
                 best_result = AllocationResult(
                     routing=routing, provisioning=state.build_provisioning(),
                     total_cost=state.total_cost(), gpus_used=state.gpus_used(),
-                    strategy=STRATEGY, feasible=True)
+                    strategy=strategy, feasible=True)
                 upper_bound = best_result.total_cost
 
         # Subgradient: g[t] = 1 − (number of profiles that selected t)
@@ -276,7 +288,7 @@ def allocate(tasks: list[Task],
 
     if best_result is None:
         return AllocationResult.failure(
-            STRATEGY,
+            strategy,
             Infeasible("no feasible allocation recovered from any subgradient iteration",
                        None, "C3"),
             elapsed)
@@ -286,7 +298,7 @@ def allocate(tasks: list[Task],
         provisioning=best_result.provisioning,
         total_cost=best_result.total_cost,
         gpus_used=best_result.gpus_used,
-        strategy=STRATEGY,
+        strategy=strategy,
         lower_bound=best_bound if best_bound > -math.inf else None,
         iterations=iterations,
         converged=converged,

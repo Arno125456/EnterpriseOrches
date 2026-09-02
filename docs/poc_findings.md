@@ -25,8 +25,25 @@ print(metrics.solvability(records))
 ```
 
 Everything below is 8 tasks, 4 profiles, seeds 0–24, six tightness levels — 150 instances,
-64 of which the exact solver could solve. Track B is absent (T1/O2 unanswered), so the
-comparison is Track A, Track C and the exact MILP only.
+64 of which the exact solver could solve.
+
+### The full table
+
+```
+cond    inst  feas  infeas  =opt  mean gap%  max gap%  bound gap%   time s
+--------------------------------------------------------------------------
+MILP      64    64       0    64       0.00      0.00        0.00    0.032
+STATIC    64    27      37     7      23.06     46.55           -    0.000
+A         64    37      27    23      10.28     40.43           -    0.000
+A+M1      64    47      17    29       9.39     40.43           -    0.000
+B         64    59       5    55       0.93     16.96        2.40    0.954
+C         64    37      27    16      14.58     70.49       15.21    0.029
+C2        64    43      21    20      13.16     70.49       15.46    0.025
+```
+
+`infeas` counts instances the exact solver could solve but the condition could not. Read it
+alongside `mean gap%`, which is over feasible runs only — a condition that solves just the
+easy instances posts a flattering gap.
 
 ---
 
@@ -215,42 +232,109 @@ the fairness wrinkle noted in F4: Track C now gets two attempts, Track A one.
 
 ---
 
-## F7 — T1, preliminary: the Lagrangian bound beats the LP bound, on every instance tried
+## F7 — T1: the Lagrangian bound is 6× tighter than the LP bound
 
-**Read the caveat in the next paragraph before quoting this one.** Track B was built
-relaxing **(C1)**, the assignment constraints, because that is what §1.8 predicts for
-capacitated facility location. That choice is an *assumption adopted so T1 had something to
-measure*, not a result: relaxing (C3) has not been implemented or measured, so T1's first
-question — "along what axis does it decompose" — is answered only in the sense that (C1)
-does decompose per profile, as predicted.
+**The bound result is clean. The cost and feasibility results are confounded — read both
+halves of this finding.**
 
-What is measured is O3, and it is clean. Over 30 solvable instances (8 tasks, 4 profiles):
+Track B was built relaxing **(C1)**, the assignment constraints, because that is what §1.8
+predicts for capacitated facility location. That choice is *an assumption adopted so T1 had
+something to measure*, not a result. Relaxing (C3) has not been implemented, so T1's
+decomposition question is answered only in the sense that (C1) does decompose per profile,
+as predicted. v1's per-workflow claim is contradicted either way.
 
-| | count |
-|---|---|
-| Lagrangian bound **strictly tighter** than the LP bound | **30** |
-| strictly looser | 0 |
-| equal | 0 |
-| **invalid** (bound above the true optimum) | **0** |
+### The bound — clean, and decisive for O3
 
-On the hand-verified fixture the Lagrangian bound reaches **280 — the exact optimum** —
-against the LP's 190.8.
+The bound comes out of the relaxation. It does not touch the primal heuristic, so nothing
+below contaminates it.
+
+| | Track B | Track C |
+|---|---|---|
+| mean bound gap below the true optimum | **2.40%** | 15.21% |
+| invalid bounds (above the optimum) | **0** | 0 |
+
+Over a separate 30-instance check, the Lagrangian bound was **strictly tighter than the LP
+bound on 30 of 30**, never looser, never equal. On the hand-verified fixture it reaches
+**280 — the exact optimum** — against the LP's 190.8.
 
 **Consequence, per §5.3's T1 table:** the row to watch was *"Lagrangian bound = LP bound
-consistently → Track B provides nothing Track C does not; it should be cut or
-rejustified"*. **That row does not fire.** On this evidence Track B earns its place, and
-§5.2.3 stands as written.
+consistently → Track B provides nothing Track C does not; cut it or rejustify"*. **That row
+does not fire.** On this evidence Track B earns its place and §5.2.3 stands.
 
-**The cost side is the catch.** Track B runs ~1.7 s per instance against microseconds for
-Track A and ~30 ms for Track C — roughly 50× Track C for the same size of problem. The
-subproblem is an exact knapsack DP per profile per iteration, up to 120 iterations. At PoC
-scale that is irrelevant; it is exactly the trade T4 should be pricing, and it is the first
-place to look if instances grow.
+Two implementation choices protect this number, and both err against Track B: (C3) is
+dropped rather than relaxed, which weakens the bound but keeps it valid; and the knapsack
+scales float loads in the permissive direction — weights down, capacity up — which can only
+*understate* the bound. So the result is not an artefact of favourable rounding.
 
-**Other caveats.** The step-size schedule, tolerance and iteration cap (O5) are untuned
-defaults. The knapsack scales float loads to integers in the *permissive* direction —
-weights down, capacity up — which can only understate the bound, so the validity result
-above is not an artefact of favourable rounding.
+### The cost and feasibility — confounded by a warm start
+
+Track B's subgradient step rule wants an incumbent upper bound, and it takes one from plain
+greedy. **That means Track B cannot be worse than Track A, and cannot fail where Track A
+succeeded — by construction, not by merit.** Its headline row (59 of 64 feasible, 55 exact
+optima, 0.93% mean gap) therefore cannot be used to claim B beats A.
+
+A `B-cold` condition runs the identical relaxation with the warm start disabled, and that
+is what any T4 statement about B versus A must be read off. Its numbers are being measured;
+until they land, treat B's cost column as an upper bound on Track A rather than an
+independent result.
+
+### The runtime, which is the real trade
+
+Track B costs **~0.95 s per instance** against Track C's 29 ms and Track A's under a
+millisecond — roughly 30× Track C at 8 tasks. The subproblem is an exact knapsack DP per
+profile per iteration, up to 120 iterations. Irrelevant at PoC scale; the first thing to
+break if instances grow, and precisely the trade T4 should be pricing.
+
+**Other caveats.** Step-size schedule, tolerance and iteration cap (O5) are untuned
+defaults, not fitted and not justified by experiment.
+
+---
+
+## F8 — The M1 lookahead works, and it is free
+
+Decision 2 asked for the M1 analogue as a separate condition so T4 could price it rather
+than assume it. Priced:
+
+| | A (plain greedy) | A+M1 (feasibility lookahead) |
+|---|---|---|
+| infeasible, of 64 solvable | 27 | **17** |
+| matched the exact optimum | 23 | **29** |
+| mean gap | 10.28% | **9.39%** |
+| runtime | <1 ms | <1 ms |
+
+**A 37% reduction in failures, and it also got slightly cheaper, at no measurable runtime
+cost** at this scale. The lookahead has no tuning parameter — it is a feasibility test, not
+a re-weighting — so it cannot have been fitted to these instances.
+
+It does not eliminate the failure mode: 17 instances still strand a task. The lookahead is
+one step and checks each remaining task in isolation, so it cannot see that two of them
+need the same last GPU.
+
+**Consequence:** F3's diagnosis is confirmed by construction. The failures were caused by
+the shared rule ignoring `extra_gpus`, and making the construction feasibility-aware fixes
+a large share of them. **035 still needs to reconcile `track_a_m1.py` against Cheng &
+Nguyen's real M1** — this is an analogue built from the observed failure, not their
+algorithm.
+
+The complexity price is asymptotic, not wall-clock: O(|T|²·|C|²) against plain greedy's
+O(|T|·|C|). Invisible at 8 tasks; the thing to watch if instances grow.
+
+---
+
+## F9 — The no-optimisation baseline is much worse, which is the point
+
+| | STATIC | best heuristic |
+|---|---|---|
+| infeasible, of 64 solvable | **37** | 5 (B) |
+| matched the optimum | 7 | 55 (B) |
+| mean gap | **23.06%** | 0.93% (B) |
+
+STATIC routes every task to its cheapest eligible profile independently — no coupling
+awareness, no budget awareness. It fails on 58% of solvable instances and sits 23% above
+optimum when it does succeed.
+
+This is the sanity check the evaluation needed: the optimisation is doing real work.
+Without this row, "Track A is 10% above optimum" has no scale to be read against.
 
 
 ---
