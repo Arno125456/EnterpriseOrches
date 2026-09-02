@@ -135,6 +135,15 @@ gives its repair pass the same cost-only `costAdjust`.
 Track C's repair identically. So the finding is about the shared decision rule, not the
 implementation of it.
 
+**The RATE is partly an artefact of the anchor, and should not be quoted.** F2 sets the
+budget to the GPUs used by the *most GPU-efficient* allocation — that is, in terms of
+exactly the quantity this finding says the tracks ignore. A track that does not optimise
+GPU-efficiency is therefore pushed toward overshooting almost by construction. The
+mechanism is real and independent of the generator; the 42% is not. Evidence that the
+anchor is an amplifier rather than the whole story: at tightness 1.0, plain greedy fails on
+28% rather than nearly all, and Track B — whose repair is equally cost-only — fails on just
+1 of 25 (F11). Cost-blind ranking is a handicap, not a death sentence.
+
 **Consequence, per §5.3's T4 table:** this is the third outcome — "greedy frequently
 infeasible → the construction needs the M1 analogue (O2) before it is viable" — arriving
 three weeks earlier than T4 was scheduled. Whatever the M1 analogue turns out to be, it has
@@ -413,6 +422,54 @@ nothing in this PoC says anything about scale.
 
 ---
 
+## F11 — The pooled table oversamples loose budgets. Broken out, the picture mostly holds.
+
+The aggregate table in every finding above pools all tightness levels, and the sample is
+badly skewed toward the loosest: of 64 solvable instances, **25 come from tightness 1.0 and
+41 from the two loosest levels**. T3's whole premise is that the evaluation has signal only
+where the budget binds, so a pooled mean is weighted toward the region the plan says shows
+least. That is a defect in how the results were presented, not merely a caveat.
+
+Broken out — `inf` = infeasible, `=opt` = matched the exact optimum:
+
+```
+ tight  solv |         A          |       A+M1         |         B          |         C
+             | inf  gap%   =opt   | inf  gap%   =opt   | inf  gap%   =opt   | inf  gap%   =opt
+   0.6     3 |   2   0.0      1   |   1   0.0      2   |   1   0.0      2   |   3     -      0
+   0.7     6 |   3  10.9      2   |   3  10.9      2   |   1   0.0      5   |   3  14.9      1
+   0.8    13 |   7   8.3      4   |   5   6.2      6   |   1   1.4     11   |   7  10.3      3
+   0.9    16 |   7  10.0      6   |   5  10.9      6   |   1   1.1     14   |   8  10.0      4
+   1.0    25 |   7  11.6     10   |   3  10.8     12   |   1   0.9     22   |   5  17.7      8
+```
+
+**Track B's dominance is not a pooling artefact.** It leads at every tightness level, and
+its failure count is **exactly 1 at every level** — the same instance, regardless of how
+many are solvable. Where the budget binds hardest (0.7–0.8), the separation is at its
+widest: B is at 0.0–1.4% gap against A's 8.3–10.9% and C's 10.3–14.9%.
+
+**Track C is worst where the budget binds.** At tightness 0.6 it fails on all three solvable
+instances. Its `§5.9` billing as "stable, least affected" does not survive contact with the
+binding region.
+
+**A+M1's advantage narrows under pressure.** It halves failures at 1.0 (7→3) but barely
+helps at 0.7 (3→3). The lookahead is one step, and one step is not enough when almost
+nothing fits.
+
+### What this does and does not rescue
+
+It answers the sampling objection. It does **not** answer the scale objection, and the two
+are easy to confuse. Every row here is 8 tasks and 4 profiles.
+
+Note what Track B actually is at this size: its subproblem is an exact knapsack, and at 8
+tasks that knapsack is trivial to solve exactly. So Track B is close to an exact method
+wearing a heuristic's clothes. The plausible failure mode is not that it is wrong, but that
+**everything making it good here is what scale erodes** — knapsack DP cost, iteration count,
+and the duality gap all grow together. Until that is measured, "Track B dominates" is a
+claim about 8-task instances and nothing more.
+
+
+---
+
 ## What these findings do not establish
 
 Restating §5.7, because early numbers invite over-reading:
@@ -423,7 +480,11 @@ Restating §5.7, because early numbers invite over-reading:
 - **Nothing about which constraint Track B *should* relax.** It relaxes (C1) by assumption
   (F7). The (C3) alternative is unbuilt and unmeasured, so T1 is half-answered at best.
 - **Nothing statistical.** 25 seeds per point, no confidence intervals, no significance
-  testing. The head-to-head 7–1 in F4 is a tendency, not a result.
+  testing. The head-to-head margins in F4 are tendencies, not results.
+- **One generator, chosen by one author.** Profile and task distributions, the budget
+  anchor, the tracks, and the metrics were all written by the same hand. That is the setup
+  in which unconscious selection is hardest to see. A second generator with different
+  structure is the only real check, and none exists.
 - **Nothing about drift, execution, or the domain.** Out of PoC scope entirely.
 
 No statement of the form "our approach reduces cost by X%" is supported by any of this.
