@@ -29,6 +29,7 @@ but not its formulation — that one has no n[m] at all and charges GPUs per tas
 
 from __future__ import annotations
 
+import math
 import time
 
 import pulp
@@ -43,8 +44,20 @@ def _instance_upper_bound(profile: ProfileSpec, total_load: float, budget: int) 
     """A finite, valid cap on n[m]. Unbounded integers make CBC work harder than it needs.
 
     Never provisioning more than covers all load, nor more than the budget can pay for.
+
+    THIS CAP MUST NOT BIND. It exists only to keep CBC from searching an unbounded integer
+    range; if it were ever tighter than the true optimum needs, CBC would return a
+    suboptimal answer — or none — and report it as optimal. Every other number in the PoC
+    is measured against this solver, so that failure would be silent and total.
+
+    Hence the deliberate slack: covering the entire batch's load on a single profile is
+    already far more than any optimal solution provisions, and there is a further +1 on
+    top. test_the_instance_cap_never_binds checks this empirically against a generous cap.
+
+    An earlier version scaled to integers by hand (int(total_load * 100)), which truncated
+    and quietly assumed the generator's 2-decimal loads. It is a plain ceiling now.
     """
-    by_load = -(-int(total_load * 100) // int(profile.throughput * 100)) + 1
+    by_load = math.ceil(round(total_load / profile.throughput, 9)) + 1
     by_budget = budget // profile.gpus
     return max(0, min(by_load, by_budget))
 

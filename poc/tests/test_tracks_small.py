@@ -163,3 +163,46 @@ def test_empty_pool_is_reported_as_c1(name, track):
     assert not result.feasible
     assert result.infeasible.constraint == "C1"
     assert result.infeasible.blocking_task == blocked
+
+
+# --- the ground truth itself (build step 4) --------------------------------------
+
+@pytest.mark.parametrize("seed", range(15))
+@pytest.mark.parametrize("tightness", [0.6, 0.8, 1.0])
+def test_the_instance_cap_never_binds(seed, tightness, monkeypatch):
+    """exact_milp caps n[m] to bound CBC's search. If that cap were ever tighter than the
+    optimum needs, CBC would return a suboptimal answer and call it optimal.
+
+    Solving the same instance with a deliberately generous cap must not change the cost.
+    Everything in the PoC is measured against this solver, so a silent cap is the worst
+    bug available here.
+    """
+    inst = generate(n_tasks=8, n_profiles=4, budget_tightness=tightness, seed=seed)
+    tasks, pools, profiles, budget = inst.unpack()
+
+    tight = exact_milp.allocate(tasks, pools, profiles, budget)
+
+    monkeypatch.setattr(exact_milp, "_instance_upper_bound",
+                        lambda profile, total_load, b: b // profile.gpus)
+    generous = exact_milp.allocate(tasks, pools, profiles, budget)
+
+    assert tight.feasible == generous.feasible
+    if tight.feasible:
+        assert tight.total_cost == pytest.approx(generous.total_cost)
+
+
+@pytest.mark.parametrize("seed", range(30))
+def test_milp_matches_brute_force_on_feasible_instances(seed):
+    """The wider cross-check, on the tightness where instances actually solve.
+
+    Independent of PuLP entirely — if the encoding drifts, this is what catches it.
+    """
+    inst = generate(n_tasks=6, n_profiles=3, budget_tightness=1.0, seed=seed)
+    tasks, pools, profiles, budget = inst.unpack()
+
+    expected, _ = brute_force(tasks, pools, profiles, budget)
+    result = exact_milp.allocate(tasks, pools, profiles, budget)
+
+    assert result.feasible
+    assert expected is not None
+    assert result.total_cost == pytest.approx(expected)

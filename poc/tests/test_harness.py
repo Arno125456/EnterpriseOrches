@@ -1,0 +1,119 @@
+"""
+Harness — reproduces a known result end-to-end, under matched inputs.
+
+Spec: docs/System_Architecture_v2.md §4.7, §6.1.
+Covers build step 10. Owner: 089
+
+The end-to-end check is the fixture: whatever the harness does to the tracks, MILP must
+still come out at 280 and greedy at 300.
+"""
+
+import pytest
+
+from poc.harness import metrics
+from poc.harness.runner import STRATEGIES, UNAVAILABLE, run_conditions, sweep
+from poc.instances.fixtures import adversarial_3t2p as fx
+from poc.instances.generator import ProblemInstance, generate
+
+
+@pytest.fixture
+def fixture_instance():
+    tasks, pools, profiles, budget = fx.build()
+    return ProblemInstance(tasks=tasks, pools=pools, profiles=profiles, budget=budget,
+                           reference_gpus=budget, seed=0, budget_tightness=1.0)
+
+
+def test_reproduces_the_known_result_end_to_end(fixture_instance):
+    """Build step 10's checkpoint, expressed against the hand-verified fixture."""
+    record = run_conditions(fixture_instance)
+
+    assert record.optimum == 280.0
+    assert record.conditions["MILP"].cost == 280.0
+    assert record.conditions["A"].cost == 300.0
+    assert record.conditions["C"].cost == 280.0
+    assert all(not c.violations for c in record.conditions.values())
+
+
+def test_every_condition_gets_the_identical_instance(fixture_instance):
+    """Matched conditions (§4.7). A comparison across different problems is not a
+    comparison, and the failure would be invisible in the output."""
+    record = run_conditions(fixture_instance)
+    for condition in record.conditions.values():
+        assert record.instance is fixture_instance
+        assert condition.result.gpus_used <= fixture_instance.budget
+
+
+def test_unknown_condition_names_why_it_is_missing():
+    """Track B is absent for a reason, and asking for it should say the reason."""
+    inst = generate(4, 3, 1.0, seed=0)
+    with pytest.raises(ValueError, match="T1"):
+        run_conditions(inst, strategies=["MILP", "B"])
+    assert "B" in UNAVAILABLE and "STATIC" in UNAVAILABLE
+    assert "B" not in STRATEGIES
+
+
+def test_gap_is_none_without_an_optimum(fixture_instance):
+    record = run_conditions(fixture_instance)
+    assert metrics.gap_to_optimum(record.conditions["A"].result, None) is None
+    assert metrics.gap_to_optimum(record.conditions["A"].result, 280.0) == pytest.approx(
+        (300 - 280) / 280 * 100)
+
+
+def test_greedy_has_no_bound_gap(fixture_instance):
+    """Track A produces no bound — that absence is T4's question, not a missing feature."""
+    record = run_conditions(fixture_instance)
+    assert metrics.bound_gap(record.conditions["A"].result, 280.0) is None
+    assert metrics.bound_gap(record.conditions["C"].result, 280.0) > 0
+
+
+def test_summary_excludes_unsolvable_instances():
+    """A gap against an unknown optimum is not a number."""
+    records = sweep(n_tasks=6, n_profiles=3, tightness_values=[0.3, 1.0], seeds=range(6))
+    summaries = metrics.summarise(records)
+    solvable = sum(1 for r in records if r.solvable)
+
+    assert solvable < len(records), "expected some instances to be unsolvable at 0.3"
+    for summary in summaries.values():
+        assert summary.instances == solvable
+
+
+def test_infeasible_runs_are_counted_not_averaged():
+    """A track that only solves the easy instances must not post the best mean gap."""
+    records = sweep(n_tasks=8, n_profiles=4, tightness_values=[0.8], seeds=range(15))
+    summaries = metrics.summarise(records)
+
+    for summary in summaries.values():
+        assert summary.feasible + summary.infeasible == summary.instances
+        if summary.infeasible:
+            assert summary.infeasible_pct > 0
+
+    assert summaries["MILP"].infeasible == 0
+    assert summaries["MILP"].mean_gap_pct == pytest.approx(0.0)
+    assert summaries["MILP"].optimal == summaries["MILP"].instances
+
+
+def test_solvability_is_monotone_in_tightness():
+    """The T3 view. Loosening the budget can only ever help."""
+    tightness = [0.5, 0.7, 0.9, 1.0]
+    records = sweep(n_tasks=8, n_profiles=4, tightness_values=tightness, seeds=range(10))
+    counts = metrics.solvability(records)
+
+    solvable = [counts[t][0] for t in tightness]
+    assert solvable == sorted(solvable), counts
+    assert counts[1.0][0] == counts[1.0][1], "tightness 1.0 must be fully solvable"
+
+
+def test_no_track_ever_violates_an_invariant_across_a_sweep():
+    """The highest-value test in the PoC (§6.6), run over the whole sweep at once."""
+    records = sweep(n_tasks=7, n_profiles=4,
+                    tightness_values=[0.6, 0.8, 1.0], seeds=range(10))
+    offenders = [(r.instance.seed, name, c.violations)
+                 for r in records for name, c in r.conditions.items() if c.violations]
+    assert offenders == []
+
+
+def test_table_renders_without_an_optimum_column_lie():
+    records = sweep(n_tasks=6, n_profiles=3, tightness_values=[1.0], seeds=range(5))
+    table = metrics.format_table(metrics.summarise(records))
+    assert "MILP" in table and "infeas" in table
+    assert len(table.splitlines()) == 2 + len(metrics.summarise(records))

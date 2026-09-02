@@ -44,6 +44,7 @@ CLAUDE.md                 Working summary + guardrails. Read first
 docs/
   System_Architecture_v2.md   Authoritative design reference
   PoC_and_Validation_Plan.md  Scope, deliverables, schedule, risks
+  poc_findings.md             Running log of measured results — preliminary
   research_papers/            Literature tracking, feeds Ch.2
   v1_superseded/              Retired v1 design. Not current — see its README
 poc/
@@ -57,8 +58,12 @@ data/                     LogHub samples + prepared batches — Semester 2, not 
 scripts/                  Data prep
 ```
 
-Build steps 1-4 are done and tested. The remaining modules carry their spec reference,
-build step, and owner, with bodies raising `NotImplementedError` until built in order.
+Nine of the ten build steps are done and tested. Only step 8, Track B, is unbuilt: which
+constraint it relaxes is T1's question (O2), and picking one would prejudge the test the
+track exists to feed.
+
+Early results are in [`docs/poc_findings.md`](docs/poc_findings.md) — including two that
+contradict the design, and five decisions the team needs to make.
 
 ## Build order
 
@@ -74,9 +79,9 @@ any heuristic** because nothing else can be checked for correctness without grou
 | 5 | `core/provisioning.py` | admit/release/snapshot/restore; budget rejection | |
 | 6 | `core/decision_rule.py` | Known pools, known picks; all-infeasible returns None | |
 | 7 | `tracks/track_c_lp.py` | Bound ≤ MILP optimum; satisfies I1-I5 | |
-| 8 | `tracks/track_b_lagr.py` | Bound ≤ optimum; compare to LP bound (T1) | |
+| 8 | `tracks/track_b_lagr.py` | Bound ≤ optimum; compare to LP bound (T1) | **Blocked — O2/T1 is 075's call** |
 | 9 | `tracks/track_a_greedy.py` | Satisfies I1-I5; **returns 300 on `adversarial_3t2p`** | |
-| 10 | `harness/` | Reproduces a known result end-to-end | |
+| 10 | `harness/` | Reproduces a known result end-to-end | Done — `python -m poc.harness.runner` |
 
 ## Getting started
 
@@ -86,6 +91,7 @@ source venv/bin/activate        # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 python -c "import pulp; print(pulp.listSolvers(onlyAvailable=True))"   # expect PULP_CBC_CMD
 pytest poc/tests
+python -m poc.harness.runner   # regenerates the sweep in docs/poc_findings.md
 ```
 
 ## Scope guard
