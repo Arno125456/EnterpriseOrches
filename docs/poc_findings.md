@@ -556,13 +556,103 @@ drives the solver cost that the whole heuristic premise depends on.
 
 ---
 
+## F13 — Scale: the exact solver does break down, and Track B breaks down faster
+
+This is the finding that changes the project's conclusions, and it goes against the track
+the rest of this log has been praising.
+
+### Does the exact MILP break down at all?
+
+Objective 1.2.2 asks for *"non-exact alternatives to MILP"*. That premise requires the MILP
+to become expensive somewhere. It does — but far later than expected, and only on one
+instance family. Mean over 3 seeds, tightness 1.0:
+
+| tasks / profiles | uniform | structured |
+|---|---|---|
+| 8 / 4 | 0.022 s | 0.058 s |
+| 16 / 6 | 0.115 s | 0.170 s |
+| 32 / 8 | 0.266 s | 0.256 s |
+| 64 / 10 | 1.400 s | 0.300 s |
+| **128 / 12** | **21.2 s** (max 55 s) | **1.9 s** |
+
+**Instance structure matters more than instance size.** The uniform generator's profiles are
+near-interchangeable, which gives CBC a large symmetric search space; the structured
+generator's distinct GPU tiers and heavy-tailed loads break that symmetry and stay cheap.
+Note this *reverses* with scale — structured instances were the harder ones at 8 tasks
+(58 ms against 22 ms) and are 11× cheaper at 128.
+
+**Consequence:** the premise holds, but only for a specific instance family, and "MILP is
+too slow" cannot be asserted without saying on what. Any Chapter 3 claim needs to name the
+family.
+
+### Does Track B scale into the gap?
+
+No. It is the opposite of what the 8-task results implied. Uniform generator, 2 seeds:
+
+| tasks | MILP | Track B | B ÷ MILP | B gap |
+|---|---|---|---|---|
+| 8 | 0.031 s | 0.69 s | 22× | 0.00% |
+| 16 | 0.053 s | 7.52 s | 142× | 1.51% |
+| 24 | 0.115 s | 15.05 s | 131× | 0.00% |
+| 32 | 0.321 s | **34.55 s** | **108×** | 0.04% |
+
+**Track B is roughly 100× slower than the exact method it exists to replace, at every size
+tested.** Its answers are excellent — 0–1.5% gap — but you would always have been better off
+running the MILP, which is both faster and optimal. A heuristic that is slower than exact
+has no reason to exist as a heuristic.
+
+This is exactly the failure predicted when Track B's dominance was first questioned: its
+subproblem is an exact knapsack, which is cheap at 8 tasks and is precisely what scale
+erodes. Extrapolating its growth, Track B would need hundreds of seconds where the MILP
+needs 21.
+
+### The caveat that matters, and it is not small
+
+**This may be my implementation rather than the method.** The subproblem is a pure-Python
+0/1 knapsack DP with a full traceback table, O(n × capacity) per profile per iteration, run
+for up to 120 iterations, with capacity scaled by 100. That is the obvious suspect, and a
+vectorised DP, a coarser scale, a smarter iteration schedule, or early termination could all
+move it by an order of magnitude or more.
+
+What is *not* implementation-dependent is the shape: capacity grows with total load, so the
+subproblem cost grows with the batch, and it is paid per profile per iteration. Lagrangian
+relaxation here is inherently heavy. Whether it is 100× heavy or 10× heavy is an open
+engineering question. **075 should not read this as "Track B is dead" — it should read as
+"Track B's subproblem needs profiling before any scale claim is made."**
+
+### What this does to T4
+
+The T4 answer at 8 tasks and the T4 answer at 32 tasks are different answers.
+
+At 8 tasks (F10): Track B dominates on quality, everything else is 9–18% above optimum.
+
+At 32 tasks: the MILP solves in 0.32 s and is optimal. Track B takes 34 s to be 0.04% worse.
+**Track C stays fast** — 0.092 s at 32 tasks — and its gap *improves* with scale (11.3% → 3.8%),
+as does A+M1's (11.3% → 5.1%).
+
+So the practical ordering inverts. Track B's value is not as an allocator but as a **bound
+generator**, which is what §5.2.3 always said it was for and what T1 measures. Its cost as
+an allocator is not competitive at any size measured.
+
+### What is still not known
+
+Where the crossover is. Track B was not run past 32 tasks because it takes 34 s per
+instance there; the MILP does not become genuinely expensive until ~128 on uniform
+instances. Whether a *profiled* Track B could win in that window is the open question, and
+it is an engineering question, not a research one.
+
+
+---
+
 ## What these findings do not establish
 
 Restating §5.7, because early numbers invite over-reading:
 
 - **Nothing about real workloads.** All instances are synthetic, from one generator whose
   distributions were chosen by hand.
-- **Nothing at scale.** 8 tasks, 4 profiles, sized for exact solvability.
+- **Little at scale.** Findings F1–F12 are all 8 tasks and 4 profiles. F13 probes up to 128
+  tasks and reverses the T4 conclusion, so every comparison above should be read as
+  small-instance behaviour unless F13 says otherwise.
 - **Nothing about which constraint Track B *should* relax.** It relaxes (C1) by assumption
   (F7). The (C3) alternative is unbuilt and unmeasured, so T1 is half-answered at best.
 - **Nothing statistical.** 25 seeds per point, no confidence intervals, no significance
