@@ -63,12 +63,47 @@ def test_the_coupling_is_what_makes_this_hard(instance):
     assert -(-int(t1 + t2) // int(m1.throughput)) * m1.price > m2.price
 
 
-@pytest.mark.skip(reason="build step 9 — track_a_greedy not yet implemented")
 def test_greedy_is_defeated_by_the_coupling(instance):
-    """Build step 9's checkpoint: plain greedy returns 300, not 280."""
+    """Build step 9's checkpoint: plain greedy returns 300, not 280.
+
+    This failing upward — greedy suddenly returning 280 — is a regression, not a win. It
+    would mean the myopia is no longer being reproduced, and T2's evidence is gone.
+    """
     from poc.tracks import track_a_greedy
     tasks, pools, profiles, budget = instance
     result = track_a_greedy.allocate(tasks, pools, profiles, budget)
+
     assert result.feasible
     assert result.total_cost == fx.GREEDY_EXPECTED_COST
+    assert result.provisioning == {"m1": 3}, "greedy piles everything onto m1"
+    assert result.lower_bound is None, "Track A produces no bound — that is T4's question"
+    assert invariants.check(result, tasks, pools, profiles, budget) == []
+
+
+def test_greedy_is_valid_but_suboptimal(instance):
+    """The gap is the finding. Greedy's answer is feasible and 20 more than optimal."""
+    from poc.tracks import track_a_greedy
+    tasks, pools, profiles, budget = instance
+    greedy = track_a_greedy.allocate(tasks, pools, profiles, budget)
+    optimal = exact_milp.allocate(tasks, pools, profiles, budget)
+
+    assert greedy.total_cost > optimal.total_cost
+    assert greedy.total_cost - optimal.total_cost == 20.0
+    assert greedy.gpus_used <= budget
+
+
+def test_track_c_recovers_the_optimum_here(instance):
+    """Not guaranteed in general — recorded because it is the first T4 signal.
+
+    On this instance the LP relaxation plus rounding finds 280 where plain greedy finds
+    300. One instance is not a result, but it is the shape T4 is looking for: if the
+    solver call keeps matching the optimum that the greedy machinery misses, Track A has
+    to justify itself.
+    """
+    from poc.tracks import track_c_lp
+    tasks, pools, profiles, budget = instance
+    result = track_c_lp.allocate(tasks, pools, profiles, budget)
+
+    assert result.total_cost == fx.OPTIMUM["total_cost"]
+    assert result.lower_bound <= fx.OPTIMUM["total_cost"]
     assert invariants.check(result, tasks, pools, profiles, budget) == []

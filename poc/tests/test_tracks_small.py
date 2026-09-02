@@ -17,7 +17,7 @@ import pytest
 
 from poc.formulation import invariants
 from poc.instances.generator import generate
-from poc.tracks import exact_milp
+from poc.tracks import exact_milp, track_a_greedy, track_c_lp
 
 
 def brute_force(tasks, pools, profiles, budget):
@@ -88,3 +88,78 @@ def test_infeasible_names_the_binding_constraint():
         pytest.skip("budget=1 happens to be satisfiable for this instance")
     assert result.infeasible.constraint == "C3"
     assert not result.routing and not result.provisioning
+
+
+# --- heuristic tracks vs ground truth (build steps 7 and 9) ----------------------
+
+HEURISTICS = [("A", track_a_greedy), ("C", track_c_lp)]
+
+
+@pytest.mark.parametrize("name,track", HEURISTICS)
+@pytest.mark.parametrize("seed", range(10))
+@pytest.mark.parametrize("tightness", [0.35, 0.6, 1.0])
+def test_heuristic_never_beats_the_optimum_and_never_violates(name, track, seed, tightness):
+    """The two things a heuristic is not allowed to do: undercut the optimum, or lie.
+
+    Costing less than the exact optimum means the result is infeasible in a way the
+    invariants missed, so both halves of this matter.
+    """
+    inst = generate(n_tasks=6, n_profiles=3, budget_tightness=tightness, seed=seed)
+    tasks, pools, profiles, budget = inst.unpack()
+
+    optimal = exact_milp.allocate(tasks, pools, profiles, budget)
+    result = track.allocate(tasks, pools, profiles, budget)
+
+    assert invariants.check(result, tasks, pools, profiles, budget) == []
+
+    if not result.feasible:
+        return          # a heuristic may fail where the exact solver succeeds; that is data
+
+    assert optimal.feasible, f"Track {name} found a solution where the MILP found none"
+    assert result.total_cost >= optimal.total_cost - 1e-6, (
+        f"Track {name} returned {result.total_cost} below the optimum {optimal.total_cost}")
+
+
+@pytest.mark.parametrize("seed", range(10))
+@pytest.mark.parametrize("tightness", [0.35, 0.6, 1.0])
+def test_track_c_bound_is_a_valid_lower_bound(seed, tightness):
+    """The LP bound must never exceed the true optimum. This is the T1 comparison's
+    reference point — Track B's bound is judged against it."""
+    inst = generate(n_tasks=6, n_profiles=3, budget_tightness=tightness, seed=seed)
+    tasks, pools, profiles, budget = inst.unpack()
+
+    optimal = exact_milp.allocate(tasks, pools, profiles, budget)
+    result = track_c_lp.allocate(tasks, pools, profiles, budget)
+
+    if not (optimal.feasible and result.lower_bound is not None):
+        return
+    assert result.lower_bound <= optimal.total_cost + 1e-6, (
+        f"LP bound {result.lower_bound} exceeds the optimum {optimal.total_cost}")
+
+
+@pytest.mark.parametrize("name,track", HEURISTICS)
+def test_tracks_are_deterministic(name, track):
+    """P10 — same inputs, same output, every time."""
+    inst = generate(n_tasks=7, n_profiles=4, budget_tightness=0.5, seed=11)
+    tasks, pools, profiles, budget = inst.unpack()
+
+    first = track.allocate(tasks, pools, profiles, budget, seed=0)
+    second = track.allocate(tasks, pools, profiles, budget, seed=0)
+    assert first.routing == second.routing
+    assert first.provisioning == second.provisioning
+    assert first.total_cost == second.total_cost
+
+
+@pytest.mark.parametrize("name,track", HEURISTICS + [("MILP", exact_milp)])
+def test_empty_pool_is_reported_as_c1(name, track):
+    """An unservable task names itself and (C1), rather than crashing (§4.1)."""
+    inst = generate(n_tasks=4, n_profiles=3, budget_tightness=1.0, seed=1)
+    tasks, pools, profiles, budget = inst.unpack()
+    blocked = tasks[0].id
+    pools = dict(pools)
+    pools[blocked] = []
+
+    result = track.allocate(tasks, pools, profiles, budget)
+    assert not result.feasible
+    assert result.infeasible.constraint == "C1"
+    assert result.infeasible.blocking_task == blocked
