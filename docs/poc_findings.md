@@ -682,15 +682,14 @@ The likely reason the gap shrinks: the integrality gap is a *rounding* penalty, 
 error amortises over more tasks. With 8 tasks one badly-rounded profile is a large fraction
 of total cost; with 128 it is not.
 
-### The greedy tracks collapse completely
+### The greedy tracks fail here — but see F15 before believing why
 
 Track A fails on **all 5 instances** at 64 and 128 tasks on uniform, and from 32 tasks
-upward on structured. A+M1 delays it but does not prevent it. At scale they do not produce
-worse answers — they produce **no answers**.
+upward on structured. A+M1 delays it but does not prevent it.
 
-This is F3's mechanism becoming fatal rather than merely costly. Cost-only ranking exhausts
-the GPU budget, and with more tasks there are more chances to strand one. The one-step
-lookahead cannot see far enough ahead when there are 128 tasks to place.
+**This is largely an artefact of the budget anchor and is corrected in F15.** The tracks
+recover completely — 0 of 5 to 5 of 5 — with 25% more budget. Do not quote "the greedy
+tracks collapse at scale" from this section.
 
 ### I have to withdraw a correction I made
 
@@ -714,6 +713,62 @@ and this time it names the regime.
 **No heuristic is justified below ~32 tasks** — the MILP is faster and optimal. Above it,
 exactly one of the three tracks earns its place, and it is not the one the 8-task data
 favoured.
+
+
+---
+
+## F15 — F14's collapse was a knife edge, not a scaling failure. Correcting my own finding.
+
+F14 reported that Track A and A+M1 fail on every instance at 64 and 128 tasks and concluded
+that greedy construction collapses at scale. That conclusion is wrong, and the way it is
+wrong is the same trap flagged against F3.
+
+Every scale row was run at `budget_tightness = 1.0` — meaning the budget is set to **exactly**
+the GPUs used by the reference allocation, which is the *most GPU-efficient* routing. That
+is a razor-thin margin: any method that does not reproduce the GPU-efficient routing almost
+exactly will overshoot. And the chance of a cost-ranking method matching it by accident goes
+to zero as tasks are added. So the anchor manufactures a failure that grows with instance
+size, and it is easy to mistake for a scaling property.
+
+Feasible out of 5, as the budget is loosened past the reference:
+
+| tasks | ×1.00 | ×1.25 | ×1.50 | ×2.00 | ×3.00 |
+|---|---|---|---|---|---|
+| 64 — Track A | **0** | **5** | 5 | 5 | 5 |
+| 64 — A+M1 | **0** | **5** | 5 | 5 | 5 |
+| 64 — Track C | 2 | 5 | 5 | 5 | 5 |
+| 128 — Track A | **0** | **5** | 5 | 5 | 5 |
+| 128 — A+M1 | **0** | **5** | 5 | 5 | 5 |
+| 128 — Track C | 2 | 5 | 5 | 5 | 5 |
+
+**A 25% budget increase takes every track from near-total failure to complete success.** The
+cliff is entirely at the anchor point. Track C is less exposed — it gets 2 of 5 where greedy
+gets 0 — because the LP naturally lands near a GPU-efficient solution, but even it is mostly
+failing at ×1.00.
+
+### What survives from F14, and what does not
+
+**Does not survive:** "the greedy tracks collapse at scale". They fail at one specific budget
+that the generator happens to make the default, and recover fully just past it.
+
+**Survives:** Track C's cost gap improving with size (8.15% → 1.16% uniform, 22.53% → 2.86%
+structured), its near-flat runtime, and the MILP's blow-up on uniform instances at 128
+tasks. Those are quality and runtime results, not feasibility results, and the anchor does
+not drive them.
+
+**Also survives, and is strengthened:** F13's finding on Track B. Its 100× runtime penalty
+is a timing measurement, untouched by feasibility.
+
+### The methodological lesson, since it has now happened three times
+
+`budget_tightness = 1.0` is not a neutral default. It is the tightest budget at which
+feasibility is still guaranteed, which makes it the single most adversarial setting in the
+sweep — and it is the one every scale run used because it is the only one where instances
+are reliably solvable at size.
+
+Anything measured only at ×1.00 is measured on a cliff edge. **T3's sweep should extend
+above the reference, not just below it.** That is a change to the experimental design, and
+it belongs to 089.
 
 
 ---
