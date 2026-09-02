@@ -125,19 +125,25 @@ def sweep(n_tasks: int,
           n_profiles: int,
           tightness_values,
           seeds,
-          strategies: list[str] | None = None) -> list[RunRecord]:
+          strategies: list[str] | None = None,
+          generator=generate) -> list[RunRecord]:
     """The T3 sweep: budget tightness across a fixed set of instances.
 
     T3 asks where the budget binds, so the axis is tightness and everything else is held
     fixed. Note the same `seed` produces the same tasks and profiles at every tightness —
     only B moves — which is what makes the sweep a sweep rather than a set of unrelated
     instances.
+
+    `generator` takes any callable with generate()'s signature. It exists so every finding
+    can be re-run against instances/structured_generator.py, which is built to disagree
+    with the default generator wherever it plausibly can. A finding that holds on one
+    generator and not the other was a finding about the generator.
     """
     records = []
     for tightness in tightness_values:
         for seed in seeds:
-            instance = generate(n_tasks=n_tasks, n_profiles=n_profiles,
-                                budget_tightness=tightness, seed=seed)
+            instance = generator(n_tasks=n_tasks, n_profiles=n_profiles,
+                                 budget_tightness=tightness, seed=seed)
             records.append(run_conditions(instance, strategies))
     return records
 
