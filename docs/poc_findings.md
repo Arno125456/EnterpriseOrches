@@ -143,7 +143,7 @@ T4 exists to evaluate, and building it now would prejudge the test. 035's call.
 
 ---
 
-## F4 — Preliminary T4 signal, and it disagrees with the fixture
+## F4 — Preliminary T4 signal on A vs C *(superseded by F10)*
 
 Over solvable instances, cost gap above the exact optimum, feasible runs only:
 
@@ -176,10 +176,10 @@ above optimum and fail often. It says the *elaborate* Track A is hard to justify
 when the plain version already matches a solver call — while the solver call is the more
 reliable of the two at actually returning an answer.
 
-**Caveat.** Track C gets two realisation attempts per instance to Track A's one (see F6).
-That is a small multi-start, and Track A is denied multi-start by the scope guard. The
-comparison is not strictly like-for-like and the team should decide whether to equalise it
-before T4 is read.
+**Caveat, since resolved.** At the time of writing Track C got two realisation attempts to
+Track A's one. That has been equalised — `C` is now single-shot and `C2` carries the extra
+attempt as its own condition. **F10 is the current T4 picture**; this finding is kept for
+the record of how it looked before Track B and A+M1 existed.
 
 ---
 
@@ -266,17 +266,40 @@ dropped rather than relaxed, which weakens the bound but keeps it valid; and the
 scales float loads in the permissive direction — weights down, capacity up — which can only
 *understate* the bound. So the result is not an artefact of favourable rounding.
 
-### The cost and feasibility — confounded by a warm start
+### The cost and feasibility — confound checked, and it does not bind
 
-Track B's subgradient step rule wants an incumbent upper bound, and it takes one from plain
-greedy. **That means Track B cannot be worse than Track A, and cannot fail where Track A
-succeeded — by construction, not by merit.** Its headline row (59 of 64 feasible, 55 exact
-optima, 0.93% mean gap) therefore cannot be used to claim B beats A.
+Track B's subgradient step rule takes its incumbent upper bound from plain greedy. That
+looked disqualifying: it would mean Track B could never be worse than Track A and never
+fail where Track A succeeded, by construction rather than by merit.
 
-A `B-cold` condition runs the identical relaxation with the warm start disabled, and that
-is what any T4 statement about B versus A must be read off. Its numbers are being measured;
-until they land, treat B's cost column as an upper bound on Track A rather than an
-independent result.
+So the identical relaxation was re-run with the warm start disabled (`B-cold`). The two are
+**identical on every column**:
+
+| | B (warm) | B-cold |
+|---|---|---|
+| feasible, of 64 solvable | 59 | 59 |
+| matched the exact optimum | 55 | 55 |
+| mean gap | 0.93% | 0.93% |
+| bound gap | 2.40% | 2.40% |
+
+**The warm start is inert.** Track B's own primal repair independently finds solutions at
+least as good as greedy's on every instance measured, so the confound does not bind and the
+cost column may be quoted.
+
+That "identical" is only meaningful if the flag changes what runs, so it is verified rather
+than assumed: warm-started Track B calls greedy exactly once, `B-cold` calls it zero times
+(`test_warm_start_flag_actually_takes_effect`). Both facts are locked in by tests — if the
+warm start ever stops being inert, the T4 comparison becomes circular again and only the
+`B-cold` row may be used.
+
+Against plain Track A, independently:
+
+| | count |
+|---|---|
+| B-cold fails where A succeeded | **0** |
+| B-cold strictly cheaper (of 37 both-feasible) | **11** |
+| A strictly cheaper | **0** |
+| tied | 26 |
 
 ### The runtime, which is the real trade
 
@@ -339,6 +362,57 @@ Without this row, "Track A is 10% above optimum" has no scale to be read against
 
 ---
 
+## F10 — T4, consolidated: Track B dominates, and the question has changed shape
+
+All conditions, 64 solvable instances, ordered by mean gap:
+
+| condition | infeasible | matched optimum | mean gap | runtime |
+|---|---|---|---|---|
+| MILP (exact / Murakkab) | 0 | 64 | 0.00% | 32 ms |
+| **B** (Lagrangian) | **5** | **55** | **0.93%** | 954 ms |
+| A+M1 (greedy + lookahead) | 17 | 29 | 9.39% | <1 ms |
+| A (plain greedy) | 27 | 23 | 10.28% | <1 ms |
+| C2 (LP + 2 attempts) | 21 | 20 | 13.16% | 25 ms |
+| C (LP + rounding) | 27 | 16 | 14.58% | 29 ms |
+| STATIC (no optimisation) | 37 | 7 | 23.06% | <1 ms |
+
+### T4 as originally asked
+
+*"Is Track A worth its cost relative to Track C? Track A has six sub-modules and produces
+no bound; Track C is a solver call plus rounding."*
+
+On equal terms — one attempt each — **plain greedy beats LP-rounding**: 10.28% against
+14.58%, identical feasibility (27 failures each), and it does so roughly 30× faster. Give
+Track C its second attempt (C2) and it closes to 13.16% with 21 failures, still behind on
+cost while ahead on feasibility.
+
+So the answer to T4 as written is **neither track earns much over the other**, and per
+§5.3's first outcome the elaborate Track A machinery is hard to justify against Track C —
+because the *plain* version already matches it.
+
+### But that is no longer the interesting question
+
+Track B is at **0.93% mean gap with 5 failures**, against every heuristic's 9–15% and 17–27
+failures. It matches the exact optimum on 55 of 64 instances. Its bound gap is 2.40%
+against Track C's 15.21%.
+
+The real T4 trade is no longer A versus C. It is **Track B's quality against its runtime**:
+954 ms per instance versus under a millisecond for greedy, at 8 tasks and 4 profiles. That
+ratio is the thing to measure as instances grow, and it is not measured here — §5.7 stands,
+nothing in this PoC says anything about scale.
+
+### What the team should take from this
+
+1. **A+M1 over plain A, on this evidence.** Same runtime, 37% fewer failures, lower gap.
+2. **Track C is the weakest of the three tracks** on both cost and feasibility, and is only
+   worth keeping for its bound — which Track B beats by 6×. Its own §5.9 status of "stable,
+   least affected" is no longer the whole story.
+3. **T4's decision criteria need rewriting** before D10. They ask an A-versus-C question
+   that the data has moved past.
+
+
+---
+
 ## What these findings do not establish
 
 Restating §5.7, because early numbers invite over-reading:
@@ -396,6 +470,8 @@ paper open. Flagging it rather than guessing.
 |---|---|---|
 | O5 | Track B's step-size schedule, tolerance, iteration cap — current values are untuned | 075 |
 | — | Relaxing (C3) instead of (C1), so T1's decomposition question is actually tested | 075 |
+| — | Rewrite T4's decision criteria: they ask an A-vs-C question the data has moved past (F10) | 089 |
+| — | Track B's runtime as instances grow — the only trade that still matters for T4 (F10) | 089 |
 | — | Reconcile `track_a_m1.py` against Cheng & Nguyen's real M1 | 035 |
 | — | Whether Murakkab's published heuristic is a separate condition (see above) | Advisor |
 | O8 | Is Track A worth its complexity? T4 proper, once the conditions above settle | 035 + 089 |

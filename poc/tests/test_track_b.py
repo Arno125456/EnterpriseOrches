@@ -122,3 +122,57 @@ def test_empty_pool_is_reported_as_c1():
     result = track_b_lagr.allocate(tasks, pools, profiles, budget)
     assert not result.feasible
     assert result.infeasible.constraint == "C1"
+
+
+def test_warm_start_flag_actually_takes_effect():
+    """The cold condition must really skip greedy, not just claim to.
+
+    B and B-cold produce identical results on every instance measured, which is only
+    meaningful if the flag changes what runs. Without this test, a flag that silently did
+    nothing would look exactly like the (much more interesting) finding that the warm
+    start is inert.
+    """
+    from unittest.mock import patch
+
+    from poc.tracks import track_a_greedy, track_b_cold
+
+    inst = generate(n_tasks=6, n_profiles=3, budget_tightness=1.0, seed=0)
+    tasks, pools, profiles, budget = inst.unpack()
+
+    calls = []
+    original = track_a_greedy.allocate
+
+    def counting(*args, **kwargs):
+        calls.append(1)
+        return original(*args, **kwargs)
+
+    with patch.object(track_b_lagr.track_a_greedy, "allocate", counting):
+        track_b_lagr.allocate(tasks, pools, profiles, budget)
+        warm = len(calls)
+        calls.clear()
+        track_b_cold.allocate(tasks, pools, profiles, budget)
+        cold = len(calls)
+
+    assert warm == 1, "warm-started Track B must consult greedy for its incumbent"
+    assert cold == 0, "B-cold must not consult greedy at all"
+
+
+@pytest.mark.parametrize("seed", range(4))
+def test_the_warm_start_is_inert(seed):
+    """Track B's own repair independently matches its warm-started self.
+
+    If this ever fails, the T4 comparison against Track A becomes circular again and the
+    B-cold row is the only one that may be quoted.
+    """
+    from poc.tracks import track_b_cold
+
+    inst = generate(n_tasks=6, n_profiles=3, budget_tightness=1.0, seed=seed)
+    tasks, pools, profiles, budget = inst.unpack()
+
+    warm = track_b_lagr.allocate(tasks, pools, profiles, budget)
+    cold = track_b_cold.allocate(tasks, pools, profiles, budget)
+
+    assert warm.feasible == cold.feasible
+    if warm.feasible:
+        assert cold.total_cost == pytest.approx(warm.total_cost)
+    assert cold.lower_bound == pytest.approx(warm.lower_bound)
