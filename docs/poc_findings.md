@@ -935,6 +935,78 @@ a separate condition, so no existing track changes behaviour and T4 can still pr
 
 ---
 
+## F18 - O9 answered: scoped re-optimisation works, and is not worth building
+
+**Outside PoC scope** (see `prototype/README.md`) - built because the question is cheap to
+answer and expensive to get wrong in Semester 2.
+
+Section 3.3 specifies J9 as re-invoking J3 "for affected workflows only", then doubts its
+own specification: *"Under (C2), re-routing one workflow changes load on shared profiles,
+which changes instance counts, which affects every other workflow using those profiles.
+Scoped re-optimisation may not be well-defined."* Deferred to Semester 2 as O9.
+
+Global versus scoped, 40 instances of 12 tasks / 5 profiles, one of three workflows marked
+affected, exact MILP as the allocator:
+
+| generator | budget | infeasible | more expensive | matched global |
+|---|---|---|---|---|
+| uniform | 1.00x | **24** | 8 | 8 |
+| uniform | 1.25x | 6 | 18 | 16 |
+| uniform | 1.50x | 0 | 20 | 20 |
+| uniform | 2.00x | 0 | 20 | 20 |
+| structured | 1.00x | **32** | 6 | 2 |
+| structured | 1.50x | 3 | 20 | 17 |
+| structured | 2.00x | 0 | 22 | 18 |
+
+### It is well-defined - the infeasibility was the anchor again
+
+At 1.00x scoped re-optimisation failed on 24 of 40 uniform and 32 of 40 structured
+instances, which looks like Section 3.3's fear confirmed. It is not: by 1.50x the failures
+are gone entirely. This is the same knife edge as F15, caught this time *before* the finding
+was written rather than after.
+
+So the answer to O9 as literally asked - *is it well-defined?* - is **yes**. Freezing the
+unaffected workflows and allocating the rest against the remaining budget produces valid,
+complete allocations whenever the budget is not on the cliff.
+
+### But it is systematically worse, and that does not go away
+
+At every budget level on both generators, scoped re-optimisation costs **more** than a
+global re-run on roughly half of instances - 20 of 40 at 1.5x and 2.0x uniform, 22 of 40 at
+2.0x structured. Loosening the budget does not help; the gap is structural, not a scarcity
+effect.
+
+The reason is exactly Section 3.3's instinct, just arriving as suboptimality rather than as
+undefinedness. Frozen workflows hold their profiles, and those profiles' instance counts are
+ceilings over aggregate load. A global run can move a frozen task to consolidate two
+half-empty instances into one; a scoped run cannot see that move exists.
+
+### Why this says "do not build it"
+
+Scoping exists to save work. On these instances a **global** re-optimisation with the exact
+solver costs about 0.1 s. The saving is negligible and the quality loss is a coin flip.
+
+**Recommendation for 077: do not build scoped re-optimisation. Re-optimise globally on every
+drift signal.** That removes a component from Semester 2 plans, removes O9 from the open
+list, and removes the "affected workflows only" language from Section 3.3 and J9.
+
+The one condition that would change this: if global re-optimisation becomes expensive at
+scale - plausible, since F13 shows the MILP reaching 21 s at 128 tasks - then scoping is
+worth revisiting, but against Track C rather than the exact solver, and with the ~50%
+quality penalty priced in.
+
+### Caveat on the interpretation
+
+Section 3.3 does not define "scoped" precisely. The reading implemented is the conservative
+one: frozen tasks keep their profiles and their GPUs are deducted from the budget. A more
+permissive reading - letting re-optimised tasks use headroom inside instances the frozen
+tasks already paid for - would score better, but it double-counts capacity unless the frozen
+instance counts are also recomputed, at which point it is a global run wearing a different
+name. That tension is the real content of Section 3.3's doubt.
+
+
+---
+
 ## What these findings do not establish
 
 Restating §5.7, because early numbers invite over-reading:

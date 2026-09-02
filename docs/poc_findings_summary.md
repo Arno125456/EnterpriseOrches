@@ -73,6 +73,7 @@ faster for under 5% cost** (17.75 s → 0.162 s, 4.58% gap). That is the result 
 | 8 | Optimisation beats no-optimisation by a wide margin | **High** | STATIC 23–25% off, fails 58% of instances | Nothing plausible |
 | 9 | The exact MILP becomes expensive around 128 tasks — but only on some instance families | **Medium** | 21 s uniform vs 1.9 s structured at 128 | More families; a better solver or formulation |
 | 10 | Instance *structure* drives solver cost more than instance *size* | **Medium** | Structured was harder at 8 tasks, 11× cheaper at 128 | Only two generators exist |
+| 11 | Scoped re-optimisation is well-defined but costs more than a global re-run ~50% of the time, so it should not be built | **Medium-high** | F18, 40 instances x 4 budgets x 2 generators | Global re-optimisation becoming expensive at scale |
 
 ---
 
@@ -98,8 +99,12 @@ faster for under 5% cost** (17.75 s → 0.162 s, 4.58% gap). That is the result 
   intervals, no significance testing.
 - **Nothing about Track B's real ceiling.** Its runtime finding may be implementation, not
   method.
-- **Nothing about profiling, drift, execution, or the domain.** Entirely out of scope, and
-  R4/R7/R8/R9 have no implementation.
+- **Nothing about execution or the domain.** No allocation has been run against a real
+  executor, and R7/R8/R9 have no implementation.
+- **Profiling and drift exist only as a prototype.** `prototype/` implements the Profile
+  Store, Drift Detector and J9 outside PoC scope, fed synthetic observations. The
+  compatibility score there is **[PROPOSED]** and not the source paper's, so no number from
+  it should be quoted until 077 reconciles it.
 - **No claim of the form "our approach reduces cost by X%"** is supported.
 
 ---
@@ -116,6 +121,8 @@ faster for under 5% cost** (17.75 s → 0.162 s, 4.58% gap). That is the result 
 | 6 | Subset-move neighbourhood — one mechanism closing both T2's fixture and F17 | 035 | — |
 | 7 | Reconcile `track_a_m1.py` against Cheng & Nguyen's actual M1 | 035 | — |
 | 8 | More seeds before anything reaches Chapter 3 | 089 | before D11 |
+| 9 | **Drop scoped re-optimisation from Semester 2.** F18 answers O9: it works but is not worth building | 077 | - |
+| 10 | Reconcile the [PROPOSED] compatibility score against Hatherley (2025) | 077 | - |
 
 ---
 
