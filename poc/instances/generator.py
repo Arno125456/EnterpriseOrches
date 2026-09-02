@@ -14,18 +14,34 @@ NAMING. §6.4 calls the return value an "Instance", but §5.1 already uses Insta
 provisioned count {profile_id, count}. Two different things, one word. The problem is a
 ProblemInstance here; types.Instance keeps its §5.1 meaning.
 
-INTERPRETATION, worth knowing before reading T3 results. §6.4 defines the budget as "a
-fraction of the GPUs needed by a naive one-instance-per-profile solution", which is taken
-literally: naive_gpus = Σ_m gpu(m), one instance of every profile in M. That anchor is
-arbitrary in the sense that it does not depend on the tasks at all — a batch whose total
-load needs three instances of one profile is not served by the "naive" solution. It is
-monotone in tightness, which is what the sweep needs, and naive_gpus is exposed on the
-result so T3 can sweep absolute B and ignore the anchor entirely. If T3 finds the binding
-region sits at odd tightness values, suspect this definition before suspecting the data.
+DEVIATION FROM §6.4 — DELIBERATE, AND IT NEEDS 083's SIGN-OFF.
+
+§6.4 defines the budget as "a fraction of the GPUs needed by a naive one-instance-per-
+profile solution", i.e. Σ_m gpu(m). That was implemented literally first, and measured:
+it does not work. The anchor does not depend on the tasks at all, so a batch of 8 tasks
+routinely needs more instances than one-per-profile, and the budget lands below
+feasibility almost everywhere. On 25 seeds at 8 tasks / 4 profiles, the exact solver found
+NO feasible allocation at tightness 0.3 or 0.4, and only 16 of 25 were solvable even at
+1.0 — the loosest the parameter allows. T3's sweep had no room to move.
+
+The anchor here is instead a concrete feasible reference allocation (see _reference_gpus),
+which gives the property the sweep actually needs:
+
+    budget_tightness = 1.0  ->  always feasible, by construction
+    decreasing tightness    ->  monotonically tighter, into infeasibility
+
+`budget_tightness` keeps its §6.4 meaning — a fraction of an anchor — so the sweep reads
+the same way. Only the anchor changed. Note the parameter name still runs backwards
+against its value: 1.0 is the LOOSEST budget, not the tightest. That inversion is §6.4's
+and is left alone rather than silently redefined.
+
+reference_gpus is exposed on the result so T3 can sweep absolute B and ignore the anchor
+entirely, which is the more defensible thing to report.
 """
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 import numpy as np
@@ -41,7 +57,7 @@ class ProblemInstance:
     pools: dict[TaskId, list[str]]
     profiles: dict[str, ProfileSpec]
     budget: int
-    naive_gpus: int
+    reference_gpus: int
     seed: int
     budget_tightness: float
 
@@ -100,6 +116,29 @@ def _build_pools(tasks, profiles) -> dict[TaskId, list[str]]:
     }
 
 
+def _reference_gpus(tasks, pools, profiles) -> int:
+    """GPUs used by a concrete, always-achievable reference allocation.
+
+    Every task goes to its most GPU-efficient eligible profile — the one with the lowest
+    gpu(m)/thr(m), i.e. the fewest GPUs per unit of throughput bought — and instance
+    counts follow from the routed load. This is a real feasible allocation, not a bound,
+    so a budget equal to it always admits at least one solution.
+
+    It is not the GPU-minimal allocation: choosing per task ignores the aggregate ceiling,
+    so consolidating two tasks onto one shared instance can beat it. That is fine and in
+    fact wanted — the anchor should sit at "obviously affordable", leaving the interesting
+    structure below it.
+    """
+    load: dict[str, float] = {}
+    for task in tasks:
+        cheapest = min(pools[task.id],
+                       key=lambda m: (profiles[m].gpus / profiles[m].throughput, m))
+        load[cheapest] = load.get(cheapest, 0.0) + task.load
+
+    return sum(math.ceil(round(routed / profiles[m].throughput, 9)) * profiles[m].gpus
+               for m, routed in load.items())
+
+
 def generate(n_tasks: int, n_profiles: int, budget_tightness: float,
              seed: int) -> ProblemInstance:
     if not 0.0 < budget_tightness <= 1.0:
@@ -118,10 +157,10 @@ def generate(n_tasks: int, n_profiles: int, budget_tightness: float,
         if any(not pool for pool in pools.values()):
             continue        # discard and regenerate — §6.4
 
-        naive_gpus = sum(p.gpus for p in profiles.values())
-        budget = max(1, int(round(budget_tightness * naive_gpus)))
+        reference_gpus = _reference_gpus(tasks, pools, profiles)
+        budget = max(1, int(round(budget_tightness * reference_gpus)))
         return ProblemInstance(tasks=tasks, pools=pools, profiles=profiles,
-                               budget=budget, naive_gpus=naive_gpus, seed=seed,
+                               budget=budget, reference_gpus=reference_gpus, seed=seed,
                                budget_tightness=budget_tightness)
 
     raise RuntimeError(

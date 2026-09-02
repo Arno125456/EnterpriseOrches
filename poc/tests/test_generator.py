@@ -52,7 +52,32 @@ def test_budget_is_monotone_in_tightness():
     budgets = [generate(8, 4, tightness, seed=3).budget
                for tightness in (0.1, 0.25, 0.5, 0.75, 1.0)]
     assert budgets == sorted(budgets)
-    assert budgets[-1] == generate(8, 4, 1.0, seed=3).naive_gpus
+    assert budgets[-1] == generate(8, 4, 1.0, seed=3).reference_gpus
+
+
+@pytest.mark.parametrize("seed", range(25))
+@pytest.mark.parametrize("n_tasks", [4, 8, 12])
+def test_tightness_of_one_is_always_feasible(seed, n_tasks):
+    """The property the §6.4 anchor did not have, and the reason it was replaced.
+
+    At the loosest setting the exact solver must find something, or T3 has no upper end
+    to sweep down from. The reference allocation is achievable by construction, so a
+    budget equal to it cannot be infeasible.
+    """
+    from poc.tracks import exact_milp
+    inst = generate(n_tasks=n_tasks, n_profiles=4, budget_tightness=1.0, seed=seed)
+    result = exact_milp.allocate(*inst.unpack())
+    assert result.feasible, f"seed {seed}: infeasible at the loosest budget"
+    assert result.gpus_used <= inst.reference_gpus
+
+
+@pytest.mark.parametrize("seed", range(10))
+def test_the_reference_allocation_is_itself_affordable(seed):
+    """reference_gpus must describe a real allocation, not an unreachable bound."""
+    from poc.tracks import exact_milp
+    inst = generate(n_tasks=8, n_profiles=4, budget_tightness=1.0, seed=seed)
+    assert inst.budget == inst.reference_gpus
+    assert exact_milp.allocate(*inst.unpack()).feasible
 
 
 @pytest.mark.parametrize("tightness", [0.0, -0.1, 1.5])
