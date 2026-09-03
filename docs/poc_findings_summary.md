@@ -1,14 +1,14 @@
 # PoC Findings — standing summary
 
 **Read this instead of `poc_findings.md` unless you need the history.** As of the 3 September
-2026 branch merge, that log runs to **thirty** findings, several of which correct earlier ones
+2026 branch merge, that log runs to **thirty-one** findings, several of which correct earlier ones
 — F14 was corrected by F15 and again by F16; F6 was refined by F17; F7's headline number was
 amended by F12 and again by F30. The history is deliberate and worth keeping, but it is
 archaeology. This page states what we believe *now*.
 
 **Numbering note.** F1–F19 predate the branch split. **F20–F22 are `mickie`'s** (subset move,
 the (C3) arm, the T3 sweep above reference) and keep their original numbers, because the M1
-slides and `PROGRESS.md` already cite them. **F23–F30 are `main`'s**, renumbered from F20–F27
+slides and `PROGRESS.md` already cite them. **F23–F31 are `main`'s**, renumbered from F20–F27
 in the merge. Any document written before 3 September that cites F20–F27 means `main`'s
 originals — add 3.
 
@@ -84,8 +84,12 @@ Counter-intuitively the gaps get **worse** as the budget loosens (Track C 10.3% 
 tight budget does the heuristic's job for it by leaving nowhere to stray. **A heuristic
 evaluated only at tight budgets looks better than it is.**
 
-**Provisional pending O13** — per F26 the budget affects feasibility but almost never the
-optimal cost, because both generators tie price to GPU count.
+**Still provisional, but the reason has changed (F31).** Per F26 the budget affects
+feasibility but almost never the optimal cost, because both generators tie price to GPU count.
+**O13 is now answered on Murakkab's basis: price is *not* a multiple of GPU count** — their own
+results move GPUs 2.82×, energy 3.72× and cost 4.33× on one workload, and their gains come from
+trading A100s for H100s. So "the budget is nearly inert" is a property of *our generators*, not
+of the problem, and this region was measured on instances where (C3) barely binds.
 
 ### T4 — Is Track A worth its complexity relative to Track C?
 
@@ -120,6 +124,7 @@ faster for under 5% cost** (17.75 s → 0.162 s, 4.58% gap). That is the result 
 | 13 | The closed loop runs without thrashing and catches real degradation, but abandons within-floor profiles on noise and can never re-test them - measurement drives eligibility, eligibility drives routing, routing drives measurement | **Medium-high** | F23, 10 seeded end-to-end runs on the real batch | An exploration or confidence-bound policy, which does not exist |
 | 14 | A static allocator silently violates its reliability floors under drift - 0.542 delivered against a 0.95 floor, reporting no change - while the adaptive loop holds 0.938. This is the project's differentiator | **Medium-high** | F24, 8 seeds, both systems starting correct, identical drift schedule | Real execution behaving unlike the simulation; a subtler drift |
 | 15 | Filtering eligibility on a point estimate costs up to 25% permanently even with no drift. Filtering on an UPPER confidence bound recovers the optimum exactly and loses no drift sensitivity | **Medium-high** | F25, 8 seeds, 80 rounds, three floor levels | A workload where thin-evidence optimism is dangerous |
+| 16 | Murakkab prices a **heterogeneous** fleet: cost per GPU moves 0.65–0.76× between configurations of one workload, so price is not a multiple of GPU count. Our generators assume the opposite, so every budget result is measured where (C3) barely binds | **Medium-high** | F31, arithmetic on Murakkab's reported GPU/energy/cost triples | The figures being misrecorded in our reference database — check the PDF |
 | 12 | Section 4.5's EMA is wrong for reliability: a binary signal under an EMA reports 0.70 after 99 successes and one failure, and that value filters C(t) | **High** | F19, arithmetic, reproduced in tests | Nothing - the mechanism is arithmetic |
 
 ---
@@ -138,6 +143,7 @@ faster for under 5% cost** (17.75 s → 0.162 s, 4.58% gap). That is the result 
 | "Track B's bound is **3–6× tighter**" | F7, F12 | **Ratio of means.** Median per-instance ratio is 2.0–2.5×. The paired difference — 12.6 pp [9.5, 15.6] — is what holds (F30) |
 | "Consolidation **halves** Track C's gap" | F17 | **Median improvement is 0.00%.** Real but tail-carried; it fixes a rare severe failure (F30) |
 | "Track C is **~110x faster** than exact for <5%" | F16, and D11's first draft | **Mean over mean, and outlier-driven.** The MEDIAN speedup is 5x on uniform and 2x on structured. What survives is predictability: 0.106 +-0.020 s against 12.3 +-10.3 s (F29) |
+| "The GPU budget is **nearly inert**" | F26 | True **of our generators**, which tie price to GPU count. **Not a property of the problem** — Murakkab's own numbers show price and GPU count are separate axes (F31) |
 | "Filter C(t) on a **lower** confidence bound" | F23, and component_reference | **Backwards.** It must be the UPPER bound — a lower bound is low when evidence is thin and excludes faster (F25) |
 | "Scoped re-optimisation is **worse ~50% of the time**" | F18, first version | Measured an arbitrary affected workflow rather than the drifted profile's. Correctly scoped it is **identical to global**, because the affected set is 84-100% of workflows |
 
@@ -160,6 +166,10 @@ faster for under 5% cost** (17.75 s → 0.162 s, 4.58% gap). That is the result 
   Store, Drift Detector and J9 outside PoC scope, fed synthetic observations. The
   compatibility score there is **[PROPOSED]** and not the source paper's, so no number from
   it should be quoted until 077 reconciles it.
+- **Nothing about a heterogeneous fleet.** Both generators tie price to GPU count with
+  corr ≈ 0.95–1.0, i.e. they assume every GPU costs the same. Murakkab does not, and neither
+  will we (F31). A generator with price decorrelated from GPU count is not built, so every
+  result involving the budget is measured in the easy regime.
 - **No claim of the form "our approach reduces cost by X%"** is supported.
 
 ---
@@ -180,6 +190,9 @@ faster for under 5% cost** (17.75 s → 0.162 s, 4.58% gap). That is the result 
 | 10 | Reconcile the [PROPOSED] compatibility score against Hatherley (2025) | 077 | - |
 | 11 | **Amend section 4.5**: EMA for latency, decayed counting estimator for reliability (F19) | 077 | - |
 | 12 | ~~Paired per-instance check that `B-C3`'s bound equals the LP bound~~ | 075 | **Done** — agrees to 2e-5 on both generators, differences of both signs |
+| 13 | **Decide the deployment target — local, GCP, or both.** O13's exact answer follows from it; Murakkab's basis is the working default until then | Team | before Ch4 |
+| 14 | Check F31's Murakkab figures against the paper's own tables before any of them reach a chapter | 083 | before Ch2 |
+| 15 | Generator with price decorrelated from GPU count — **Semester 2**, but every budget result stays provisional until it exists | 083 | S2 |
 
 ---
 

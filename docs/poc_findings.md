@@ -1791,6 +1791,78 @@ hitting the optimum on every single seed.
    tail rather than a typical case, and that difference is usually the interesting part.
 4. **State n.** Three of the corrections in this project trace to 3-8 seed samples.
 
+---
+
+## F31 - O13 answered from Murakkab's own numbers: price is NOT a multiple of GPU count
+
+**Trigger.** The advisor's guidance on O13 was to look at the actual thing we allocate on, and
+that since the deployment target (local vs GCP) is undecided, we should take Murakkab as the
+base. So the question becomes: what does Murakkab itself assume? It is answerable from the
+results already recorded in `docs/research_papers/papers.json`, without asking anyone.
+
+### The test
+
+Murakkab reports GPU count, energy and dollar cost as three separate quantities on the same
+matched workload. If price were a fixed multiple of GPU count - our generators' assumption -
+those three would move by identical factors between configurations. They do not.
+
+| workload | config | GPUs | MWh | $k | **$k per GPU** |
+|---|---|---|---|---|---|
+| Video-QA + CodeGen | static baseline | 2560 | 80.4 | 201.5 | **78.7** |
+| Video-QA + CodeGen | Murakkab-Opt | 1151 | 27.1 | 56.2 | **48.8** |
+| Video-QA + CodeGen | Opt + multiplexed | 908 | 21.6 | 46.5 | **51.2** |
+| Math-QA + CodeGen | static baseline | 4448 | 169.9 | 367.2 | **82.6** |
+| Math-QA + CodeGen | best | 1660 | 52.7 | 104.6 | **63.0** |
+
+Within one workload, moving from the static baseline to the optimised configuration:
+
+* Video-QA + CodeGen: GPUs fall **2.82x**, energy **3.72x**, cost **4.33x**. Cost per GPU
+  moves to **0.65x** of its starting value.
+* Math-QA + CodeGen: GPUs fall **2.68x**, energy **3.23x**, cost **3.51x**. Cost per GPU
+  moves to **0.76x**.
+
+**Three different factors on the same workload. Price is not proportional to GPU count.**
+
+### Why, and why it is the point of their paper
+
+Murakkab runs a heterogeneous fleet - A100, H100 and CPU - and its optimizer explicitly trades
+A100s for H100s as H100 capacity appears, in order to minimise energy. That move is only
+worth making if price and energy per GPU differ **by hardware type**. The variation in $/GPU
+is not noise around a constant; it is where their reported gains come from.
+
+### What this says about our instances
+
+Both our generators have corr(price, gpus) ~ 0.95-1.0. That encodes a **homogeneous fleet**:
+every GPU costs the same, so the GPU budget and the cost objective are nearly the same axis.
+It is a coherent assumption, but it is not Murakkab's, and it contradicts our own premise -
+this project's whole point is routing across *heterogeneous* profiles.
+
+**So F26's headline needs restating.** "The GPU budget is nearly inert" is a property of our
+generators, not of the problem. Under a Murakkab-style price/GPU spread, (C3) is a genuinely
+separate constraint and can bind where the objective does not.
+
+### What this changes, and what it does not
+
+| | |
+|---|---|
+| **O13** | **Answered on Murakkab's basis: price and GPU count are separate axes.** Which exact basis applies to *our* deployment still depends on local vs GCP, which is undecided - but that decision is between two options that are *both* unlike our generators |
+| F26 (budget nearly inert) | Still correct **about our instances**. Withdrawn as a claim about the problem |
+| T3's operating region | Still provisional - but now for a stated reason, not an open question |
+| T1's arm comparison | Same. The (C3) arms were compared on instances where (C3) barely binds, which is the weakest possible test of them |
+| Everything not involving the budget | Unaffected. T2, the bound comparison, the closed loop and the differentiator do not depend on price/GPU correlation |
+
+### Honest limits of this finding
+
+The figures are read from **our own reference database**, not from the paper's tables
+directly. They should be checked against the PDF before they appear in a chapter. And a
+generator with price decorrelated from GPU count is **not built** - this finding identifies
+the gap, it does not close it. That build is parked for Semester 2.
+
+**Nothing here was re-measured.** No number in any other finding changes. What changes is
+the interpretation of the budget results, and it moves in the direction of our instances
+being easier than reality rather than harder.
+
+
 
 ---
 

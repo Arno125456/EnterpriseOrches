@@ -160,6 +160,9 @@ Add to this list rather than building. Nothing here blocks the presentation.
 - ~~Subset-move neighbourhood~~ — **already built on `mickie`, shipped in the step-1 merge**
   as `A+subset` / `A+M1+subset`. It recovers the fixture's optimum of 280. Chapter 3 can
   report it rather than promise it
+- Generator with **price decorrelated from GPU count** — F31 shows Murakkab prices a
+  heterogeneous fleet and our generators do not, so every budget result is measured where
+  (C3) barely binds. Identified, not closed
 - Real execution to replace `prototype/simulator.py`
 - Profiling Track B's knapsack subproblem before its runtime finding is treated as settled
 - More seeds and intervals on the findings that still lack them

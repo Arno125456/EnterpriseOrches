@@ -868,7 +868,7 @@ catches that class of bug regardless of source.
 | O10 | Fallback/retry — the reliability pillar | Advisor | High |
 | O11 | Framework integration or standalone | Advisor | High |
 | O12 | Novelty positioning vs Cheng & Nguyen | Advisor | High |
-| O13 | **Is `price(m)` independent of `gpu(m)`?** §1.3 defines price as "cost of one instance over the horizon" and `B` as a "total GPU budget" without saying whether they are the same axis. Measured, both generators have corr(price, gpus) ≈ 0.95–1.0, and consequently the budget does not change the optimal cost in 40 of 41 instances — (C3) is nearly inert. If GPUs are rented per hour that is realistic and (C3) is close to redundant with the objective, which is itself a finding. If price means energy, amortised hardware or mixed providers, both generators are unrealistic and every budget result is shaped by it. **T3's binding-region result and T1's arm comparison are provisional until this is settled** (F26) | **Advisor / Murakkab paper** | High |
+| ~~O13~~ | **ANSWERED 3 Sep (F31).** `price(m)` is **not** a multiple of `gpu(m)`. Murakkab's own results move GPU count 2.82x, energy 3.72x and cost 4.33x on one matched workload, and their gains come from trading A100s for H100s - price and energy per GPU differ by hardware type. Our generators assume the opposite (corr(price, gpus) ~ 0.95-1.0), so (C3) is nearly inert **in our instances only**. T3's binding region and T1's arm comparison remain provisional, not because O13 is open but because no generator reflects its answer yet. Remaining decision is the deployment target - local, GCP, or both - which is a team call | **Team (deployment target)** | High |
 
 ---
 

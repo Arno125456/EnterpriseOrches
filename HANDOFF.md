@@ -15,7 +15,7 @@ document is the detail behind those steps.
 The proof-of-concept is complete: all four tests answered against the plan's *methods*, not
 just its deliverables. 593 tests pass, reproducible from a clean clone. The optimizer works
 and Track C is the result. Beyond the PoC, the closed loop was built and run end to end, and
-it produced the project's strongest claim. Thirty findings are recorded, of which several
+it produced the project's strongest claim. Thirty-one findings are recorded, of which several
 correct earlier ones — **the corrections are as important as the results, and three headline
 numbers were retracted after a statistical audit.**
 
@@ -64,9 +64,12 @@ quoted survives §5 below.
 measured operating region (T3: 0.8×–1.25× the reference).
 
 **Known defects, both flagged, neither fixed.** T4's decision criteria ask an A-vs-C question
-the data has moved past. And **O13 is open** — whether `price(m)` is independent of `gpu(m)`.
-Both generators tie them together, so the GPU budget does not change the optimal cost in 40
-of 41 instances. Until O13 is settled, T3's region and T1's arm comparison are provisional.
+the data has moved past. And **the generators model a homogeneous fleet**: both tie price to
+GPU count, so the GPU budget does not change the optimal cost in 40 of 41 instances. O13 is no
+longer the open part — F31 answers it from Murakkab's own numbers, and the answer is that price
+and GPU count are separate axes. What is open is that **no generator reflects that yet**, so
+T3's region and T1's arm comparison were both measured where (C3) barely binds. State this in
+Chapter 4 rather than waiting for it to be found.
 
 ### The Semester 2 story
 
@@ -106,6 +109,8 @@ track makes the loop affordable. **The algorithm work exists because the loop de
 | §4.5 | EMA for latency, **decayed counting estimator for reliability** | Changed by F19 |
 | Track A | Stays in the repo, **not reported in results** | Your call, this session |
 | Track B | Keeps both roles — bound generator **and** allocator, with the 100× caveat attached | Your call, this session |
+| O13 | **Price is not a multiple of GPU count.** Murakkab's basis is the working default until the deployment target is fixed | Advisor + F31, 3 Sep |
+| STATIC | **Keep it as a live comparator, not a strawman.** If the adaptive method underperforms on a workload, report that static wins there | Your call, 3 Sep |
 
 ---
 
@@ -133,15 +138,17 @@ the audit** and may carry the same defect.
 
 | # | question | owner | blocks |
 |---|---|---|---|
-| **O13** | Is `price(m)` independent of `gpu(m)`? | **Advisor / Murakkab paper** | T3's region, T1's arm comparison |
+| ~~**O13**~~ | ~~Is `price(m)` independent of `gpu(m)`?~~ | **Answered 3 Sep** — yes, on Murakkab's basis (F31). What remains is a *team* decision: local, GCP, or both | T3's region and T1's arm comparison stay provisional until a decorrelated generator exists |
 | **O12** | Is the closed loop a sufficient novelty claim? | **Advisor** | Chapter 2, and the framing of everything |
 | **D1** | Formulation ratification, due 8 Sep | Team | Nominally everything, though §1 has not needed to change |
 | — | ~~Which duplicate implementation ships~~ | 035 / 075 | **Closed 3 Sep** — `mickie`'s ship; `main`'s stay registered as `B-C3-alt`, `A+rel` |
 | — | ~~Finding renumbering~~ | Team | **Closed 3 Sep** — `main`'s F20–F27 → F23–F30 |
 | — | Reconcile the `[PROPOSED]` compatibility score with Hatherley (2025) | 077 | Any drift-detection number |
 
-**O13 and O12 are advisor questions and both are cheap to ask.** O10 was answered in one
-sentence this session and it materially improved the project — these two would too.
+**O12 is the remaining advisor question and it is cheap to ask.** O13 turned out not to need
+asking: the advisor's guidance was to take Murakkab as the base, and Murakkab's published
+GPU/energy/cost triples answer it directly (F31). O10 was answered in one sentence and it
+materially improved the project; O12 would too.
 
 ---
 
