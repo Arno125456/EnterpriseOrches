@@ -78,9 +78,20 @@ nowhere to stray, so **a heuristic evaluated only at tight budgets looks better 
 | ≤ 8 tasks | **No heuristic is justified.** The exact solver is optimal in 32 ms |
 | 16–128 tasks | **Track C, decisively.** Greedy sits 8–15% above optimum and degrades with scale |
 
-At 128 tasks on the harder instance family the exact solver takes **17.75 s**; Track C takes
-**0.162 s** at **4.58% above optimum** — a ~110× speedup for under 5% cost, with runtime flat
-across a 16× increase in task count.
+At 128 tasks on the harder instance family (10 seeds, 95% CIs, every instance proven
+optimal): the exact solver takes **12.3 ± 10.3 s**, Track C takes **0.106 ± 0.020 s** at
+**3.03 ± 1.62%** above optimum.
+
+**The defensible claim is predictability, not a speed ratio.** The median speedup is 5×, not
+the ~110× obtained by dividing mean by mean — the solver's mean is carried by a heavy tail.
+What matters for a system that re-optimises in a loop is that Track C's runtime is bounded
+and near-constant while the exact solver's is highly variable and, without an imposed limit,
+unbounded on its worst cases: a statistics run had to be killed after an hour on a single
+instance. **An allocator that sometimes never returns cannot go in a control loop; one that
+always returns in 0.1 s can.**
+
+Track C's gap also improves with scale — 16.7% at 16 tasks to 3.0% at 128 — because rounding
+error amortises over more tasks.
 
 **Track A does not earn its complexity.** Track B produces the best bound in the project but
 is ~100× slower than the exact solver as an allocator, so its role is as an optimality
@@ -141,7 +152,11 @@ measurement is the only full answer and is Semester 2 work.
 hidden true parameters and the executor samples from them. This tests the loop's *logic*, not
 any executor's behaviour.
 
-**Nothing statistical.** Scale results are 3 seeds; sweeps are 25. No confidence intervals.
+**Statistics are partial.** The headline scale result now has 10 seeds and 95% confidence
+intervals, and every instance in it proved optimality. Most other results are 8–25 seeds
+without intervals. The first version of this report quoted a "~110× speedup" that was mean
+divided by mean and did not survive proper sampling — the median is 5×. Treat any single
+ratio in this project with suspicion unless an interval is attached.
 
 **No claim of the form "our approach reduces cost by X%" is supported.**
 

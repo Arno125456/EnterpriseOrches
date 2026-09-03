@@ -1578,6 +1578,70 @@ if it were.
 
 ---
 
+## F26 - Statistics: the 110x speedup claim was mean-over-mean and does not survive
+
+The headline result rested on 3 seeds. Re-run with 10 seeds, 95% confidence intervals, and a
+45s solver limit so a pathological instance cannot distort the mean by running forever.
+
+| generator | tasks | proven | MILP s | Track C s | **median** speedup | C gap % |
+|---|---|---|---|---|---|---|
+| uniform | 16 | 10/10 | 0.106 +-0.032 | 0.039 +-0.010 | 2x | 16.66 +-7.90 |
+| uniform | 32 | 10/10 | 0.293 +-0.070 | 0.070 +-0.014 | 4x | 9.12 +-4.63 |
+| uniform | 64 | 10/10 | 7.194 +-6.294 | 0.083 +-0.014 | 5x | 6.24 +-3.38 |
+| uniform | **128** | 10/10 | **12.283 +-10.290** | **0.106 +-0.020** | **5x** | **3.03 +-1.62** |
+| structured | 128 | 10/10 | 0.243 +-0.065 | 0.109 +-0.027 | 2x | 2.79 +-0.78 |
+
+### The correction
+
+**"~110x faster" was mean divided by mean.** 12.283 / 0.106 = 116, and that is the number
+that was quoted. But the **median speedup is 5x**, and the difference between those two
+numbers is the whole story: look at the interval, 12.283 **+-10.290**. The MILP's mean is
+carried by a heavy tail of a few pathological instances. On a *typical* 128-task instance the
+exact solver is only about five times slower than Track C.
+
+The claim as previously written - "110x faster for under 5% cost" - is not defensible and
+must not be presented. It is now in the do-not-quote table.
+
+### What survives, and it is a better argument
+
+**Predictability, not mean speed.** Track C at 128 tasks: **0.106 +-0.020 s**. The exact
+solver: **12.283 +-10.290 s**. Track C's runtime is essentially constant and bounded; the
+MILP's is wildly variable with a tail that, before a limit was imposed, ran unbounded - a
+statistics run had to be killed after an hour on a single instance.
+
+For a system that re-optimises inside a loop on every drift signal, **bounded latency matters
+more than mean latency.** An allocator that usually takes 12 s and sometimes never returns
+cannot be put in a control loop at all. One that always takes 0.1 s can. That is a stronger
+argument than a speed ratio and it does not depend on which average you pick.
+
+**The gap improves with scale, now with 10 seeds behind it.** 16.66% at 16 tasks down to
+**3.03 +-1.62%** at 128. The amortisation mechanism proposed in F16 - rounding error spread
+over more tasks - holds up under proper sampling.
+
+**Every instance proved optimality** within 45s, 80 of 80. So no gap here is measured against
+an unproven incumbent.
+
+### The generator dependence, again
+
+On the **structured** generator the MILP stays fast at 128 tasks (0.243s) and the median
+speedup is only **2x**. The speed argument is therefore specific to instance families where
+the MILP struggles - the same conclusion as F13, now with intervals. Any speed claim must
+name the family it holds for.
+
+### What this does to the project's headline
+
+The strongest honest statement is no longer about speed:
+
+> Track C returns an allocation within 3% of optimal at 128 tasks, in **0.106 +-0.020 s**,
+> with bounded and predictable runtime. The exact solver's runtime on the same instances is
+> **12.3 +-10.3 s** and, without an imposed limit, is unbounded on its worst cases.
+
+That supports the loop argument - a control loop needs bounded latency - without resting on
+an average that a careful reader will immediately question.
+
+
+---
+
 ## What these findings do not establish
 
 Restating §5.7, because early numbers invite over-reading:
