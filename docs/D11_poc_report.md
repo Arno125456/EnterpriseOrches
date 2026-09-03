@@ -25,23 +25,38 @@ back negative, and each removed work from Semester 2.
 
 ## 2. The four answers
 
-### T1 — It decomposes per profile, and the bound is real
+### T1 — It decomposes three different ways, and only one of them is useful
 
-Relaxing the assignment constraint (C1) yields one independent knapsack per profile, exactly
-as the facility-location literature predicts and **contradicting the earlier design's claim of
-per-workflow decomposition**. The resulting bound is consistently tighter than the LP bound —
-strictly tighter on 30 of 30 instances, never invalid.
+All three relaxations the method asks for were built and measured. Bound gap is the distance
+below the true optimum; smaller is tighter.
 
-The alternative arm (relaxing the budget) was also built. It does *not* decompose: the
-assignment constraint still couples every profile through the tasks, so each iteration costs
-a full exact solve. **The structural question is answered; the bound-quality comparison
-between the two arms is not, for the reason in §4.**
+| relaxed | decomposes into | uniform | structured |
+|---|---|---|---|
+| **(C1) assignment** | one knapsack **per profile** | **3.02%** | **4.63%** |
+| (C2) capacity | one choice **per task** | 12.68% | 26.85% |
+| (C3) budget | **does not decompose** | — | — |
+| LP relaxation | — | 12.16% | 24.61% |
+
+**None of them decomposes per workflow**, which is what the earlier design claimed. Workflow
+membership never appears in any subproblem, because no constraint is indexed by workflow.
+
+The plan flags one outcome to watch: a Lagrangian bound matching the LP bound means the track
+provides nothing the LP does not. **That fires for the (C2) arm** — 12.68% against the LP's
+12.16% — and the reason is structural: (C2) is where the coupling and the integrality gap
+live, so relaxing it buys an easy subproblem that no longer describes the problem. The
+criterion firing for the *wrong* arm is what vindicates the right one.
+
+The (C3) arm does not decompose — the assignment constraint still couples every profile
+through the tasks, so each iteration costs a full exact solve. Its bound could not be
+meaningfully compared here for the reason in §4.
 
 ### T2 — No. Greedy is defeated, and multi-start does not save it
 
 On a hand-verified instance (3 tasks, 2 profiles), greedy returns 300 against an optimum of
-280. Exhaustive enumeration confirms **all six task orderings return 300**, and no
-single-move relocate recovers it — the improving move requires relocating two tasks together.
+280. Exhaustive enumeration confirms **all six task orderings return 300**. A single-move
+relocate pass was then built and run, as the method specifies, and **also returns 300** — the
+improving move requires relocating two tasks together, which a one-at-a-time neighbourhood
+cannot see.
 
 This is not a tuning problem. It is a structural property of pricing a task against the
 current provisioning state when later assignments change that state.

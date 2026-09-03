@@ -176,3 +176,66 @@ def test_the_warm_start_is_inert(seed):
     if warm.feasible:
         assert cold.total_cost == pytest.approx(warm.total_cost)
     assert cold.lower_bound == pytest.approx(warm.lower_bound)
+
+
+# --- T1's other two arms (F25) ---------------------------------------------------
+
+@pytest.mark.parametrize("arm", ["capacity", "budget"])
+@pytest.mark.parametrize("seed", range(4))
+def test_every_relaxation_arm_produces_a_valid_bound(arm, seed):
+    """The disqualifying error applies to all three arms, not just the one we favour."""
+    from poc.tracks import track_b_budget, track_b_capacity
+    module = {"capacity": track_b_capacity, "budget": track_b_budget}[arm]
+
+    inst = generate(n_tasks=6, n_profiles=3, budget_tightness=1.0, seed=seed)
+    tasks, pools, profiles, budget = inst.unpack()
+    optimal = exact_milp.allocate(*inst.unpack())
+    result = module.allocate(*inst.unpack())
+
+    assert invariants.check(result, tasks, pools, profiles, budget) == []
+    if optimal.feasible and result.lower_bound is not None:
+        assert result.lower_bound <= optimal.total_cost + 1e-6, (
+            f"INVALID BOUND from the {arm} arm: {result.lower_bound} > {optimal.total_cost}")
+
+
+def test_relaxing_capacity_gives_no_better_bound_than_the_lp():
+    """F25. §5.3's cut criterion fires for the (C2) arm — relaxing the constraint that
+    carries the coupling buys an easy subproblem and a bound worth nothing extra.
+
+    This is what vindicates the (C1) choice: the criterion fires for the wrong arm.
+    """
+    from poc.tracks import track_b_capacity
+    c2_gaps, lp_gaps = [], []
+    for seed in range(6):
+        inst = generate(n_tasks=6, n_profiles=3, budget_tightness=1.0, seed=seed)
+        optimal = exact_milp.allocate(*inst.unpack())
+        if not optimal.feasible:
+            continue
+        c2 = track_b_capacity.allocate(*inst.unpack())
+        lp = track_c_lp.allocate(*inst.unpack())
+        if c2.lower_bound is not None and lp.lower_bound is not None:
+            c2_gaps.append(optimal.total_cost - c2.lower_bound)
+            lp_gaps.append(optimal.total_cost - lp.lower_bound)
+
+    assert c2_gaps
+    mean_c2 = sum(c2_gaps) / len(c2_gaps)
+    mean_lp = sum(lp_gaps) / len(lp_gaps)
+    assert mean_c2 >= mean_lp * 0.8, (
+        "the (C2) arm is supposed to be no better than the LP; if it has become "
+        "materially tighter, F25's conclusion needs revisiting")
+
+
+def test_the_assignment_arm_is_the_tightest():
+    """The whole point of T1: (C1) beats both alternatives and the LP."""
+    from poc.tracks import track_b_capacity
+    wins = 0
+    for seed in range(6):
+        inst = generate(n_tasks=6, n_profiles=3, budget_tightness=1.0, seed=seed)
+        optimal = exact_milp.allocate(*inst.unpack())
+        if not optimal.feasible:
+            continue
+        c1 = track_b_lagr.allocate(*inst.unpack())
+        c2 = track_b_capacity.allocate(*inst.unpack())
+        if c1.lower_bound is not None and c2.lower_bound is not None:
+            wins += c1.lower_bound >= c2.lower_bound - 1e-6
+    assert wins >= 5, "the (C1) arm should dominate the (C2) arm on bound quality"

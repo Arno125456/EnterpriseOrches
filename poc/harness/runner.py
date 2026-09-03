@@ -39,7 +39,8 @@ from poc.formulation import invariants
 from poc.formulation.types import AllocationResult
 from poc.instances.generator import ProblemInstance, generate
 from poc.tracks import (exact_milp, static_baseline, track_a_greedy,
-                        track_a_m1, track_b_budget, track_b_cold,
+                        track_a_m1, track_a_relocate, track_b_budget,
+                        track_b_capacity, track_b_cold,
                         track_b_lagr, track_c_consolidate, track_c_lp,
                         track_c_multi)
 
@@ -49,9 +50,11 @@ STRATEGIES = {
     "STATIC": static_baseline,
     "A": track_a_greedy,
     "A+M1": track_a_m1,
+    "A+rel": track_a_relocate,
     "B": track_b_lagr,
     "B-cold": track_b_cold,
     "B-C3": track_b_budget,
+    "B-C2": track_b_capacity,
     "C": track_c_lp,
     "C2": track_c_multi,
     "C+cons": track_c_consolidate,

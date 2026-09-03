@@ -107,3 +107,20 @@ def test_track_c_recovers_the_optimum_here(instance):
     assert result.total_cost == fx.OPTIMUM["total_cost"]
     assert result.lower_bound <= fx.OPTIMUM["total_cost"]
     assert invariants.check(result, tasks, pools, profiles, budget) == []
+
+
+def test_relocate_does_not_rescue_greedy(instance):
+    """T2's method step 2, run rather than asserted.
+
+    CLAUDE.md records by hand-enumeration that single-move relocate cannot recover the
+    optimum here: moving t1 alone to m2 costs +180 and saves only 100. The plan's method
+    asks for it to be *run*, so it is.
+    """
+    from poc.tracks import track_a_relocate
+    tasks, pools, profiles, budget = instance
+    result = track_a_relocate.allocate(tasks, pools, profiles, budget)
+
+    assert result.total_cost == fx.GREEDY_EXPECTED_COST, (
+        "relocate recovered the optimum — if this happens, T2's conclusion that a "
+        "multi-move neighbourhood is required no longer holds")
+    assert invariants.check(result, tasks, pools, profiles, budget) == []

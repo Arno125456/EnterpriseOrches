@@ -1520,6 +1520,64 @@ of GPU count, this whole table needs re-running and the region may move.
 
 ---
 
+## F25 - T1 answered in full: three arms, three decomposition axes, one right answer
+
+The PoC plan's T1 method asks for three relaxations - "write the Lagrangian of (3)... repeat
+relaxing (2) instead, and both together". Two existed. The capacity arm did not, so T1 was
+incomplete regardless of the earlier findings. It is built now.
+
+| relaxed | decomposes into | uniform bound gap | structured bound gap |
+|---|---|---|---|
+| **(C1) assignment** | one knapsack **per profile** | **3.02%** | **4.63%** |
+| (C2) capacity | one choice **per task** | 12.68% | 26.85% |
+| (C3) budget | **does not decompose** | 0.00% * | 0.00% * |
+| LP relaxation | - | 12.16% | 24.61% |
+
+\* only because the budget does not bind on our instances - see F23. Not a real result.
+
+### The answer to T1 as asked
+
+**Along what axis does it decompose?** All three, differently - and that is the useful part
+of the answer:
+
+  * Relaxing **(C1)** leaves (C2) indexed by profile, so the subproblems are **per profile**.
+    This is the classical facility-location decomposition and what §1.8 predicted.
+  * Relaxing **(C2)** removes the only thing linking tasks to each other, so routing becomes
+    **per task** and provisioning becomes a knapsack over the budget. Cleanly separable, and
+    nearly worthless.
+  * Relaxing **(C3)** leaves (C1) coupling every profile through the tasks. It **does not
+    decompose**, and each iteration costs a full exact solve.
+
+**None of them is per workflow**, which is what the earlier design claimed. Workflow
+membership never appears in any subproblem, because no constraint is indexed by workflow.
+
+### The (C2) arm fires §5.3's cut criterion, and that is informative
+
+§5.3's T1 table flags one outcome to watch: *"Lagrangian bound = LP bound consistently ->
+Track B provides nothing Track C does not; it should be cut or rejustified."*
+
+For the **(C2) arm that is exactly what happens**: 12.68% against the LP's 12.16%, and 26.85%
+against 24.61%. Relaxing the capacity constraint buys an easy, cleanly decomposable
+subproblem and a bound no better than simply solving the LP.
+
+The reason is structural rather than numerical. §1.7 states that (C2) is where the coupling
+lives and where the integrality gap lives. Relax the one constraint that makes the problem
+hard and the remainder is easy precisely because it no longer describes the problem.
+
+**So the criterion fires for the wrong arm, which vindicates the right one.** Track B as
+built - relaxing (C1) - gives 3.02% against the LP's 12.16%, and stands.
+
+### On "both together"
+
+`track_b_lagr.py` relaxes (C1) with multipliers and **drops** (C3) outright, which is the
+limiting case of relaxing both with the budget multiplier pinned at zero. So the combined
+case is covered in its weakest form. A proper two-multiplier version was not built; given
+F23 shows the budget does not bind on these instances, it could not be evaluated here even
+if it were.
+
+
+---
+
 ## What these findings do not establish
 
 Restating §5.7, because early numbers invite over-reading:

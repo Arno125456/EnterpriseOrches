@@ -19,10 +19,12 @@ each finding supports, and which findings are negative results that should not b
 
 ### T1 — Does the Lagrangian relaxation decompose, and along what axis?
 
-**Half answered.** Track B was built relaxing **(C1)**, and it does decompose **per profile**,
-exactly as §1.8 predicted and contradicting v1's per-workflow claim. But (C1) was chosen
-*by assumption* to give T1 something to measure; **the (C3) alternative was never built**, so
-"which constraint *should* be relaxed" remains open.
+**Answered in full (F25).** All three arms are built. Relaxing **(C1)** gives one knapsack
+per profile and a 3.0–4.6% bound gap; relaxing **(C2)** gives one choice per task and a bound
+no better than the LP (12.7% vs 12.2%); relaxing **(C3)** does not decompose at all. **None is
+per workflow** — no constraint is indexed by workflow, so the earlier design's claim could
+never have held. §5.3's "cut it" criterion fires for the (C2) arm, which vindicates the (C1)
+choice rather than undermining it.
 
 The sub-question O3 is answered cleanly: **the Lagrangian bound is consistently tighter than
 the LP bound** — strictly tighter on 30 of 30 instances, 0 invalid bounds, and tight on the
