@@ -44,6 +44,10 @@ no execution, no domain data.
 A *negative* answer to any of these is a success. "Track B provides no bound advantage" is a
 finding that saves a semester. The PoC fails only if the questions remain open.
 
+> **Picking this up fresh?** Read [`HANDOFF.md`](HANDOFF.md) first — current state, decisions
+> already taken, what must not be quoted, and what to do next. Then [`BRANCHES.md`](BRANCHES.md)
+> if you intend to merge anything.
+
 ## Where to start, by role
 
 Nine documents exist. Nobody needs to read them all. Read the two marked **everyone**, then
