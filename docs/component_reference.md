@@ -162,8 +162,10 @@ function, and it is upstream of every track's feasibility.
 
 **Does.** Relocates *every* task on one profile to another, together.
 
-**Behaves.** Halves Track C's mean gap on both generators at no runtime cost, and cuts its
-worst case from 100.85% to 44.01%. **It does not fix the adversarial fixture** — that needs
+**Behaves.** Cuts Track C's worst case from 100.85% to 44.01% at no runtime cost. Audited
+(F27): the **median** paired improvement is **0.00%** — it does nothing on a typical instance.
+The mean improvement is real (5.31% [0.56, 10.07]) but tail-carried, so describe it as a
+rare-severe-failure fix, not as halving the gap. **It does not fix the adversarial fixture** — that needs
 a *subset* move, and there is a test asserting the fixture is unchanged so the limitation is
 not mistaken for a bug.
 

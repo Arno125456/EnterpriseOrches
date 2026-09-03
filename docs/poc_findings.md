@@ -268,8 +268,12 @@ below contaminates it.
 | mean bound gap below the true optimum | **2.40%** | 15.21% |
 | invalid bounds (above the optimum) | **0** | 0 |
 
-*The 6× ratio here is the uniform generator's. On the structured generator it is 2.8×
-(8.39% against 23.47%) — see F12. "Consistently tighter" is robust; the multiplier is not.*
+*The multiplier here is **ratio of means and inflated** — the same construction that broke
+the 110× claim. Audited with paired per-instance statistics (F27): the median ratio is
+**2.53× uniform, 2.00× structured**, not 6×. What survives, and survives strongly, is the
+paired difference: the LP bound sits **12.6 [9.5, 15.6] percentage points** further from the
+optimum than the Lagrangian bound, and the interval excludes zero. Quote the difference,
+not the ratio.*
 
 Over a separate 30-instance check, the Lagrangian bound was **strictly tighter than the LP
 bound on 30 of 30**, never looser, never equal. On the hand-verified fixture it reaches
@@ -907,9 +911,18 @@ Measured, as condition `C+cons`:
 | runtime | 0.030 s | 0.026 s |
 | bound | unchanged | unchanged |
 
-**It halves Track C's mean gap on both generators at no runtime cost.** It does not change
-feasibility — it improves cost, it does not rescue a failed allocation — and it cannot
-change the bound, which is a relaxation property.
+**It halves Track C's mean gap on both generators at no runtime cost** — but see the audit
+below before quoting that.
+
+**Audited (F27): the MEDIAN paired improvement is 0.00% on both generators.** Consolidation
+does nothing at all on a typical instance. The mean improvement is real — paired 5.31%
+[0.56, 10.07] uniform and 13.29% [1.01, 25.56] structured, both excluding zero — but it is
+carried by a minority of instances where it helps enormously, of which the 100.85% case
+above is the extreme. The honest statement is **"fixes a rare, severe failure mode"**, not
+"halves the gap".
+
+It does not change feasibility — it improves cost, it does not rescue a failed allocation —
+and it cannot change the bound, which is a relaxation property.
 
 At scale the gain is smaller (uniform 4.25% → 3.35%, structured 15.86% → 13.52%) simply
 because Track C is already close there. The pass matters most where Track C is worst.
@@ -1638,6 +1651,73 @@ The strongest honest statement is no longer about speed:
 
 That supports the loop argument - a control loop needs bounded latency - without resting on
 an average that a careful reader will immediately question.
+
+
+---
+
+## F27 - Statistical audit of every headline claim. Two break, two hold, one holds differently.
+
+After F26 retracted the 110x speedup as a ratio of means, the same defect was looked for
+everywhere. It is systemic: of 26 findings, only 11 lines carried an interval, and several
+headline numbers were built the same way.
+
+Comparisons are re-measured as **paired per-instance differences** - same instance, both
+methods - which is both the correct statistic and far more sensitive than comparing two
+means. A paired interval that crosses zero means the effect is not established at all.
+
+| claim | verdict | paired evidence |
+|---|---|---|
+| Track C ~110x faster than exact | **RETRACTED** (F26) | median speedup 5x; the mean was outlier-carried |
+| Track B's bound 3-6x tighter than LP | **RATIO INFLATED, effect holds** | difference **12.57 pp [9.49, 15.64]**; median ratio **2.53x**, not 6x |
+| Consolidation halves Track C's gap | **MISLEADING, effect is real but rare** | median improvement **0.00%**; mean 5.31% [0.56, 10.07] |
+| The adaptive loop holds reliability under drift | **HOLDS STRONGLY** | **+0.424 [0.405, 0.442]**, n=20, mean = median |
+| Optimistic eligibility removes the overpayment | **HOLDS STRONGLY** | saving **128 [74, 182]**; the fixed condition has **zero variance** |
+
+### The ratio-of-means defect, three times
+
+`mean(A) / mean(B)` is not a typical ratio when either distribution has a tail. It appeared
+in three separate claims:
+
+| claim | ratio of means | median per-instance ratio |
+|---|---|---|
+| Track C vs exact solver, speed | 116x | **5x** |
+| Lagrangian vs LP bound, uniform | 7.51x | **2.53x** |
+| Lagrangian vs LP bound, structured | 3.80x | **2.00x** |
+
+**The rule going forward: never divide two means.** Compute the ratio per instance and report
+its median, or better, report the paired difference and its interval - which is what actually
+establishes the effect.
+
+### The one that changed character rather than size
+
+Consolidation's **median** paired improvement is **0.00% on both generators**. On a typical
+instance it does nothing. Its mean improvement is real - the interval excludes zero - but it
+is carried by a minority of instances where it helps enormously, of which F17's 100.85% case
+is the extreme.
+
+So the honest description is **"fixes a rare, severe failure mode"** rather than "halves the
+gap". That is arguably a *better* reason to keep it: a tail fix that costs nothing is worth
+having precisely because the tail is what embarrasses you.
+
+### The two that got stronger under audit
+
+**The differentiator (F21)** is the most solid result in the project. Paired difference
+**+0.424 [0.405, 0.442]** over 20 seeds, with mean and median identical - no skew, a tight
+interval, and an effect roughly twenty times the interval's half-width. It is also the claim
+the project most needs to be true.
+
+**The overpayment fix (F22)** is stronger than first reported. With 20 seeds the point-estimate
+condition costs a median of **560** against the optimum of 400 - a 40% overpayment, not the
+25% measured with 8 seeds - and the upper-bound condition returns **400.0 with zero variance**,
+hitting the optimum on every single seed.
+
+### What this changes about how results should be reported
+
+1. **Paired differences with intervals, not means side by side.**
+2. **Never a ratio of means.** Median of per-instance ratios, if a ratio is needed at all.
+3. **Report the median alongside the mean.** Where they diverge, the mean is describing a
+   tail rather than a typical case, and that difference is usually the interesting part.
+4. **State n.** Three of the corrections in this project trace to 3-8 seed samples.
 
 
 ---

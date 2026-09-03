@@ -93,9 +93,10 @@ always returns in 0.1 s can.**
 Track C's gap also improves with scale — 16.7% at 16 tasks to 3.0% at 128 — because rounding
 error amortises over more tasks.
 
-**Track A does not earn its complexity.** Track B produces the best bound in the project but
-is ~100× slower than the exact solver as an allocator, so its role is as an optimality
-certificate rather than as a candidate allocator.
+**Track A does not earn its complexity.** Track B produces the best bound in the project —
+paired, it sits **12.6 percentage points [9.5, 15.6]** closer to the optimum than the LP
+bound — but is ~100× slower than the exact solver as an allocator, so its role is as an
+optimality certificate rather than as a candidate allocator.
 
 ---
 
@@ -152,11 +153,20 @@ measurement is the only full answer and is Semester 2 work.
 hidden true parameters and the executor samples from them. This tests the loop's *logic*, not
 any executor's behaviour.
 
-**Statistics are partial.** The headline scale result now has 10 seeds and 95% confidence
-intervals, and every instance in it proved optimality. Most other results are 8–25 seeds
-without intervals. The first version of this report quoted a "~110× speedup" that was mean
-divided by mean and did not survive proper sampling — the median is 5×. Treat any single
-ratio in this project with suspicion unless an interval is attached.
+**Statistics were audited, and three claims did not survive.** Every headline was
+re-measured as a paired per-instance difference with 95% intervals (F26, F27):
+
+| claim | outcome |
+|---|---|
+| "~110× faster than exact" | **retracted** — mean over mean; median speedup is 5× |
+| "bound 3–6× tighter than LP" | **ratio inflated** — median 2.0–2.5×; the paired difference of 12.6 pp [9.5, 15.6] is what holds |
+| "consolidation halves the gap" | **median improvement is 0.00%** — real but tail-carried; it fixes a rare severe failure |
+| the adaptive loop holds reliability | **holds strongly** — +0.424 [0.405, 0.442], n=20 |
+| optimistic eligibility removes the overpayment | **holds strongly** — saving 128 [74, 182], zero variance |
+
+The lesson generalises: **never divide two means.** All three failures were the same
+construction. Treat any bare ratio in this project as unverified unless an interval is
+attached to it.
 
 **No claim of the form "our approach reduces cost by X%" is supported.**
 
