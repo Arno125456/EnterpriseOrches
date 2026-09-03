@@ -157,7 +157,9 @@ next thing started from the excursion rather than from the plan.
 Add to this list rather than building. Nothing here blocks the presentation.
 
 - Confidence-bound eligibility (built, measured, off by default — needs 077's sign-off)
-- Subset-move neighbourhood — one mechanism closing both T2's fixture and F17
+- ~~Subset-move neighbourhood~~ — **already built on `mickie`, shipped in the step-1 merge**
+  as `A+subset` / `A+M1+subset`. It recovers the fixture's optimum of 280. Chapter 3 can
+  report it rather than promise it
 - Real execution to replace `prototype/simulator.py`
 - Profiling Track B's knapsack subproblem before its runtime finding is treated as settled
 - More seeds and intervals on the findings that still lack them
@@ -166,6 +168,5 @@ Add to this list rather than building. Nothing here blocks the presentation.
 
 ## What you do not need to do
 
-The technical work is finished. The confidence-bound fix, real execution, more statistics, the
-subset-move neighbourhood — all Semester 2. **Nothing in the eight steps above requires writing
-new code.**
+The technical work is finished. The confidence-bound fix, real execution and more statistics
+are all Semester 2. **Nothing in the eight steps above requires writing new code.**
