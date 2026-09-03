@@ -87,6 +87,14 @@ rel(m)      reliability of profile m                     [0,1]
 lat(t,m)    latency of task t on profile m
 R_min(t)    reliability floor for task t
 L_max(t)    latency ceiling for task t
+
+            R_min(t) is **the reliability the baseline would deliver for t** — not an
+            arbitrary input. Advisor guidance, 3 Sep 2026: the goal is not to maximise
+            reliability but to keep it as good as not using this system. Set arbitrarily
+            low, the optimiser will legally trade reliability for cost: given two profiles
+            both passing a 0.90 floor it correctly takes 0.910 over 0.999 and saves 200.
+            Anchored to the baseline, the existing program enforces the requirement with no
+            change to the objective or to (C1)-(C3). See poc_findings.md F21.
 ```
 
 ### 1.4 Decision variables
@@ -440,7 +448,15 @@ allocation time, not a mechanism at execution time. **[OPEN — Semester 2.]**
 ### 4.7 Evaluation Harness
 
 Fixes batch, profile snapshot, budget, and seed identically across conditions; runs Tracks A,
-B, C, static baseline, and exact MILP; records cost, runtime, bound, feasibility. Any condition
+B, C, static baseline, and exact MILP; records cost, runtime, bound, feasibility, and
+**delivered reliability against the baseline**.
+
+That last metric is not optional. On cost alone a static allocator wins any drift scenario —
+it keeps the cheap plan and reports an unchanged bill while silently violating its floors.
+Measured over 16 rounds with a mid-run degradation, a static allocator delivered 0.542
+against a 0.95 floor, at cost 400, and reported nothing wrong; the adaptive loop delivered
+0.938 at cost 1013 (F21). Reporting cost without delivered reliability would have scored the
+failing system as the better one. Any condition
 this project introduces that Murakkab's evaluation did not use requires the MILP baseline to be
 re-run under it before an improvement is claimed.
 

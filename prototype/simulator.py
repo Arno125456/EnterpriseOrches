@@ -59,6 +59,8 @@ class SimulatedExecutor:
         self._truth = dict(truth)
         self._rng = np.random.default_rng(seed)
         self._clock = datetime(2026, 9, 3, 12, 0, 0)
+        self._round = 0
+        self._schedule: list[tuple[int, str, float | None, float | None]] = []
 
     def truth_for(self, profile_id: str) -> TrueBehaviour:
         return self._truth[profile_id]
@@ -76,6 +78,17 @@ class SimulatedExecutor:
             latency_mean=current.latency_mean if latency_mean is None else latency_mean,
             latency_sd=current.latency_sd)
 
+    def schedule_degradation(self, at_round: int, profile_id: str,
+                             reliability: float | None = None,
+                             latency_mean: float | None = None) -> None:
+        """Move the hidden truth at a given round.
+
+        Scheduling rather than calling degrade() directly is what makes a fair comparison
+        possible: two conditions given the same seed and the same schedule experience an
+        identical world, so any difference between them is the system, not the weather.
+        """
+        self._schedule.append((at_round, profile_id, reliability, latency_mean))
+
     def execute(self, routing: dict[TaskId, str]) -> list[Observation]:
         """One round: run every task on its assigned profile, emit an Observation each.
 
@@ -83,6 +96,11 @@ class SimulatedExecutor:
         Precedence is not simulated — DAG edges determine ordering at execution time but
         nothing here depends on it (§1.9).
         """
+        for at_round, profile_id, reliability, latency in self._schedule:
+            if at_round == self._round:
+                self.degrade(profile_id, reliability, latency)
+        self._round += 1
+
         observations = []
         for task_id in sorted(routing, key=lambda t: (t.workflow_id, t.task_name)):
             profile_id = routing[task_id]

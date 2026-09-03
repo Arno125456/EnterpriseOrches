@@ -136,3 +136,47 @@ def test_an_abandoned_profile_never_recovers(batch):
     frozen = [r.measured["parse_log_line-cheap"] for r in records[-10:]]
     assert len(set(round(v, 6) for v in frozen)) == 1, (
         "an unused profile's estimate should be frozen — no observations arrive")
+
+
+# --- F21: the differentiator ----------------------------------------------------
+
+def test_static_fails_its_floor_without_noticing_and_adaptive_does_not(batch):
+    """The project's central claim, pinned.
+
+    Both systems start correct - declared reliability equals true reliability - so this is
+    not a strawman. Mid-run the truth drops below the floor. The static system keeps
+    executing the same plan, reporting the same cost and a satisfied floor, while actually
+    delivering about half the required reliability. The adaptive loop measures, detects and
+    re-routes.
+
+    If this test ever fails, the project's differentiator no longer holds and the proposal
+    narrative needs rewriting.
+    """
+    strict = {t: TaskTypeSpec(SPECS[t].load, 0.95, 200.0) for t in SPECS}
+    strict_batch = ingest(MANIFEST, strict)
+    DRIFT_AT, ROUNDS = 6, 16
+
+    def executor():
+        _, truth = _setup(0.99)
+        for key in truth:
+            truth[key] = TrueBehaviour(0.99, truth[key].latency_mean)
+        sim = SimulatedExecutor(truth, seed=0)
+        for task_type in SPECS:
+            sim.schedule_degradation(DRIFT_AT, f"{task_type}-cheap", reliability=0.55)
+        return sim
+
+    def delivered(adaptive):
+        registry, _ = _setup(0.99)
+        records = run(strict_batch.as_list(), registry, executor(), exact_milp.allocate,
+                      budget=8, rounds=ROUNDS, adaptive=adaptive)
+        after = records[DRIFT_AT + 2:]
+        return sum(r.successes for r in after) / sum(r.successes + r.failures for r in after)
+
+    static_delivered = delivered(adaptive=False)
+    adaptive_delivered = delivered(adaptive=True)
+
+    assert static_delivered < 0.75, (
+        f"static delivered {static_delivered:.3f} - expected it to fail the 0.95 floor")
+    assert adaptive_delivered > 0.90, (
+        f"adaptive delivered {adaptive_delivered:.3f} - expected recovery toward the floor")
+    assert adaptive_delivered > static_delivered + 0.2

@@ -1196,6 +1196,89 @@ result. Adding an exploration policy is then a concrete, defensible Semester 2 c
 
 ---
 
+## F21 - The differentiator, measured: a static system fails its floors without noticing
+
+**This is the result the advisor asked for.** His guidance on O10 was that the goal is not to
+maximise reliability but to *"keep the reliability the same as much as possible as not using
+this system, or using Murakkab"*, and to *"maximise the thing that would make us stand out"*.
+Those are the same claim, and this measures it.
+
+Setup: the real Zookeeper batch, 12 tasks. Floors at 0.95. Declared reliability equals true
+reliability at the start, so **both systems begin correct** - this is not a strawman where
+the baseline starts wrong. At round 6 every cheap profile's true reliability drops from 0.99
+to 0.55. Same seed, same drift schedule, so both conditions experience an identical world.
+8 seeds.
+
+| round | STATIC delivered | STATIC cost | ADAPTIVE delivered | ADAPTIVE cost |
+|---|---|---|---|---|
+| 5 | 1.000 | 400 | 1.000 | 460 |
+| **6** | **0.552** | 400 | **0.594** | 900 |
+| 7 | 0.583 | 400 | 0.865 | 900 |
+| 9 | 0.625 | 400 | 0.990 | 1020 |
+| 13 | 0.438 | 400 | 1.000 | 1040 |
+| 17 | 0.521 | 400 | 0.979 | 1040 |
+
+**Post-drift: STATIC delivers 0.542 at cost 400. ADAPTIVE delivers 0.938 at cost 1013.**
+
+### The point is not the cost, it is the not-noticing
+
+A static allocator does not become wrong when reality drifts. It becomes wrong **without
+finding out**. Through rounds 6-17 the static system reports the same plan, the same cost,
+and a satisfied 0.95 reliability floor, while actually delivering 0.54. Every number it could
+show you is unchanged. Nothing in it is capable of detecting the failure, because it has no
+measurement path.
+
+That is the honest form of the project's claim, and it is stronger than a cost claim:
+
+> A static system cannot report reliability it does not measure. Ours holds delivered
+> reliability under drift because it measures, detects, and re-routes - and the cost of doing
+> so is visible rather than hidden.
+
+### The cost comparison is not apples to apples, and should not be presented as one
+
+ADAPTIVE costs 2.5x more post-drift. That is real and must be reported. But the two systems
+are not delivering the same thing: **STATIC is not meeting its requirement at all.** Its 0.95
+floor is violated on every round after drift. Comparing 400 against 1013 as though both are
+valid allocations would be dishonest - the correct statement is that STATIC's cheaper plan is
+cheaper *because it has silently stopped working*.
+
+### What it also exposes about our own system
+
+ADAPTIVE's cost creeps from 400 to 460 in rounds 0-5, **before any drift at all**. That is
+F20's premature abandonment showing up as money: unlucky early failures push a good profile
+below its floor and the system pays to move off it for no reason.
+
+So this experiment prices F20. The confidence-bound fix is no longer just a correctness
+argument - it is worth roughly 15% of the pre-drift bill.
+
+### Limitations
+
+- **Simulated execution.** The loop logic is tested; no real executor is involved.
+- **The drift is dramatic** - 0.99 to 0.55. A subtler drift would be a harder test and has
+  not been run.
+- **8 seeds**, no confidence intervals.
+- Floors are set by hand. Under the O10 answer they should be anchored to baseline-delivered
+  reliability (see the Section 1.3 note below), which would change the numbers.
+
+### Consequence for the documents
+
+Section 1 does **not** change: C1, C2, C3 and the objective all stand, and Section 1.9's
+"reliability is a floor only" is confirmed by the advisor.
+
+Two things around it do:
+
+- **Section 1.3** - `R_min(t)` has never been defined anywhere, it is simply listed as an
+  input. Under the O10 answer it acquires one: *the reliability the baseline would deliver
+  for that task*. Set that way, the existing program enforces exactly what the advisor asked
+  for. Set arbitrarily low, the optimiser will legally trade reliability away for cost -
+  demonstrated: two profiles both passing a 0.90 floor, the optimiser correctly takes 0.910
+  over 0.999 and saves 200.
+- **Section 4.7** - the evaluation must report **delivered reliability against baseline**,
+  not cost alone. On the current metric set, STATIC wins this experiment.
+
+
+---
+
 ## What these findings do not establish
 
 Restating §5.7, because early numbers invite over-reading:

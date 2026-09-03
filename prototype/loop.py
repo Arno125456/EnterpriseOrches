@@ -83,8 +83,18 @@ def run(batch_tasks: list[Task],
         budget: int,
         rounds: int = 20,
         drift_threshold: float = 0.9,
-        min_observations: int = 5) -> list[RoundRecord]:
-    """Run the loop for `rounds` execution rounds. Returns one record per round."""
+        min_observations: int = 5,
+        adaptive: bool = True) -> list[RoundRecord]:
+    """Run the loop for `rounds` execution rounds. Returns one record per round.
+
+    `adaptive=False` is the STATIC comparison, and it is what Murakkab does: allocate once
+    from the DECLARED profiles, then execute that same plan forever. Observations are still
+    recorded, but only so the evaluator can measure what the plan actually delivered — the
+    system itself never sees them, never detects drift, and never re-optimises.
+
+    That distinction is the project's differentiator made concrete. A static system does not
+    become wrong when reality drifts; it becomes wrong *without noticing*, which is worse.
+    """
     store = ProfileStore(registry.all_profiles())
     detector = DriftDetector(allocate, threshold=drift_threshold,
                              min_observations=min_observations)
@@ -121,6 +131,17 @@ def run(batch_tasks: list[Task],
         for observation in observations:
             store.record(observation)
         profiles = store.snapshot()
+
+        if not adaptive:
+            # Static: measured, but never acted on. No J2 refresh, no J8, no J9.
+            records.append(RoundRecord(
+                round_index=index, routing=dict(routing),
+                cost=assignments.active.total_cost,
+                measured={m: profiles[m].reliability for m in sorted(profiles)},
+                successes=successes, failures=len(observations) - successes,
+                drift_fired=False, drift_compatibility=1.0, reallocated=False,
+                reason="static: observations recorded but not acted on"))
+            continue
 
         # --- J2 again: measurement may have changed eligibility -------------------
         pools = current_pools(profiles)
