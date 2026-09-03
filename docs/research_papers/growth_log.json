@@ -47,5 +47,12 @@
     "concepts": 30,
     "total_words": 11490,
     "timestamp": "2026-08-29T07:26:53.510847+00:00"
+  },
+  {
+    "snapshot": "P12",
+    "papers": 12,
+    "concepts": 30,
+    "total_words": 12260,
+    "timestamp": "2026-09-03T05:45:21.136692+00:00"
   }
 ]
