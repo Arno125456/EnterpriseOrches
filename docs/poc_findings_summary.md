@@ -33,24 +33,24 @@ conclusions about whether it decomposes. **Both are correct; they relax differen
 | **(C1) assignment** | one knapsack **per profile** | **3.02%** | **4.63%** |
 | (C2) capacity | one choice **per task** | 12.68% | 26.85% |
 | (C3) budget, `n` integral (`track_b_budget.py`) | **does not decompose** — each iteration is a full exact solve | 0.00% \* | 0.00% \* |
-| (C3) budget, `n` continuous (`track_b_c3.py`, ships as `B-C3`) | one choice **per task**, 1-D concave dual solved by bisection in < 1 ms | 15.22% † | not yet run |
+| (C3) budget, `n` continuous (`track_b_c3.py`, ships as `B-C3`) | one choice **per task**, 1-D concave dual solved by bisection in < 1 ms | = LP bound † | = LP bound † |
 | LP relaxation | — | 12.16% | 24.61% |
 
 \* only because the budget does not bind on our instances — see F26. Not a real result.
 
-† post-merge harness run, 64 solvable instances, against the LP's **15.21%** on the same run.
-Whether that 0.01 pp is bisection tolerance or a genuine difference is **not yet checked
-per-instance** — the paired comparison is queued below, and the claim of exact equality
-should not be made until it is run.
+† **checked paired, per instance**, 6 tasks / 3 profiles at tightness 1.0: 24 uniform and 25
+structured instances, `B-C3` and the LP agree to within **2e-5** with differences of *both*
+signs — solver and bisection tolerance, not a systematic gap. The 15.22% vs 15.21% in the
+pooled harness table is aggregation, not a difference in the bounds themselves.
 
 **The reconciliation.** Relaxing (C3) alone leaves (C1) coupling every profile through the
 tasks, so the subproblem is still capacitated facility location — `main`'s F28 is right that
 it does not decompose. `mickie`'s F21 additionally relaxes the **integrality of `n[m]`**,
 which is what buys the per-task decomposition: each task independently picks the profile
-minimising the effective rate `(price + μ·gpu) / thr`. That is also why its dual bound is
-expected to **match** the LP rather than beat it — with the integrality property restored in
-the subproblem, Lagrangian duality guarantees no more than the LP. On the evidence so far it
-is the LP bound reached by a cheaper route, not a tighter one.
+minimising the effective rate `(price + μ·gpu) / thr`. That is also why its dual bound
+**matches** the LP rather than beating it — with the integrality property restored in the
+subproblem, Lagrangian duality guarantees no more than the LP, and the paired check above
+confirms it. It is the LP bound reached by a cheaper route, not a tighter one.
 
 **None of the arms is per workflow** — no constraint is indexed by workflow, so the earlier
 design's claim could never have held. §5.3's "cut it" criterion fires for the (C2) arm and
@@ -179,7 +179,7 @@ faster for under 5% cost** (17.75 s → 0.162 s, 4.58% gap). That is the result 
 | 9 | **Drop scoped re-optimisation from Semester 2.** F18 answers O9: it works but is not worth building | 077 | - |
 | 10 | Reconcile the [PROPOSED] compatibility score against Hatherley (2025) | 077 | - |
 | 11 | **Amend section 4.5**: EMA for latency, decayed counting estimator for reliability (F19) | 077 | - |
-| 12 | Paired per-instance check that `B-C3`'s bound equals the LP bound (15.22% vs 15.21% pooled), and run `B-C3` on the structured generator | 075 | before Ch3 |
+| 12 | ~~Paired per-instance check that `B-C3`'s bound equals the LP bound~~ | 075 | **Done** — agrees to 2e-5 on both generators, differences of both signs |
 
 ---
 
