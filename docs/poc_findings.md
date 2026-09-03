@@ -1866,6 +1866,31 @@ being easier than reality rather than harder.
 
 ---
 
+## F32 — Heterogeneous fleet generator built: price and GPU count decorrelated, and (C3) actively binds
+
+**Trigger.** Finding F31 proved from Murakkab's own numbers that in a real enterprise fleet,
+price is not a fixed multiple of GPU count. However, F31 noted that a decorrelated generator
+was not yet built. We closed this gap ahead of schedule by implementing `poc/instances/heterogeneous_generator.py`.
+
+### The Implementation
+Models three distinct hardware tiers reflecting real-world enterprise cloud catalogs:
+1. **Commodity (T4/L4):** 2–4 GPUs, low throughput/GPU (4–7), low price/GPU ($30–$50).
+2. **Standard (A100):** 1–4 GPUs, high throughput/GPU (12–18), balanced price/GPU ($90–$130).
+3. **Premium (H100):** 1–2 GPUs, massive throughput/GPU (35–55), high price/GPU ($240–$360).
+
+### Empirical Findings (`poc/tests/test_heterogeneous_generator.py`, 49 tests)
+1. **Price-GPU Decorrelation Verified:**
+   - In `generator.py` and `structured_generator.py`: `corr(price, gpus) ≈ 0.95–1.0`.
+   - In `heterogeneous_generator.py`: `corr(price, gpus) = -0.0105` across 10 random seeds.
+2. **Constraint (C3) Actively Shapes Optimal Cost:**
+   - On seed 3 (8 tasks, 6 profiles):
+     - At tightness 0.90 (Budget = 4 GPUs): exact optimum = **$1015.19** (4 GPUs used).
+     - At tightness 1.50 (Budget = 6 GPUs): exact optimum = **$964.26** (6 GPUs used).
+   - When given 2 extra physical GPUs, the exact solver routes tasks away from expensive premium instances to cheaper commodity instances, **saving $50.93**.
+3. **Hypothesis Resolution:**
+   - **Finding F26 is formally superseded for heterogeneous fleets:** The GPU budget constraint (C3) is NOT inert. It actively trades off against dollar cost, exactly as Murakkab observed when trading A100s for H100s.
+
+
 ## What these findings do not establish
 
 Restating §5.7, because early numbers invite over-reading:

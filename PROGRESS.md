@@ -56,7 +56,7 @@ All planned PoC build steps (Steps 1–10) and prototype modules are **100% impl
 |---|---|---|---|---|
 | **Step 1** | Types & Data Structures | `poc/formulation/types.py` | **Complete** | Validated in all tracks |
 | **Step 2** | Invariant Gates ($I_1-I_5$) | `poc/formulation/invariants.py` | **Complete** | `test_invariants.py` |
-| **Step 3** | Problem Generators | `generator.py`, `structured_generator.py` | **Complete** | `test_generator.py`, `test_structured_generator.py` |
+| **Step 3** | Problem Generators | `generator.py`, `structured_generator.py`, `heterogeneous_generator.py` | **Complete** | `test_generator.py`, `test_structured_generator.py`, `test_heterogeneous_generator.py` |
 | **Step 4** | Exact Reference Solver | `poc/tracks/exact_milp.py` | **Complete** | Hand-verified against `adversarial_3t2p` (opt=280) |
 | **Step 5** | Dynamic Provisioning State | `poc/core/provisioning.py` | **Complete** | `test_provisioning.py` |
 | **Step 6** | Shared Decision Rule | `poc/core/decision_rule.py` | **Complete** | `test_decision_rule.py` |
@@ -140,6 +140,16 @@ Published in [`docs/chapter3_benchmark_results.md`](docs/chapter3_benchmark_resu
 - **F20:** Subset-move consolidation (`A+subset`) breaks aggregate coupling, achieving true optimum 280 on fixture and 1.57% mean gap.
 - **F21:** (C3) Lagrangian relaxation confirms LP duality equivalence (15.00% bound gap in $<1\text{ms}$); (C1) relaxation proved 3–5× tighter.
 - **F22:** Extended tightness sweeps above $1.0\times B_{\text{ref}}$ eliminate cliff artifacts and confirm asymptotic convergence.
+- **F23:** Closed-loop execution runs end-to-end; reveals that measurement noise can cause premature abandonment of good profiles.
+- **F24 (Core Differentiator):** A static allocator silently violates reliability floors under drift (0.542 against 0.95 floor); adaptive loop maintains 0.938 (+0.424 [0.405, 0.442]).
+- **F25:** Upper confidence bound filtering on reliability recovers true optimum (400.0) with zero variance; point-estimate filtering overpays by 40%.
+- **F26:** GPU budget (C3) was nearly inert in homogeneous generators where price ≈ 100 * GPUs.
+- **F27:** Operating budget region mapped to 0.8× to 1.25× reference; looser budgets worsen heuristic gaps by expanding search space.
+- **F28:** CBC solver bounded with explicit time limit; prevents unbounded hangs on hard instances.
+- **F29:** Statistical audit of Track C speedup: median speedup is 5×; the defensible claim is bounded runtime predictability (0.106 ± 0.020 s vs 12.3 ± 10.3 s with heavy tails).
+- **F30:** Statistical audit of dual bounds and consolidation: Track B bound is 12.57 pp [9.49, 15.64] closer to optimum; consolidation provides 5.31% [0.56, 10.07] mean paired improvement, eliminating tail failures.
+- **F31:** Murakkab's published numbers prove that in heterogeneous fleets, price is NOT a multiple of GPU count (GPUs fall 2.82× while cost falls 4.33×).
+- **F32:** Heterogeneous fleet generator built (`heterogeneous_generator.py`, corr = -0.0105); proves (C3) actively couples with (C2) and directly trades off against dollar cost.
 
 ---
 
@@ -177,12 +187,13 @@ Published in [`docs/chapter3_benchmark_results.md`](docs/chapter3_benchmark_resu
 | **Executive Summary** | [`docs/poc_findings_summary.md`](docs/poc_findings_summary.md) | Standing summary of beliefs, confidence levels, and core conclusions |
 | **Chronological Findings** | [`docs/poc_findings.md`](docs/poc_findings.md) | Detailed findings log from F1 to F22, including mathematical proofs and anomalies |
 | **M1 Presentation Slides** | [`docs/M1_Proposal_Presentation_Slides.md`](docs/M1_Proposal_Presentation_Slides.md) | 16-slide presentation outline, visuals, speaker script, and committee Q&A prep |
+| **Heterogeneous Fleet Generator** | [`poc/instances/heterogeneous_generator.py`](poc/instances/heterogeneous_generator.py) | Decorrelates price from GPU count (F32), activating the (C3) budget trade-off |
 | **Chapter 3 Benchmarks** | [`docs/chapter3_benchmark_results.md`](docs/chapter3_benchmark_results.md) | Publication-grade Markdown and LaTeX benchmark tables (8 to 64 tasks) |
 | **Literature Report** | [`docs/research_papers/relationship_report.md`](docs/research_papers/relationship_report.md) | Synthesis of 12 foundational papers across scopes $S_1, S_2, S_3$ (12,260 words) |
 | **Pipeline Diagram** | [`docs/pipeline.md`](docs/pipeline.md) | End-to-end ASCII trace of the resource allocation and provisioning pipeline |
 
 ---
 
-*Last Updated: 3 September 2026 | Verified against test suite (566 tests, 562 passed, 4 skipped) | Branch: `mickie`*
+*Last Updated: 3 September 2026 | Verified against test suite (646 tests: 642 passed, 4 skipped) | Branch: `mickie`*
 
 

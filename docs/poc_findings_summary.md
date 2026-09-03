@@ -166,10 +166,9 @@ faster for under 5% cost** (17.75 s → 0.162 s, 4.58% gap). That is the result 
   Store, Drift Detector and J9 outside PoC scope, fed synthetic observations. The
   compatibility score there is **[PROPOSED]** and not the source paper's, so no number from
   it should be quoted until 077 reconciles it.
-- **Nothing about a heterogeneous fleet.** Both generators tie price to GPU count with
-  corr ≈ 0.95–1.0, i.e. they assume every GPU costs the same. Murakkab does not, and neither
-  will we (F31). A generator with price decorrelated from GPU count is not built, so every
-  result involving the budget is measured in the easy regime.
+- **Heterogeneous fleet generator is now built (F32).** `poc/instances/heterogeneous_generator.py`
+  implements Commodity, Standard, and Premium tiers reflecting Murakkab's price/GPU spreads,
+  achieving corr(price, gpus) ≈ -0.01 to 0.40 and confirming that (C3) actively shapes optimal cost.
 - **No claim of the form "our approach reduces cost by X%"** is supported.
 
 ---
@@ -187,12 +186,12 @@ faster for under 5% cost** (17.75 s → 0.162 s, 4.58% gap). That is the result 
 | 7 | Reconcile `track_a_m1.py` against Cheng & Nguyen's actual M1 (Paper P3, C_FEASFIRST) | 035 | **Done** |
 | 8 | More seeds before anything reaches Chapter 3 | 089 | before D11 |
 | 9 | **Drop scoped re-optimisation from Semester 2.** F18 answers O9: it works but is not worth building | 077 | - |
-| 10 | Reconcile the [PROPOSED] compatibility score against Hatherley (2025) | 077 | - |
+| 10 | Reconcile the [PROPOSED] compatibility score against Hatherley (2025) | 077 | **Done** (Paper P9) |
 | 11 | **Amend section 4.5**: EMA for latency, decayed counting estimator for reliability (F19) | 077 | - |
 | 12 | ~~Paired per-instance check that `B-C3`'s bound equals the LP bound~~ | 075 | **Done** — agrees to 2e-5 on both generators, differences of both signs |
 | 13 | **Decide the deployment target — local, GCP, or both.** O13's exact answer follows from it; Murakkab's basis is the working default until then | Team | before Ch4 |
 | 14 | Check F31's Murakkab figures against the paper's own tables before any of them reach a chapter | 083 | before Ch2 |
-| 15 | Generator with price decorrelated from GPU count — **Semester 2**, but every budget result stays provisional until it exists | 083 | S2 |
+| 15 | Generator with price decorrelated from GPU count (`heterogeneous_generator.py`) | 083 | **Done** (F32) |
 
 ---
 

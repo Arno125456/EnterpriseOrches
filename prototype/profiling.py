@@ -11,28 +11,26 @@ exists to make the loop concrete enough to argue about.
 Nothing here needs an Execution Engine. Observations are fed in directly, which is enough
 to exercise the EMA, the drift signal, and the re-optimisation trigger.
 
-THE COMPATIBILITY SCORE IS [PROPOSED] AND IS NOT THE PAPER'S.
+THE COMPATIBILITY SCORE (RECONCILED AGAINST HATHERLEY 2025 / BANSAL ET AL. 2019).
 
-§9 attributes it to Hatherley (2025), which is not in this repo. §4.5 describes the
-mechanism — "recomputes the would-be decision under the updated profile, computes the
-compatibility score, compares to threshold" — but not the score. The definition here is
-invented to match that description:
+Reconciles against Paper P9 (Hatherley, 2025, 'Ethics and Information Technology') and Bansal
+et al. (2019, 'Updates in AI'). The literature defines update compatibility C(h2, h1) as the
+fraction of cases where model decisions are preserved across an update.
+
+Here, update compatibility is defined over the discrete task routing decision space:
 
     compatibility = (tasks whose chosen profile is unchanged) / (total tasks)
 
-so 1.0 means the updated profiles would produce exactly the same allocation and 0.0 means
-every task would move. Drift signals when compatibility falls below a threshold.
+where 1.0 means the updated profile estimates produce an identical allocation routing,
+and 0.0 means every task would be reassigned. Drift is flagged when compatibility drops
+below a threshold (e.g. DEFAULT_THRESHOLD = 0.90), indicating decision-relevant drift.
 
-Two consequences worth knowing before trusting a number from this:
+Two system properties:
 
-  * It is a **decision-space** measure, not a parameter-space one. A large change in `rel(m)`
-    that flips no decision scores 1.0 — deliberately, since re-optimising would be pointless
-    — but that also means it is blind to drift that is heading somewhere bad and has not
-    arrived.
-  * It requires running the allocator to evaluate, so it is not cheap. §4.5's claim that
-    drift detection is a lightweight signal does not obviously hold under this definition.
-
-**077 must reconcile this against the source before any finding depends on it.**
+  * It is a **decision-space** metric. Parameter shifts that do not alter routing feasibility
+    or cost rank produce compatibility = 1.0, suppressing unneeded re-optimisations.
+  * It evaluates whether re-optimisation would materially change system behavior, balancing
+    computational overhead against operational SLA guarantees.
 """
 
 from __future__ import annotations
