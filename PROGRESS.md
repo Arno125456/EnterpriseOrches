@@ -181,6 +181,7 @@ Published in [`docs/chapter3_benchmark_results.md`](docs/chapter3_benchmark_resu
 
 | Deliverable | File Path | Purpose |
 |---|---|---|
+| **Master Proposal Document** | [`docs/CapOrches_Proposal_Master.md`](docs/CapOrches_Proposal_Master.md) | Complete unified M1 Proposal manuscript (Chapters 1–4, Exec Summary, References) |
 | **Proposal Chapters 1 & 2 Draft** | [`docs/proposal_chapter1_2_draft.md`](docs/proposal_chapter1_2_draft.md) | Publication-grade Chapters 1 & 2 (Motivation, MCFLP-B model, literature positioning) |
 | **Proposal Chapter 3 Draft** | [`docs/proposal_chapter3_draft.md`](docs/proposal_chapter3_draft.md) | Publication-grade Chapter 3 proposal text (Loop leads, optimizer serves it, F1-F32) |
 | **Proposal Chapter 4 Draft** | [`docs/proposal_chapter4_draft.md`](docs/proposal_chapter4_draft.md) | Publication-grade Chapter 4 (Architecture, S2 implementation, R7-R9, testbed) |
