@@ -181,6 +181,7 @@ Published in [`docs/chapter3_benchmark_results.md`](docs/chapter3_benchmark_resu
 
 | Deliverable | File Path | Purpose |
 |---|---|---|
+| **Proposal Chapters 1 & 2 Draft** | [`docs/proposal_chapter1_2_draft.md`](docs/proposal_chapter1_2_draft.md) | Publication-grade Chapters 1 & 2 (Motivation, MCFLP-B model, literature positioning) |
 | **Proposal Chapter 3 Draft** | [`docs/proposal_chapter3_draft.md`](docs/proposal_chapter3_draft.md) | Publication-grade Chapter 3 proposal text (Loop leads, optimizer serves it, F1-F32) |
 | **Authoritative Architecture** | [`docs/System_Architecture_v2.md`](docs/System_Architecture_v2.md) | Formal problem formulation (§1), component architecture (§3-§5), invariants (§6) |
 | **T0 Ratification Briefing** | [`docs/T0_Formulation_Ratification_Briefing.md`](docs/T0_Formulation_Ratification_Briefing.md) | Official formulation sign-off document and advisor briefing on SLA floors vs. objectives |
