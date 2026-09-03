@@ -71,6 +71,8 @@ All planned PoC build steps (Steps 1–10) and prototype modules are **100% impl
 
 Evaluated across uniform and structured generators over budget tightness $[0.6, 0.8, 1.0, 1.25, 1.5]$:
 
+### 4.1 Tightness Sweep (8 Tasks, 4 Profiles across Tightness [0.6, 0.8, 1.0, 1.25, 1.5])
+
 ```
 === UNIFORM GENERATOR (18 solvable instances) ===
 Condition    Feasible   Infeasible   Matched Opt   Mean Gap%   Max Gap%   Bound Gap%   Time (s)
@@ -96,6 +98,21 @@ B-C3 (C3 Dual)     19            2             5      27.75%     50.94%       25
 C (LP)             19            2             2      42.68%    100.85%       25.17%      0.033
 C+cons             19            2            10       6.11%     21.87%       25.17%      0.023
 ```
+
+### 4.2 Multi-Scale Scaling Evaluation (8 to 64 Tasks, Budget 1.25× Reference)
+
+Published in [`docs/chapter3_benchmark_results.md`](docs/chapter3_benchmark_results.md) and generated via [`scripts/generate_chapter3_tables.py`](scripts/generate_chapter3_tables.py):
+
+| Scale (Tasks, Prof) | Generator | MILP Time | A Gap% | A+subset Gap% | B-C3 Gap% | C+cons Gap% | C+cons Time |
+|---|---|---|---|---|---|---|---|
+| **8t, 4p** | Uniform | 0.032s | 12.55% | **4.51%** | 8.73% | 8.73% | 0.017s |
+| **8t, 4p** | Structured | 0.023s | 31.75% | **0.20%** | 30.09% | 7.74% | 0.021s |
+| **16t, 6p** | Uniform | 0.084s | 10.33% | **3.27%** | 6.81% | 9.50% | 0.023s |
+| **16t, 6p** | Structured | 0.121s | 29.14% | **0.22%** | 19.21% | 21.89% | 0.037s |
+| **32t, 8p** | Uniform | 0.214s | 8.83% | **2.20%** | 5.19% | 3.97% | 0.032s |
+| **32t, 8p** | Structured | 0.162s | 27.95% | 13.03% | 8.28% | **8.02%** | 0.057s |
+| **64t, 10p** | Uniform | 7.935s | 11.81% | 4.78% | 5.62% | **4.00%** | 0.055s |
+| **64t, 10p** | Structured | 0.210s | 23.77% | 13.92% | 8.96% | **5.59%** | 0.061s |
 
 ---
 
@@ -150,4 +167,19 @@ C+cons             19            2            10       6.11%     21.87%       25
 
 ---
 
-*Last Updated: 3 September 2026 | Verified against test suite (566 tests, 562 passed, 4 skipped)*
+## 8. Core Deliverables & Architecture Reference Index
+
+| Deliverable | File Path | Purpose |
+|---|---|---|
+| **Authoritative Architecture** | [`docs/System_Architecture_v2.md`](docs/System_Architecture_v2.md) | Formal problem formulation (§1), component architecture (§3-§5), invariants (§6) |
+| **Validation Plan** | [`docs/PoC_and_Validation_Plan.md`](docs/PoC_and_Validation_Plan.md) | September PoC roadmap, milestone definitions, research questions $T_1-T_4$ |
+| **Executive Summary** | [`docs/poc_findings_summary.md`](docs/poc_findings_summary.md) | Standing summary of beliefs, confidence levels, and core conclusions |
+| **Chronological Findings** | [`docs/poc_findings.md`](docs/poc_findings.md) | Detailed findings log from F1 to F22, including mathematical proofs and anomalies |
+| **Chapter 3 Benchmarks** | [`docs/chapter3_benchmark_results.md`](docs/chapter3_benchmark_results.md) | Publication-grade Markdown and LaTeX benchmark tables (8 to 64 tasks) |
+| **Literature Report** | [`docs/research_papers/relationship_report.md`](docs/research_papers/relationship_report.md) | Synthesis of 12 foundational papers across scopes $S_1, S_2, S_3$ (12,260 words) |
+| **Pipeline Diagram** | [`docs/pipeline.md`](docs/pipeline.md) | End-to-end ASCII trace of the resource allocation and provisioning pipeline |
+
+---
+
+*Last Updated: 3 September 2026 | Verified against test suite (566 tests, 562 passed, 4 skipped) | Branch: `mickie`*
+
