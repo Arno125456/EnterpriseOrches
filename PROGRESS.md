@@ -160,8 +160,8 @@ Published in [`docs/chapter3_benchmark_results.md`](docs/chapter3_benchmark_resu
 
 | # | Action Item | Owner | Target Date | Status |
 |---|---|---|---|---|
-| 1 | **T0 / D1 — Ratify the formulation:** Formal team sign-off on §1 mathematical programming model | All | **8 September 2026** | Ready for review |
-| 2 | **Advisor Alignment:** Clarify whether reliability is strictly a floor ($R_{\min}$) or multi-objective trade-off | Team / Advisor | Before T0 | Question prepared |
+| 1 | **T0 / D1 — Ratify the formulation:** Formal team sign-off on §1 mathematical programming model | All | **8 September 2026** | **Ready for sign-off** ([`docs/T0_Formulation_Ratification_Briefing.md`](docs/T0_Formulation_Ratification_Briefing.md)) |
+| 2 | **Advisor Alignment:** Clarify whether reliability is strictly a floor ($R_{\min}$) or multi-objective trade-off | Team / Advisor | Before T0 | **Briefing prepared** (Option A recommended) |
 | 3 | **Proposal Chapter 3 Drafting:** Ingest benchmark tables from F20–F22 (`chapter3_benchmark_results.md`) | All | Mid-September | **Done** (Tables ready) |
 | 4 | **Semester 2 Scope Pruning:** Formally excise scoped re-optimization from implementation architecture (F18) | 077 | Milestone M1 | Decided |
 
@@ -172,6 +172,7 @@ Published in [`docs/chapter3_benchmark_results.md`](docs/chapter3_benchmark_resu
 | Deliverable | File Path | Purpose |
 |---|---|---|
 | **Authoritative Architecture** | [`docs/System_Architecture_v2.md`](docs/System_Architecture_v2.md) | Formal problem formulation (§1), component architecture (§3-§5), invariants (§6) |
+| **T0 Ratification Briefing** | [`docs/T0_Formulation_Ratification_Briefing.md`](docs/T0_Formulation_Ratification_Briefing.md) | Official formulation sign-off document and advisor briefing on SLA floors vs. objectives |
 | **Validation Plan** | [`docs/PoC_and_Validation_Plan.md`](docs/PoC_and_Validation_Plan.md) | September PoC roadmap, milestone definitions, research questions $T_1-T_4$ |
 | **Executive Summary** | [`docs/poc_findings_summary.md`](docs/poc_findings_summary.md) | Standing summary of beliefs, confidence levels, and core conclusions |
 | **Chronological Findings** | [`docs/poc_findings.md`](docs/poc_findings.md) | Detailed findings log from F1 to F22, including mathematical proofs and anomalies |
@@ -182,4 +183,5 @@ Published in [`docs/chapter3_benchmark_results.md`](docs/chapter3_benchmark_resu
 ---
 
 *Last Updated: 3 September 2026 | Verified against test suite (566 tests, 562 passed, 4 skipped) | Branch: `mickie`*
+
 
