@@ -78,6 +78,7 @@ faster for under 5% cost** (17.75 s → 0.162 s, 4.58% gap). That is the result 
 | 9 | The exact MILP becomes expensive around 128 tasks — but only on some instance families | **Medium** | 21 s uniform vs 1.9 s structured at 128 | More families; a better solver or formulation |
 | 10 | Instance *structure* drives solver cost more than instance *size* | **Medium** | Structured was harder at 8 tasks, 11× cheaper at 128 | Only two generators exist |
 | 11 | Scoped re-optimisation is well-defined but **vacuous**: a drifted profile is used by 84-100% of workflows, so the affected set is almost the whole batch. Scoped narrower than reality it costs a mean 22%. Either way, do not build it | **Medium-high** | F18, corrected; 60 instances, workflow counts 2-12 | Global re-optimisation becoming expensive at scale |
+| 13 | The closed loop runs without thrashing and catches real degradation, but abandons within-floor profiles on noise and can never re-test them - measurement drives eligibility, eligibility drives routing, routing drives measurement | **Medium-high** | F20, 10 seeded end-to-end runs on the real batch | An exploration or confidence-bound policy, which does not exist |
 | 12 | Section 4.5's EMA is wrong for reliability: a binary signal under an EMA reports 0.70 after 99 successes and one failure, and that value filters C(t) | **High** | F19, arithmetic, reproduced in tests | Nothing - the mechanism is arithmetic |
 
 ---
@@ -105,8 +106,11 @@ faster for under 5% cost** (17.75 s → 0.162 s, 4.58% gap). That is the result 
   intervals, no significance testing.
 - **Nothing about Track B's real ceiling.** Its runtime finding may be implementation, not
   method.
-- **Nothing about execution or the domain.** No allocation has been run against a real
-  executor, and R7/R8/R9 have no implementation.
+- **Nothing about execution.** J5/J6 are simulated: profiles have hidden true parameters and
+  the executor samples from them. That tests the loop's LOGIC, not any real executor's
+  behaviour. R7/R8/R9 have no implementation.
+- **The domain data is used only for structure.** The real Zookeeper batch supplies workflow
+  shape and task types; load and floors are invented, because the manifest carries neither.
 - **Profiling and drift exist only as a prototype.** `prototype/` implements the Profile
   Store, Drift Detector and J9 outside PoC scope, fed synthetic observations. The
   compatibility score there is **[PROPOSED]** and not the source paper's, so no number from

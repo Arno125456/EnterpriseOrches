@@ -1106,6 +1106,96 @@ section 4.5 implies.
 
 ---
 
+## F20 - The closed loop runs, and it abandons good profiles it can never win back
+
+**Outside PoC scope.** The first end-to-end run of the system as a system: J1 ingest ->
+J2 resolve -> J3 allocate -> J4 persist -> J5/J6 simulated execution -> J7 profile ->
+J8 drift -> J9 global re-optimisation -> back to J3.
+
+Run on the **real batch** - `data/eval_batches/eval_batch_3workflows.json`, three
+incident-detection workflows over multi-host Zookeeper logs, twelve tasks. Execution is
+simulated (see `prototype/simulator.py`); the profiles have a **hidden true** reliability
+that differs from what the registry declares, so the loop must measure its way to reality
+rather than being handed it.
+
+### What works
+
+**It does not thrash.** The feedback path - signal, re-allocate, execute differently,
+signal again - is the obvious instability, and it does not fire. Typical runs re-allocate
+once or twice in twenty-five rounds and then hold.
+
+**It converges.** Measured reliability on profiles that keep receiving traffic climbs toward
+the hidden truth (0.938 -> 0.986 against a true 0.995 over twelve rounds).
+
+**Genuine degradation is caught.** Dropping a profile's true reliability from 0.99 to 0.40
+mid-run causes the loop to route away from it and accept a costlier plan. Sensitivity is
+real.
+
+### What does not work, and it is structural
+
+**In 8 of 10 seeded runs the system permanently abandoned a profile that met its floor.**
+
+The cheap profiles have true reliability **0.93** against a floor of **0.90**. They are
+acceptable. They are also cheap - the whole allocation costs 400 with them and 560-720
+without.
+
+| seed | final cost | abandoned | re-allocations | final measured |
+|---|---|---|---|---|
+| 0 | 720 | yes | 2 | 0.950 |
+| 1 | 560 | yes | 1 | 0.861 |
+| 3 | **400** | **no** | 0 | 0.939 |
+| 4 | 560 | yes | 1 | 0.694 |
+| 5 | **400** | **no** | 0 | 0.942 |
+| 8 | 720 | yes | 2 | 0.860 |
+
+An early unlucky failure pushes the measured estimate below the floor. The profile drops out
+of `C(t)`. The allocation moves to the expensive alternative. **And then the estimate
+freezes** - at 0.861, or 0.694 - because a profile that is not routed to receives no
+observations, forever.
+
+Cost rises 40-80% permanently, on the evidence of one or two failures, for a profile that
+was fine.
+
+### Why no component test could have found this
+
+Every part behaves correctly in isolation. The estimator is sound (F19 fixed it). The floor
+filter is doing exactly what §1.6 specifies. The drift detector fires appropriately. The
+allocator picks the cheapest feasible option.
+
+The failure is in the **composition**: measurement drives eligibility, eligibility drives
+routing, and routing drives measurement. Once a profile leaves that cycle it cannot re-enter
+it. Nothing in §4.5, §4.2 or §3.3 mentions this, because each section is correct about its
+own component.
+
+### What it is, and what it means for Semester 2
+
+This is the **explore/exploit problem**, and the architecture currently has no position on
+it. Principle P6 says profiles are measured, not declared - but a system that only measures
+what it already chose will converge to whatever it happened to try first.
+
+Three directions, none of them implemented here:
+
+  * **Confidence-aware floors** - filter `C(t)` on a lower confidence bound rather than a
+    point estimate, so a profile with few observations is not excluded on thin evidence.
+    Fits the existing formulation with no new machinery.
+  * **Occasional exploration** - route a small fraction of tasks to unused profiles.
+    Standard, but it deliberately spends money and needs a budget argument.
+  * **Estimate decay toward the prior** - let an unobserved profile's estimate drift back
+    toward its declared value so it is eventually retried. Cheapest to build, weakest
+    theoretically.
+
+**This is a design gap, not a bug, and it is a good one to have found.** It is a named
+problem with a large literature, it is squarely in the profile-guided half of the project
+where the novelty lives, and it is exactly the kind of thing §5.0 argues should surface
+before someone spends a semester on it.
+
+**For the proposal:** this strengthens the narrative rather than weakening it. "We built the
+loop, ran it, and found that naive measurement-driven eligibility is self-reinforcing" is a
+result. Adding an exploration policy is then a concrete, defensible Semester 2 contribution.
+
+
+---
+
 ## What these findings do not establish
 
 Restating §5.7, because early numbers invite over-reading:
