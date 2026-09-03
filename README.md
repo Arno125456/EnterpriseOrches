@@ -52,6 +52,8 @@ docs/
   System_Architecture_v2.md   Authoritative design reference
   PoC_and_Validation_Plan.md  Scope, deliverables, schedule, risks
   proposal_narrative.md       What the contribution is, and why the optimizer serves it
+  component_reference.md      Per-component: behaviour, whether it earns its place, and
+                              what it must become in the full system
   poc_findings_summary.md     START HERE for results — current beliefs and confidence
   poc_findings.md             Full chronological log, including superseded findings
   research_papers/            Literature tracking, feeds Ch.2
@@ -72,7 +74,8 @@ constraint it relaxes is T1's question (O2), and picking one would prejudge the 
 track exists to feed.
 
 Results: [`docs/proposal_narrative.md`](docs/proposal_narrative.md) explains what the
-findings are *for*. [`docs/poc_findings_summary.md`](docs/poc_findings_summary.md) is the
+findings are *for*, and [`docs/component_reference.md`](docs/component_reference.md) says
+what each part does and what it needs to become. [`docs/poc_findings_summary.md`](docs/poc_findings_summary.md) is the
 standing summary — what is believed now, at what confidence, and what would overturn it.
 [`docs/poc_findings.md`](docs/poc_findings.md) is the full chronological log behind it.
 
