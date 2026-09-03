@@ -176,6 +176,7 @@ Published in [`docs/chapter3_benchmark_results.md`](docs/chapter3_benchmark_resu
 | **Validation Plan** | [`docs/PoC_and_Validation_Plan.md`](docs/PoC_and_Validation_Plan.md) | September PoC roadmap, milestone definitions, research questions $T_1-T_4$ |
 | **Executive Summary** | [`docs/poc_findings_summary.md`](docs/poc_findings_summary.md) | Standing summary of beliefs, confidence levels, and core conclusions |
 | **Chronological Findings** | [`docs/poc_findings.md`](docs/poc_findings.md) | Detailed findings log from F1 to F22, including mathematical proofs and anomalies |
+| **M1 Presentation Slides** | [`docs/M1_Proposal_Presentation_Slides.md`](docs/M1_Proposal_Presentation_Slides.md) | 16-slide presentation outline, visuals, speaker script, and committee Q&A prep |
 | **Chapter 3 Benchmarks** | [`docs/chapter3_benchmark_results.md`](docs/chapter3_benchmark_results.md) | Publication-grade Markdown and LaTeX benchmark tables (8 to 64 tasks) |
 | **Literature Report** | [`docs/research_papers/relationship_report.md`](docs/research_papers/relationship_report.md) | Synthesis of 12 foundational papers across scopes $S_1, S_2, S_3$ (12,260 words) |
 | **Pipeline Diagram** | [`docs/pipeline.md`](docs/pipeline.md) | End-to-end ASCII trace of the resource allocation and provisioning pipeline |
