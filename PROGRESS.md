@@ -62,7 +62,7 @@ All planned PoC build steps (Steps 1–10) and prototype modules are **100% impl
 | **Step 6** | Shared Decision Rule | `poc/core/decision_rule.py` | **Complete** | `test_decision_rule.py` |
 | **Step 7** | Track C (LP + Consolidate) | `track_c_lp.py`, `track_c_consolidate.py` | **Complete** | `test_tracks_small.py`, `test_consolidation.py` |
 | **Step 8** | Track B (C1 & C3 Relaxations) | `track_b_lagr.py`, `track_b_c3.py`, `track_b_cold.py`| **Complete** | `test_track_b.py` |
-| **Step 9** | Track A (Greedy, M1, Subset) | `track_a_greedy.py`, `track_a_m1.py`, `track_a_subset.py` | **Complete** | `test_tracks_small.py`, `test_consolidation.py` |
+| **Step 9** | Track A (Greedy, M1, Subset, M1+Subset) | `track_a_greedy.py`, `track_a_m1.py`, `track_a_subset.py`, `track_a_m1_subset.py` | **Complete** | `test_tracks_small.py`, `test_consolidation.py` |
 | **Step 10** | Measurement Harness & Metrics | `poc/harness/runner.py`, `poc/harness/metrics.py` | **Complete** | `test_harness.py` |
 
 ---
