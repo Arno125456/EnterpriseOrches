@@ -73,7 +73,7 @@ faster for under 5% cost** (17.75 s → 0.162 s, 4.58% gap). That is the result 
 | 8 | Optimisation beats no-optimisation by a wide margin | **High** | STATIC 23–25% off, fails 58% of instances | Nothing plausible |
 | 9 | The exact MILP becomes expensive around 128 tasks — but only on some instance families | **Medium** | 21 s uniform vs 1.9 s structured at 128 | More families; a better solver or formulation |
 | 10 | Instance *structure* drives solver cost more than instance *size* | **Medium** | Structured was harder at 8 tasks, 11× cheaper at 128 | Only two generators exist |
-| 11 | Scoped re-optimisation is well-defined but costs more than a global re-run ~50% of the time, so it should not be built | **Medium-high** | F18, 40 instances x 4 budgets x 2 generators | Global re-optimisation becoming expensive at scale |
+| 11 | Scoped re-optimisation is well-defined but **vacuous**: a drifted profile is used by 84-100% of workflows, so the affected set is almost the whole batch. Scoped narrower than reality it costs a mean 22%. Either way, do not build it | **Medium-high** | F18, corrected; 60 instances, workflow counts 2-12 | Global re-optimisation becoming expensive at scale |
 | 12 | Section 4.5's EMA is wrong for reliability: a binary signal under an EMA reports 0.70 after 99 successes and one failure, and that value filters C(t) | **High** | F19, arithmetic, reproduced in tests | Nothing - the mechanism is arithmetic |
 
 ---
@@ -89,6 +89,7 @@ faster for under 5% cost** (17.75 s → 0.162 s, 4.58% gap). That is the result 
 | "Track C is the **weakest** of the three tracks" | F11, and an amendment I made to §5.9 | **Withdrawn.** True at 8 tasks, false at scale, where it is the only heuristic that works |
 | "**Track B dominates**" | F10 | True on quality at 8 tasks; false in practice — it is ~100× slower than exact (F13) |
 | "Rounding the routing is **nearly free**" | F6 | Mechanically true, but the integral routing can still be badly wrong (F17) |
+| "Scoped re-optimisation is **worse ~50% of the time**" | F18, first version | Measured an arbitrary affected workflow rather than the drifted profile's. Correctly scoped it is **identical to global**, because the affected set is 84-100% of workflows |
 
 ---
 

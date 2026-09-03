@@ -300,10 +300,13 @@ J10 ──► drives J3 under fixed conditions
 5. Verify: every task assigned; (C2) holds for every profile; (C3) holds
 6. Emit `AllocationResult` containing both `x` and `n`
 
-**[OPEN — scoping of re-optimisation.]** J9 re-invokes J3 "for affected workflows only". Under
-(C2), re-routing one workflow changes load on shared profiles, which changes instance counts,
-which affects every other workflow using those profiles. **Scoped re-optimisation may not be
-well-defined.** Deferred to Semester 2; the PoC does not exercise J9.
+**[RESOLVED — O9, see `poc_findings.md` F18.]** J9 previously read "for affected workflows
+only", with a note doubting whether that is well-defined under (C2). It is well-defined, and
+it is **vacuous**: drift is detected on a *profile*, so the affected workflows are those
+routed to it — and a shared profile is used by 84–100% of workflows even at twelve. Scoping
+correctly does the same work as a global run; scoping narrower costs a mean 22% and up to 51%.
+
+**J9 re-invokes J3 over the whole batch.** No scoping.
 
 ---
 
@@ -398,9 +401,28 @@ state-dependence is the aggregate-coupling problem, made explicit rather than hi
 `(workflowInstance, taskId, profileId)`; records latency, success, cost. Unattributable calls
 are logged and discarded rather than mis-attributed.
 
-**Profile Store** — sole writer of profile state. EMA update per observation. Serves immutable
-snapshots; an allocation run reads exactly one snapshot so Track B's bound is meaningful.
-Unprofiled pairs return `NotProfiled`, never a default.
+**Profile Store** — sole writer of profile state. Serves immutable snapshots; an allocation
+run reads exactly one snapshot so Track B's bound is meaningful. Unprofiled pairs return
+`NotProfiled`, never a default.
+
+*Update rule, amended after measurement — see `poc_findings.md` F19.* This section
+previously said "EMA update per observation" for all fields. That is correct for **latency**,
+a continuous quantity an EMA tracks well. It is **wrong for reliability**, which is estimated
+from a binary success/failure signal: at α = 0.3 a profile at 0.99 that observes 99 successes
+and then one failure reports **0.70**. Since `rel(m)` is the filter that builds `C(t)`, a
+single failed call would make a profile ineligible for every task with a floor above 0.7,
+collapse the pools and re-allocate the batch on the evidence of one observation.
+
+```text
+latency      EMA, as originally specified
+reliability  decayed counting estimator with a weak prior:
+                 rel = (decayed successes + p) / (decayed trials + 2p)
+```
+
+Recency still dominates, so genuine degradation is still detected. Note that the decay sets
+the effective sample size at `1/(1 − decay)` and therefore imposes a **ceiling** on achievable
+reliability of `(N + p)/(N + 2p)` — pick it so the ceiling clears the highest `R_min(t)` the
+registry must serve, or those tasks become permanently unservable with no error raised.
 
 **Drift Detector** — recomputes the would-be decision under the updated profile, computes the
 compatibility score, compares to threshold, signals. Signals only; does not re-optimise.
@@ -826,7 +848,7 @@ catches that class of bug regardless of source.
 | O6 | ~~LP rounding policy~~ → **Track C's repair pass**. Answered in part: the LP returns an integral routing 96% of the time, so rounding the routing is nearly free; the cost is decided by the repair that runs once `n[m]` must be integral (findings F6) | **PoC T3/T4** | Medium |
 | O7 | Where does the budget bind? | **PoC T3** | High |
 | O8 | Is Track A worth its complexity? | **PoC T4** | High |
-| O9 | Is scoped re-optimisation well-defined under (C2)? | Semester 2 | Medium |
+| O9 | Is scoped re-optimisation well-defined under (C2)? **Closed: yes, but vacuous** — the affected set is 84–100% of workflows, so J9 re-optimises globally (F18) | Closed | — |
 | O10 | Fallback/retry — the reliability pillar | Advisor | High |
 | O11 | Framework integration or standalone | Advisor | High |
 | O12 | Novelty positioning vs Cheng & Nguyen | Advisor | High |

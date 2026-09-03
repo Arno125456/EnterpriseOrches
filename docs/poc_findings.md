@@ -965,49 +965,67 @@ instances, which looks like Section 3.3's fear confirmed. It is not: by 1.50x th
 are gone entirely. This is the same knife edge as F15, caught this time *before* the finding
 was written rather than after.
 
-So the answer to O9 as literally asked - *is it well-defined?* - is **yes**. Freezing the
-unaffected workflows and allocating the rest against the remaining budget produces valid,
-complete allocations whenever the budget is not on the cliff.
+So the answer to O9 as literally asked - *is it well-defined?* - is **yes**.
 
-### But it is systematically worse, and that does not go away
+### But it is vacuous, which is the real finding [CORRECTED]
 
-At every budget level on both generators, scoped re-optimisation costs **more** than a
-global re-run on roughly half of instances - 20 of 40 at 1.5x and 2.0x uniform, 22 of 40 at
-2.0x structured. Loosening the budget does not help; the gap is structural, not a scarcity
-effect.
+**The first version of this finding measured the wrong thing, and its headline was wrong.**
+It marked one arbitrary workflow as affected and concluded that scoping is worse than a
+global re-run about half the time, at a mean 22% cost penalty.
 
-**How much worse, which the first version of this finding failed to report.** Over 60
-instances at 2.0x budget, 31 were strictly worse, and on those the penalty was:
+That is not how J9 is triggered. Drift is detected on a **profile**, so the affected
+workflows are *those with a task routed to the drifted profile* - not an arbitrary one.
+Re-run that way, over the same 60 instances:
 
-| | penalty |
-|---|---|
-| mean, over all instances | 11.53% |
-| mean, when strictly worse | **22.32%** |
-| median, when worse | 20.63% |
-| 90th percentile | 39.76% |
-| worst | 51.08% |
+| affected set | infeasible | worse | same | mean penalty | workflows affected |
+|---|---|---|---|---|---|
+| arbitrary, one workflow | 0 | 31 | 29 | 11.53% | 1.00 of 3 |
+| **derived from the drifted profile** | 0 | **0** | **60** | **0.00%** | **2.95 of 3** |
 
-Reporting only the frequency understated this badly. A coin flip between "same cost" and
-"20% more expensive" is a much stronger argument against scoping than a coin flip alone.
+Scoped re-optimisation is not worse. It is **identical to global, every time** - because the
+affected set is almost the entire batch.
 
-The reason is exactly Section 3.3's instinct, just arriving as suboptimality rather than as
-undefinedness. Frozen workflows hold their profiles, and those profiles' instance counts are
-ceilings over aggregate load. A global run can move a frozen task to consolidate two
-half-empty instances into one; a scoped run cannot see that move exists.
+That degeneracy is structural, not an artifact of these instances having only three
+workflows. Relabelling 24-task instances into more workflows and drifting the most-used
+profile:
+
+| workflows | affected (mean) | as % | affected = all |
+|---|---|---|---|
+| 2 | 2.00 | 100% | 40 of 40 |
+| 3 | 3.00 | 100% | 40 of 40 |
+| 5 | 4.90 | 98% | 36 of 40 |
+| 8 | 7.38 | 92% | 20 of 40 |
+| 12 | 10.05 | **84%** | 8 of 40 |
+
+**A shared profile is shared by nearly everyone.** Even at twelve workflows, drift on one
+profile touches ten of them.
+
+### What the two experiments say together
+
+They bracket the design. Scope the re-optimisation **correctly** - to every workflow
+actually touching the drifted profile - and it does the same work as a global run, so it
+saves nothing. Scope it **narrower** than reality, as the first experiment did by taking one
+workflow, and it costs a mean 22% and up to 51% more.
+
+So "affected workflows only" is either a no-op or a penalty, and there is no setting where
+it pays. Section 3.3's instinct was exactly right - *"re-routing one workflow changes load
+on shared profiles, which affects every other workflow using those profiles"* - it just
+surfaces as vacuousness rather than as undefinedness.
 
 ### Why this says "do not build it"
 
-Scoping exists to save work. On these instances a **global** re-optimisation with the exact
-solver costs about 0.1 s. The saving is negligible and the quality loss is a coin flip.
+Unchanged, and now better supported. A global re-optimisation costs about 0.1 s on these
+instances. Scoping adds a component, a correctness question, and a failure mode, in
+exchange for excluding roughly 16% of workflows from a re-run that is already cheap.
 
 **Recommendation for 077: do not build scoped re-optimisation. Re-optimise globally on every
-drift signal.** That removes a component from Semester 2 plans, removes O9 from the open
-list, and removes the "affected workflows only" language from Section 3.3 and J9.
+drift signal.** That removes a component from Semester 2, closes O9, and removes the
+"affected workflows only" language from Section 3.3 and J9.
 
-The one condition that would change this: if global re-optimisation becomes expensive at
-scale - plausible, since F13 shows the MILP reaching 21 s at 128 tasks - then scoping is
-worth revisiting, but against Track C rather than the exact solver, and with the ~50%
-quality penalty priced in.
+The condition that would change this: if global re-optimisation becomes expensive at scale -
+plausible, since F13 shows the MILP reaching 21 s at 128 tasks - then scoping is worth
+revisiting, against Track C rather than the exact solver. But the affected set would still
+be ~84% of workflows, so the saving would remain small.
 
 ### Caveat on the interpretation
 

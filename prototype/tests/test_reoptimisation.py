@@ -41,9 +41,18 @@ def test_scoped_never_beats_global():
             assert s.total_cost >= g.total_cost - 1e-6, f"seed {seed}"
 
 
-def test_scoped_is_frequently_more_expensive_than_global():
-    """The O9 finding, pinned. Freezing workflows locks in provisioning that a global run
-    would revisit, and no amount of budget fixes it."""
+def test_scoping_narrower_than_reality_is_expensive():
+    """What scoping costs when the affected set is smaller than the truth.
+
+    This marks ONE arbitrary workflow affected, which is not how J9 is triggered — drift is
+    detected on a profile, so the affected set is every workflow using it. That correct
+    version is covered by test_affected_set_is_almost_the_whole_batch below, and it comes
+    out identical to global.
+
+    This test is the other bracket: it shows the penalty for under-scoping, mean ~22% on
+    the instances where it bites. Together the two say scoping is either a no-op or a
+    penalty, with no setting in between where it pays.
+    """
     worse = comparable = 0
     for seed in range(40):
         inst = _instance(seed, multiplier=2.0)
@@ -104,3 +113,55 @@ def test_both_strategies_return_complete_allocations():
     for outcome in (g, s):
         if outcome.feasible:
             assert set(outcome.routing) == {t.id for t in tasks}
+
+
+def test_affected_set_is_almost_the_whole_batch():
+    """The corrected O9 finding: "affected workflows only" is close to vacuous.
+
+    J9 is triggered by drift on a PROFILE, so the affected workflows are those with a task
+    routed to it. Under (C2) a profile is shared, so that set is nearly everything — which
+    is exactly what §3.3 suspected, arriving as vacuousness rather than as undefinedness.
+    """
+    fractions = []
+    for seed in range(20):
+        inst = _instance(seed, multiplier=2.0, n_tasks=12)
+        tasks, pools, profiles, budget = inst.unpack()
+        base = exact_milp.allocate(tasks, pools, profiles, budget)
+        if not base.feasible:
+            continue
+        workflows = {t.id.workflow_id for t in tasks}
+        if len(workflows) < 2:
+            continue
+
+        counts = {}
+        for _, m in base.routing.items():
+            counts[m] = counts.get(m, 0) + 1
+        drifted = max(sorted(counts), key=lambda m: counts[m])
+        affected = {tid.workflow_id for tid, m in base.routing.items() if m == drifted}
+        fractions.append(len(affected) / len(workflows))
+
+    assert fractions
+    mean = sum(fractions) / len(fractions)
+    assert mean > 0.8, (
+        f"a drifted profile touched only {mean:.0%} of workflows; if this drops far, "
+        f"scoping might actually save something and F18 needs revisiting")
+
+
+def test_correctly_scoped_matches_global():
+    """With the affected set derived from the drifted profile, scoping is a no-op."""
+    for seed in range(12):
+        inst = _instance(seed, multiplier=2.0, n_tasks=12)
+        tasks, pools, profiles, budget = inst.unpack()
+        base = exact_milp.allocate(tasks, pools, profiles, budget)
+        if not base.feasible:
+            continue
+        counts = {}
+        for _, m in base.routing.items():
+            counts[m] = counts.get(m, 0) + 1
+        drifted = max(sorted(counts), key=lambda m: counts[m])
+        affected = {tid.workflow_id for tid, m in base.routing.items() if m == drifted}
+
+        g, s = compare(exact_milp.allocate, tasks, pools, profiles, budget,
+                       affected, base.routing)
+        if g.feasible and s.feasible:
+            assert s.total_cost == pytest.approx(g.total_cost), f"seed {seed}"
