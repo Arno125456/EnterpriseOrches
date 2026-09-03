@@ -129,6 +129,41 @@ couples workflows, and one thing the team got wrong and fixed.
 Cut from the end, never the front. Steps 1–4 are load-bearing; 7 and 8 compress. **Never skip
 step 3** — a wrong number in front of an examiner costs more than a missing slide.
 
+## When you find something interesting mid-plan
+
+**Follow it.** Every correction that mattered in this project came from someone noticing
+something looked wrong and pulling on it — the EMA that would have collapsed eligibility, the
+budget anchor that made T3 unsweepable, three headline numbers that were ratios of means.
+Refusing to look would have cost far more than the detour did.
+
+The failure mode is not exploring. It is **exploring and not coming back.** So when something
+surfaces, spend one minute classifying it before you dig:
+
+| kind | what to do | example from this project |
+|---|---|---|
+| **It breaks something already written** | **Chase it now.** It is not a detour, it is step 3 arriving early | The 110× speedup was a ratio of means. Everything quoting it was wrong |
+| **It blocks the step you are on** | Fix it as part of that step | The solver had no time limit, so the statistics run could not finish |
+| **It is a new capability** | **Write one line in `PLAN.md` under Semester 2 and stop.** Do not build it | Subset-move neighbourhood, confidence-bound eligibility, real execution |
+
+The first two are the plan, not interruptions to it. Only the third is a detour, and it is the
+one that consumed the most time here.
+
+**Then say out loud which step you are returning to.** That single sentence is what was
+missing: several excursions in this session were correct and never explicitly ended, so the
+next thing started from the excursion rather than from the plan.
+
+### Discoveries parked for Semester 2
+
+Add to this list rather than building. Nothing here blocks the presentation.
+
+- Confidence-bound eligibility (built, measured, off by default — needs 077's sign-off)
+- Subset-move neighbourhood — one mechanism closing both T2's fixture and F17
+- Real execution to replace `prototype/simulator.py`
+- Profiling Track B's knapsack subproblem before its runtime finding is treated as settled
+- More seeds and intervals on the findings that still lack them
+
+---
+
 ## What you do not need to do
 
 The technical work is finished. The confidence-bound fix, real execution, more statistics, the
