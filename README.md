@@ -44,6 +44,28 @@ no execution, no domain data.
 A *negative* answer to any of these is a success. "Track B provides no bound advantage" is a
 finding that saves a semester. The PoC fails only if the questions remain open.
 
+## Where to start, by role
+
+Nine documents exist. Nobody needs to read them all. Read the two marked **everyone**, then
+the row for your part.
+
+| | read | why |
+|---|---|---|
+| **everyone** | [`docs/T0_briefing.md`](docs/T0_briefing.md) | The 8 Sep session. Short, and it is the only thing with a deadline |
+| **everyone** | [`docs/poc_findings_summary.md`](docs/poc_findings_summary.md) | What we currently believe, at what confidence. Includes a table of numbers **not** to quote |
+| 035 — Track A | `poc/tracks/track_a_greedy.py`, `track_a_m1.py`, findings F1, F8, F20 | Your track, and the M1 analogue that needs your sign-off |
+| 075 — Tracks B & C | `poc/tracks/track_b_lagr.py`, `track_c_lp.py`, findings F7, F13, F16, F17 | The bound result, and the 110× speedup that carries Objective 1.2.2 |
+| 077 — Phase C | `prototype/profiling.py`, `loop.py`, findings F18, F19, F20 | The profiling loop, and the two design decisions awaiting your sign-off |
+| 083 — Infrastructure | `poc/instances/`, findings F2, F11, F12 | The generators and the budget anchor you need to accept or reject |
+| 089 — Evaluation | `poc/harness/`, findings F10, F14, F15, F16 | The harness, and four cases where the experimental design misled us |
+
+Then, when you need them:
+[`docs/proposal_narrative.md`](docs/proposal_narrative.md) for what the findings are *for*,
+[`docs/component_reference.md`](docs/component_reference.md) for what each part does and must
+become, and [`docs/poc_findings.md`](docs/poc_findings.md) for the full chronological record
+including superseded findings.
+
+
 ## Repo layout
 
 ```
@@ -108,6 +130,11 @@ python -c "import pulp; print(pulp.listSolvers(onlyAvailable=True))"   # expect 
 pytest poc/tests
 python -m poc.harness.runner   # regenerates the sweep in docs/poc_findings.md
 ```
+
+Verified from a clean clone on 3 September 2026: fresh virtualenv, install from
+`requirements.txt`, **565 passed in 79s**, and `poc.harness.runner` reproduced every figure
+in the findings byte-for-byte. If any of that fails for you it is an environment problem,
+not a repo problem — say so rather than working around it.
 
 ## Scope guard
 
