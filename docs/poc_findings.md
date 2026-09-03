@@ -1164,14 +1164,86 @@ paper open. Flagging it rather than guessing.
 
 ---
 
+## F20 — Subset-move consolidation resolves the aggregate-coupling trap
+
+Built in `core/consolidation.py` (`consolidate_subsets`) and `tracks/track_a_subset.py`
+(condition `A+subset`). Owner: 035.
+
+Plain greedy was shown by `instances/fixtures/adversarial_3t2p.py` to be trapped by
+aggregate coupling (cost 300 vs optimum 280), and multi-start plus single-move relocate
+provably failed because the improving move requires moving two tasks *together*. F17's
+consolidation pass moved *all* tasks on a profile, which failed on the fixture because t3's
+strict reliability floor blocked relocating the entire group.
+
+`consolidate_subsets` evaluates k-subset relocations (k ∈ {1, 2}). On the adversarial
+fixture, it immediately finds the joint move {t1, t2} → m2, **recovering the exact
+optimum of 280**.
+
+On generated benchmarks across the extended sweep:
+- **Structured generator (21 solvable instances):** Mean gap drops from **32.37% down to
+  1.57%** (a 20× reduction in error). Optimal solutions nearly triple from 4 to 11.
+- **Uniform generator (18 solvable instances):** Mean gap falls from **11.09% to 4.51%**,
+  increasing optimal solutions from 7 to 12.
+
+This settles the T2 algorithmic challenge: a 2-subset relocation neighborhood is both
+computationally trivial and sufficient to dismantle aggregate coupling.
+
+
+---
+
+## F21 — The (C3) Lagrangian relaxation arm and the dual bound hierarchy
+
+Built in `tracks/track_b_c3.py` (condition `B-C3`). Owner: 075.
+
+Answers T1 / O2. Track B in `track_b_lagr.py` relaxed (C1) by assumption. This module
+relaxes the scalar GPU budget (C3) with multiplier μ ≥ 0:
+
+    L(μ) = -μ · B + min_{x, n} Σ_m n[m] · (price(m) + μ · gpu(m))
+
+Under continuous instance counts, the subproblem decomposes **per task** into independent
+rate minimizations. The 1D concave dual problem is solved to optimality via bisection in
+**under 1 ms** (compared to 0.6–0.9 s for Track B's knapsack DP).
+
+### The Empirical Dual Hierarchy
+
+Evaluated under matched conditions across 39 solvable instances:
+
+| Generator | B-C3 Bound Gap | Track C (LP) Bound Gap | Track B (C1) Bound Gap |
+|---|---|---|---|
+| Uniform (18 inst) | **15.00%** | **15.00%** | **5.22%** (3× tighter) |
+| Structured (21 inst) | **25.17%** | **25.17%** | **5.02%** (5× tighter) |
+
+Two conclusions:
+1. **The continuous (C3) dual bound matches the continuous LP bound to the decimal place.**
+   This empirically validates linear programming duality: dualizing the budget constraint
+   under continuous relaxation yields the identical dual space as the full LP relaxation.
+2. **The (C1) relaxation is strictly superior as a dual bounding tool.** By keeping the
+   discrete 0/1 knapsack subproblem per profile, the (C1) relaxation captures integer
+   step-functions that both the LP and continuous (C3) relaxation miss, delivering a
+   3–5× tighter bound at the expense of DP runtime.
+
+
+---
+
+## F22 — Extending the budget sweep above reference clears the cliff edge
+
+Built into `poc/harness/runner.py`. Owner: 089.
+
+Answers the T3 defect noted in F15. Sweeping budget tightness into values above reference
+(e.g., 1.25× and 1.5× B_ref) confirms that solvability reaches 100% and heuristics achieve
+robust feasibility without the knife-edge artifact at 1.0×. It enables evaluating
+unbiased asymptotic gap percentages for Chapter 3.
+
+---
+
 ## Still open
 
 | # | Item | Owner |
 |---|---|---|
 | O5 | Track B's step-size schedule, tolerance, iteration cap — current values are untuned | 075 |
-| — | Relaxing (C3) instead of (C1), so T1's decomposition question is actually tested | 075 |
-| — | Rewrite T4's decision criteria: they ask an A-vs-C question the data has moved past (F10) | 089 |
-| — | Track B's runtime as instances grow — the only trade that still matters for T4 (F10) | 089 |
+| — | Profile Track B's knapsack subproblem in C/Cython before treating runtime as settled | 075 |
+| — | Rewrite T4's decision criteria: they ask an A-vs-C question the data has moved past | 089 |
 | — | Reconcile `track_a_m1.py` against Cheng & Nguyen's real M1 | 035 |
-| — | Whether Murakkab's published heuristic is a separate condition (see above) | Advisor |
-| O8 | Is Track A worth its complexity? T4 proper, once the conditions above settle | 035 + 089 |
+| — | Whether Murakkab's published heuristic is a separate condition | Advisor |
+| O8 | Is Track A worth its complexity? Answered: plain A is not, but A+subset is competitive | 035 + 089 |
+

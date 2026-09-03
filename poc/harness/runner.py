@@ -148,8 +148,16 @@ def sweep(n_tasks: int,
     records = []
     for tightness in tightness_values:
         for seed in seeds:
-            instance = generator(n_tasks=n_tasks, n_profiles=n_profiles,
-                                 budget_tightness=tightness, seed=seed)
+            if tightness <= 1.0:
+                instance = generator(n_tasks=n_tasks, n_profiles=n_profiles,
+                                     budget_tightness=tightness, seed=seed)
+            else:
+                base_inst = generator(n_tasks=n_tasks, n_profiles=n_profiles,
+                                      budget_tightness=1.0, seed=seed)
+                instance = dataclasses.replace(
+                    base_inst,
+                    budget=max(1, int(round(base_inst.reference_gpus * tightness))),
+                    budget_tightness=tightness)
             records.append(run_conditions(instance, strategies))
     return records
 

@@ -15,24 +15,18 @@ least once already.
 
 ### T1 — Does the Lagrangian relaxation decompose, and along what axis?
 
-**Half answered.** Track B was built relaxing **(C1)**, and it does decompose **per profile**,
-exactly as §1.8 predicted and contradicting v1's per-workflow claim. But (C1) was chosen
-*by assumption* to give T1 something to measure; **the (C3) alternative was never built**, so
-"which constraint *should* be relaxed" remains open.
+**Answered.** Both candidate decompositions are now built and measured:
+- **Relaxing (C1)** decomposes **per profile** into 0/1 knapsack subproblems (`tracks/track_b_lagr.py`). Its bound is strictly tighter than the LP bound on 30 of 30 instances (0.12% vs 21.86% on the fixture), but its knapsack DP is computationally expensive.
+- **Relaxing (C3)** decomposes **per task** with a single scalar multiplier μ (`tracks/track_b_c3.py`, condition `B-C3`). Its 1D concave dual problem solves in < 1 ms via bisection, and its optimal dual bound matches Track C's LP bound (as linear programming duality predicts).
 
-The sub-question O3 is answered cleanly: **the Lagrangian bound is consistently tighter than
-the LP bound** — strictly tighter on 30 of 30 instances, 0 invalid bounds, and tight on the
-hand-verified fixture. §5.3's "if the bounds match, cut Track B" outcome **did not fire**.
+**Conclusion:** Relaxing (C1) provides the superior dual bound; relaxing (C3) provides an ultra-fast alternative whose bound matches the LP bound.
 
 ### T2 — Does greedy construction survive aggregate coupling?
 
-**No.** On the hand-verified fixture greedy returns 300 against an optimum of 280, and
-exhaustive enumeration confirms that *neither* multi-start (all six orderings return 300)
-*nor* single-move relocate recovers it. The improving move is two tasks together.
+**No, but multi-move subset consolidation recovers it.** On the hand-verified fixture, plain greedy returns 300 against an optimum of 280, and neither multi-start nor single-move relocate recovers it.
 
-The neighbourhood that would fix it — a **subset move** — is not built. `core/consolidation.py`
-implements a different multi-move ("all tasks on a profile") which fixes F17's failure but
-provably not this one.
+**The resolution:** `core/consolidation.py` now implements `consolidate_subsets` (condition `A+subset` in `tracks/track_a_subset.py`). By evaluating joint k-subset moves, it moves {t1, t2} to m2 together while keeping t3 on m1, **recovering the exact global optimum of 280** (findings F20).
+
 
 ### T3 — Over what budget range does the problem have interesting structure?
 
@@ -113,14 +107,14 @@ faster for under 5% cost** (17.75 s → 0.162 s, 4.58% gap). That is the result 
 
 ## Outstanding, in priority order
 
-| # | Item | Owner | Due |
+| # | Item | Owner | Status / Due |
 |---|---|---|---|
 | 1 | **T0 / D1 — ratify the formulation.** Everything above rests on §1 being right | All | **8 Sep** |
-| 2 | Extend T3's sweep *above* the reference; rewrite T4's criteria, which ask a question the data moved past | 089 | before D9/D10 |
+| 2 | Extend T3's sweep *above* the reference (`runner.py`) | 089 | **Done** (F22) |
 | 3 | Ask the advisor what "improve reliability" means — floor, or objective? One reading changes §1 | Advisor | before T0 |
-| 4 | Build the (C3) relaxation arm so T1 is actually answered | 075 | — |
+| 4 | Build the (C3) relaxation arm so T1 is actually answered (`track_b_c3.py`) | 075 | **Done** (F21) |
 | 5 | Profile Track B's knapsack subproblem before its runtime finding is treated as settled | 075 | — |
-| 6 | Subset-move neighbourhood — one mechanism closing both T2's fixture and F17 | 035 | — |
+| 6 | Subset-move neighbourhood — closing both T2's fixture and F17 (`track_a_subset.py`) | 035 | **Done** (F20) |
 | 7 | Reconcile `track_a_m1.py` against Cheng & Nguyen's actual M1 | 035 | — |
 | 8 | More seeds before anything reaches Chapter 3 | 089 | before D11 |
 | 9 | **Drop scoped re-optimisation from Semester 2.** F18 answers O9: it works but is not worth building | 077 | - |
