@@ -129,8 +129,10 @@ def generate(n_tasks: int, n_profiles: int, budget_tightness: float,
              seed: int) -> ProblemInstance:
     """Same signature and same return type as generator.generate, so every track,
     the harness and the metrics work unchanged."""
-    if not 0.0 < budget_tightness <= 1.0:
-        raise ValueError(f"budget_tightness must be in (0, 1], got {budget_tightness}")
+    # Range matches generator.py: extended past 1.0 because the reference allocation is a
+    # cliff rather than a neutral upper bound (F15).
+    if not 0.0 < budget_tightness <= 3.0:
+        raise ValueError(f"budget_tightness must be in (0, 3], got {budget_tightness}")
     if n_tasks < 1 or n_profiles < 1:
         raise ValueError("n_tasks and n_profiles must be >= 1")
 

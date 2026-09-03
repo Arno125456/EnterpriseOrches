@@ -73,6 +73,8 @@ CLAUDE.md                 Working summary + guardrails. Read first
 docs/
   System_Architecture_v2.md   Authoritative design reference
   PoC_and_Validation_Plan.md  Scope, deliverables, schedule, risks
+  D11_poc_report.md           The PoC report for the advisor — the four answers, the
+                              differentiator, and what we do not know
   T0_briefing.md              READ FIRST if D1 has not happened — the 8 Sep session
   proposal_narrative.md       What the contribution is, and why the optimizer serves it
   component_reference.md      Per-component: behaviour, whether it earns its place, and

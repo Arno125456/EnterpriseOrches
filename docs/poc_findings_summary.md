@@ -43,10 +43,17 @@ provably not this one.
 **Answered, but the experimental design is defective.** Solvability rises from 1/25 to 25/25
 as tightness goes 0.5 → 1.0, so a binding region exists and is wide.
 
-**The defect:** the sweep only runs *below* the reference allocation, and F15 showed the
-cliff sits exactly *at* it — every track goes from 0/5 to 5/5 feasible with 25% more budget.
-Everything measured at `tightness = 1.0` was measured on a cliff edge. **T3's sweep must
-extend above the reference before D9 is written.**
+**Answered (F24).** The sweep now spans both sides of the reference. The operating region is
+**0.8× to 1.25×**: below 0.8 most instances are infeasible, above 1.25 every number freezes
+because the budget stops constraining anything. Two distinct transitions sit inside it —
+feasibility (0.6–1.0) and *heuristic* feasibility (1.0–1.5), which happens later.
+
+Counter-intuitively the gaps get **worse** as the budget loosens (Track C 10.3% → 21.8%): a
+tight budget does the heuristic's job for it by leaving nowhere to stray. **A heuristic
+evaluated only at tight budgets looks better than it is.**
+
+**Provisional pending O13** — per F23 the budget affects feasibility but almost never the
+optimal cost, because both generators tie price to GPU count.
 
 ### T4 — Is Track A worth its complexity relative to Track C?
 

@@ -80,7 +80,15 @@ def test_the_reference_allocation_is_itself_affordable(seed):
     assert exact_milp.allocate(*inst.unpack()).feasible
 
 
-@pytest.mark.parametrize("tightness", [0.0, -0.1, 1.5])
+@pytest.mark.parametrize("tightness", [0.0, -0.1, 3.5])
 def test_rejects_tightness_outside_the_range(tightness):
     with pytest.raises(ValueError):
         generate(4, 2, tightness, seed=0)
+
+
+@pytest.mark.parametrize("tightness", [1.25, 1.5, 2.0, 3.0])
+def test_accepts_budgets_above_the_reference(tightness):
+    """F15: the reference allocation is a cliff, not a neutral upper bound. A sweep that
+    stops at 1.0 can only ever measure the cliff, so the range must extend past it."""
+    inst = generate(6, 3, tightness, seed=0)
+    assert inst.budget > inst.reference_gpus or tightness <= 1.0

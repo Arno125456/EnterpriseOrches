@@ -1451,6 +1451,75 @@ arm comparison should both be treated as provisional.
 
 ---
 
+## F24 - T3 completed: the region is 0.8x to 1.25x, and the gaps run the wrong way
+
+D9 was defective: the sweep only ever ran *below* the reference allocation, and F15 showed
+the reference is a cliff rather than a neutral upper bound. Both generators now accept
+budgets up to 3x, so the sweep spans both sides.
+
+25 seeds per point, 8 tasks, 4 profiles. Ratio is the budget as a multiple of the reference
+allocation's GPU usage.
+
+**uniform**
+
+| ratio | solvable | A feasible | C feasible | A gap | C gap |
+|---|---|---|---|---|---|
+| 0.6 | 3/25 | 1 | 0 | 0.00% | - |
+| 0.8 | 13/25 | 6 | 6 | 8.26% | 10.26% |
+| **1.0** | 25/25 | 18 | 20 | 11.56% | 17.67% |
+| 1.25 | 25/25 | 25 | 24 | 14.22% | 20.48% |
+| 1.5 | 25/25 | 25 | 25 | 14.22% | 21.76% |
+| 2.0 | 25/25 | 25 | 25 | 14.22% | 21.76% |
+
+**structured**
+
+| ratio | solvable | A feasible | C feasible | A gap | C gap |
+|---|---|---|---|---|---|
+| 0.6 | 1/25 | 0 | 1 | - | 0.00% |
+| 0.8 | 17/25 | 8 | 9 | 11.87% | 11.05% |
+| **1.0** | 25/25 | 23 | 25 | 17.43% | 27.57% |
+| 1.25 | 25/25 | 24 | 25 | 17.13% | 27.57% |
+| 2.0 | 25/25 | 25 | 25 | 18.88% | 27.57% |
+
+### The answer
+
+**The operating region is roughly 0.8x to 1.25x the reference allocation.** Below 0.8 most
+instances are simply infeasible - there is nothing to compare. Above 1.25 every number
+freezes: identical gaps at 1.5 and 2.0 on both generators, because the budget has stopped
+constraining anything at all.
+
+Two distinct transitions sit inside that window, and they are not the same thing:
+
+  * **Feasibility** transitions between 0.6 and 1.0 - whether any allocation exists.
+  * **Heuristic feasibility** transitions between 1.0 and 1.5 - whether the *tracks* can find
+    one, which happens later than the optimum existing.
+
+### The counter-intuitive part: gaps get WORSE as the budget loosens
+
+Track A goes 8.26% -> 14.22% and Track C 10.26% -> 21.76% as the budget is relaxed. More
+budget makes the heuristics *worse* relative to optimal.
+
+The reason is that a tight budget does the heuristic's job for it. With few affordable
+options, a greedy or rounded choice cannot stray far from the optimum because there is
+nowhere to stray to. Loosen the budget and the search space opens up, and the exact solver
+exploits that freedom while the heuristics do not.
+
+That has a direct consequence for how the evaluation is read: **a heuristic evaluated only at
+tight budgets will look better than it is.** T4's numbers should be quoted with the ratio
+they were measured at.
+
+### Caveat, and it is a large one
+
+Per **F23**, the budget does not change the *optimal cost* in 40 of 41 instances, because both
+generators set `price = gpus x constant`. So this sweep measures where the budget affects
+**feasibility**, not where it affects **choice**. If O13 resolves to price being independent
+of GPU count, this whole table needs re-running and the region may move.
+
+**T3 is answered for the instances we have, and provisional pending O13.**
+
+
+---
+
 ## What these findings do not establish
 
 Restating §5.7, because early numbers invite over-reading:

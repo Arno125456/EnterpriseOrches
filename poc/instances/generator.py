@@ -141,8 +141,13 @@ def _reference_gpus(tasks, pools, profiles) -> int:
 
 def generate(n_tasks: int, n_profiles: int, budget_tightness: float,
              seed: int) -> ProblemInstance:
-    if not 0.0 < budget_tightness <= 1.0:
-        raise ValueError(f"budget_tightness must be in (0, 1], got {budget_tightness}")
+    # Range extended past 1.0 deliberately. F15: the reference allocation is a CLIFF, not a
+    # neutral upper bound -- every track goes from 0 of 5 feasible at 1.0x to 5 of 5 at
+    # 1.25x. A sweep that stops at the cliff can only ever measure the cliff. The name is
+    # left as budget_tightness for continuity, though it is really a ratio and larger means
+    # looser.
+    if not 0.0 < budget_tightness <= 3.0:
+        raise ValueError(f"budget_tightness must be in (0, 3], got {budget_tightness}")
     if n_tasks < 1 or n_profiles < 1:
         raise ValueError("n_tasks and n_profiles must be >= 1")
 
