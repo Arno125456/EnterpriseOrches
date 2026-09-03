@@ -172,7 +172,7 @@ Published in [`docs/chapter3_benchmark_results.md`](docs/chapter3_benchmark_resu
 |---|---|---|---|---|
 | 1 | **T0 / D1 — Ratify the formulation:** Formal team sign-off on §1 mathematical programming model | All | **8 September 2026** | **Ready for sign-off** ([`docs/T0_Formulation_Ratification_Briefing.md`](docs/T0_Formulation_Ratification_Briefing.md)) |
 | 2 | **Advisor Alignment:** Clarify whether reliability is strictly a floor ($R_{\min}$) or multi-objective trade-off | Team / Advisor | Before T0 | **Briefing prepared** (Option A recommended) |
-| 3 | **Proposal Chapter 3 Drafting:** Ingest benchmark tables from F20–F22 (`chapter3_benchmark_results.md`) | All | Mid-September | **Done** (Tables ready) |
+| 3 | **Proposal Chapter 3 Drafting:** Draft full Chapter 3 text integrating closed loop and benchmarks | All | Mid-September | **Done** ([`docs/proposal_chapter3_draft.md`](docs/proposal_chapter3_draft.md)) |
 | 4 | **Semester 2 Scope Pruning:** Formally excise scoped re-optimization from implementation architecture (F18) | 077 | Milestone M1 | Decided |
 
 ---
@@ -181,14 +181,15 @@ Published in [`docs/chapter3_benchmark_results.md`](docs/chapter3_benchmark_resu
 
 | Deliverable | File Path | Purpose |
 |---|---|---|
+| **Proposal Chapter 3 Draft** | [`docs/proposal_chapter3_draft.md`](docs/proposal_chapter3_draft.md) | Publication-grade Chapter 3 proposal text (Loop leads, optimizer serves it, F1-F32) |
 | **Authoritative Architecture** | [`docs/System_Architecture_v2.md`](docs/System_Architecture_v2.md) | Formal problem formulation (§1), component architecture (§3-§5), invariants (§6) |
 | **T0 Ratification Briefing** | [`docs/T0_Formulation_Ratification_Briefing.md`](docs/T0_Formulation_Ratification_Briefing.md) | Official formulation sign-off document and advisor briefing on SLA floors vs. objectives |
 | **Validation Plan** | [`docs/PoC_and_Validation_Plan.md`](docs/PoC_and_Validation_Plan.md) | September PoC roadmap, milestone definitions, research questions $T_1-T_4$ |
 | **Executive Summary** | [`docs/poc_findings_summary.md`](docs/poc_findings_summary.md) | Standing summary of beliefs, confidence levels, and core conclusions |
-| **Chronological Findings** | [`docs/poc_findings.md`](docs/poc_findings.md) | Detailed findings log from F1 to F22, including mathematical proofs and anomalies |
+| **Chronological Findings** | [`docs/poc_findings.md`](docs/poc_findings.md) | Detailed findings log from F1 to F32, including mathematical proofs and anomalies |
 | **M1 Presentation Slides** | [`docs/M1_Proposal_Presentation_Slides.md`](docs/M1_Proposal_Presentation_Slides.md) | 16-slide presentation outline, visuals, speaker script, and committee Q&A prep |
 | **Heterogeneous Fleet Generator** | [`poc/instances/heterogeneous_generator.py`](poc/instances/heterogeneous_generator.py) | Decorrelates price from GPU count (F32), activating the (C3) budget trade-off |
-| **Chapter 3 Benchmarks** | [`docs/chapter3_benchmark_results.md`](docs/chapter3_benchmark_results.md) | Publication-grade Markdown and LaTeX benchmark tables (8 to 64 tasks) |
+| **Chapter 3 Benchmarks** | [`docs/chapter3_benchmark_results.md`](docs/chapter3_benchmark_results.md) | Publication-grade Markdown and LaTeX benchmark tables across 3 generators (8 to 64 tasks) |
 | **Literature Report** | [`docs/research_papers/relationship_report.md`](docs/research_papers/relationship_report.md) | Synthesis of 12 foundational papers across scopes $S_1, S_2, S_3$ (12,260 words) |
 | **Pipeline Diagram** | [`docs/pipeline.md`](docs/pipeline.md) | End-to-end ASCII trace of the resource allocation and provisioning pipeline |
 
