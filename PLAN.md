@@ -1,0 +1,136 @@
+# The plan — one line, from here to 30 September
+
+**No options, no branches, no parallel tracks.** Eight steps in order. Finish one, start the
+next. At the end you have a proposal and a presentation you can defend.
+
+The end state: **a written proposal and an M1 presentation, both backed by evidence in this
+repo.** Everything below exists to get there.
+
+```
+  1  merge          2  ask advisor      3  fix numbers     4  T0 session
+  |                    |                   |                  |
+  +--------------------+-------------------+------------------+
+                       |
+  5  write Ch3      6  write Ch1,2,4    7  build slides    8  rehearse
+  |                    |                   |                  |
+  +--------------------+-------------------+------------------+
+                       |
+                  30 Sep — M1
+```
+
+---
+
+## 1 · Merge the two branches — by 4 Sep
+
+**Why first:** there are currently two versions of the truth. Nothing after this is reliable
+until there is one.
+
+**Do:** follow `BRANCHES.md`. Three decisions, all small:
+- renumber `main`'s findings so they don't collide with `mickie`'s F20
+- keep `mickie`'s implementations where they duplicate `main`'s
+- resolve the five conflicting files by hand
+
+**Done when:** one branch, tests pass, `python -m poc.harness.runner` runs.
+
+---
+
+## 2 · Send the advisor two questions — same day, 30 minutes
+
+**Why now:** both shape what you write, and writing before the answers means rewriting.
+
+> 1. Our allocation problem is textbook capacitated facility location. Our novelty claim is
+>    the closed loop — measured profiles, drift detection, re-optimisation — which neither
+>    Murakkab nor Cheng & Nguyen does. Is that sufficient? *(O12)*
+> 2. Is `price(m)` independent of `gpu(m)`, or is price essentially GPU-hours? It determines
+>    whether the GPU budget constraint does anything. *(O13)*
+
+**Done when:** sent. Continue to step 3 while waiting.
+
+---
+
+## 3 · Fix every number — by 6 Sep
+
+**Why:** three headline claims were retracted after a statistical audit, and the slides on
+`mickie` were written before it.
+
+**Do:** take the "numbers that were corrected" table in `docs/poc_findings_summary.md` and
+grep the merged repo for each. Fix every occurrence. **The rule: never divide two means.**
+
+**Done when:** no bare `N×` claim survives anywhere without a confidence interval beside it.
+
+---
+
+## 4 · T0 session — 8 September
+
+**Why:** it is the one hard deadline before the presentation, and it is a deliverable (D1).
+
+**Do:** run `docs/T0_briefing.md`. It is built as confirm-or-object with a default for every
+item, so it should take about an hour. Fill in the template at the end.
+
+**Done when:** the template is filled in and five people have signed off their part.
+
+---
+
+## 5 · Write Chapter 3 — 8 to 15 Sep
+
+**Why:** it is your strongest chapter and everything else is written around it.
+
+**Do:** start from `docs/D11_poc_report.md`. Restructure it in the order given in
+`docs/proposal_narrative.md` §6 — **the loop leads, the optimizer serves it.** Do not lead
+with the algorithm comparison.
+
+**Done when:** Chapter 3 is drafted and every number in it appears in
+`poc_findings_summary.md` with an interval.
+
+---
+
+## 6 · Write Chapters 1, 2 and 4 — 15 to 22 Sep
+
+**Why:** they are shorter and they frame Chapter 3.
+
+- **Ch 1** — problem and objectives. Lead with the loop, not the optimizer.
+- **Ch 2** — literature. The weakest chapter. Use the advisor's answer to O12 and the
+  positioning table in `docs/proposal_narrative.md` §4.
+- **Ch 4** — evaluation plan, plus Semester 2 scope covering R7, R8 and R9, which have no
+  implementation and must be presented as planned work rather than omitted.
+
+**Done when:** all four chapters drafted.
+
+---
+
+## 7 · Build the slides from the chapters — 22 to 27 Sep
+
+**Why this order:** slides built from written chapters stay consistent with them. Slides
+written first drift.
+
+**Do:** start from `mickie`'s existing slides, cut anything not backed by a chapter, and
+recheck every figure against step 3.
+
+**Done when:** every slide traces to a chapter section.
+
+---
+
+## 8 · Rehearse — 27 to 30 Sep
+
+**Do:** each person works `docs/study_guide.md` — the six core choices, roughly two to three
+hours, not the full nine steps. Then rehearse the hard questions in its step 9.
+
+**One rule for the room:** volunteer the limitations before you are asked. An examiner who
+has to extract a weakness trusts you less than one you hand it to. You have unusually good
+material for this — three headline numbers were found wrong by your own audit.
+
+**Done when:** every member can answer, unprompted: what `x` and `n` are, which constraint
+couples workflows, and one thing the team got wrong and fixed.
+
+---
+
+## If something slips
+
+Cut from the end, never the front. Steps 1–4 are load-bearing; 7 and 8 compress. **Never skip
+step 3** — a wrong number in front of an examiner costs more than a missing slide.
+
+## What you do not need to do
+
+The technical work is finished. The confidence-bound fix, real execution, more statistics, the
+subset-move neighbourhood — all Semester 2. **Nothing in the eight steps above requires writing
+new code.**

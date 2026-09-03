@@ -4,7 +4,9 @@
 to make everything here the **core of the proposal** — not just T0, but Chapters 1 through 4,
 the novelty argument, and the M1 presentation.
 
-Read this first, then `docs/README.md` for where each document lives.
+**If you want the ordered sequence rather than the reference material, read
+[`PLAN.md`](PLAN.md) instead — eight steps, in order, ending at the presentation.** This
+document is the detail behind those steps.
 
 ---
 
