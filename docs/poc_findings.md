@@ -1361,6 +1361,96 @@ comparison, it removes a 25% cost penalty, and it costs nothing in detection.
 
 ---
 
+## F23 - T1's other arm, and a bigger problem: the GPU budget is nearly inert in our instances
+
+Built `poc/tracks/track_b_budget.py`, the (C3) relaxation, so T1 is answered by measurement
+rather than by assumption. It immediately exposed something more important than the question
+it was built to settle.
+
+### The arm comparison, at face value
+
+8 tasks, 4 profiles, both generators, bound gap = distance below the true optimum:
+
+| generator | (C1) relaxation | (C3) relaxation | LP |
+|---|---|---|---|
+| uniform | 3.52% in 0.79 s | **0.00% in 0.06 s** | 11.99% |
+| structured | 3.13% in 0.97 s | **0.00% in 0.08 s** | 25.73% |
+
+The (C3) arm reaches the exact optimum, in roughly one iteration, ten times faster. Taken at
+face value that overturns Section 1.8's prediction and the choice made in `track_b_lagr.py`.
+
+**It should not be taken at face value.**
+
+### Why it is exact: there is nothing to relax
+
+The (C3) arm converges immediately because the budget-free optimum already satisfies the
+budget. Checked directly - solve each instance with the real budget and again with an
+effectively infinite one:
+
+| generator | budget | solvable | optimal cost differs | mean rise |
+|---|---|---|---|---|
+| uniform | 1.00x | 12 | 1 | 1.30% |
+| uniform | 0.80x | 8 | **0** | 0.00% |
+| structured | 1.00x | 12 | **0** | 0.00% |
+| structured | 0.80x | 9 | **0** | 0.00% |
+
+**In 40 of 41 solvable instances the GPU budget does not change the optimal cost at all.**
+
+### The cause is in the generators, and it is my fault
+
+```
+corr(price, gpus)     uniform 0.953     structured 0.999
+```
+
+Both generators set `price = gpus x constant`. Minimising `Sum n[m]*price(m)` is therefore
+almost the same objective as minimising `Sum n[m]*gpu(m)`, and a constraint on the second
+cannot bind when you are already minimising the first.
+
+Decorrelate them - price drawn independently of GPU count - and the budget starts mattering:
+
+| budget | solvable | cost differs | mean rise |
+|---|---|---|---|
+| 12 | 15 | 0 | 0.00% |
+| **8** | 11 | **2** | **95.01%** |
+| 5 | 1 | 1 | 48.46% |
+
+### What this invalidates, and what it does not
+
+**Does not invalidate:** Section 1's formulation. (C3) is a correct constraint. Nor does it
+touch F1, F16, F17, F21 or F22, none of which depend on the budget binding.
+
+**Does invalidate the reading of T1's arm comparison.** The (C3) arm is exact because the
+constraint it relaxes is inactive. On instances where the budget genuinely binds it would
+have to search the multiplier, and each iteration is a full MILP solve, because relaxing
+(C3) leaves (C1) coupling every profile through the tasks - the problem does not decompose,
+exactly as Section 5.2.3 predicts. **The structural prediction stands; the numbers above do
+not test it.**
+
+**Weakens T3.** T3 asks where the budget binds. The honest answer from our instances is that
+it binds on *feasibility* - whether any allocation exists - but almost never on *choice*.
+That is a property of the generators, not of the problem.
+
+### The question this raises, which is for the team and the advisor
+
+Is `price(m)` genuinely independent of `gpu(m)`?
+
+If you rent GPUs by the hour from one provider, price *is* proportional to GPU count, both
+generators are realistic, and **(C3) is close to redundant with the objective** - which is a
+real finding about the problem, not a bug. The budget then means physical capacity, not
+spend.
+
+If `price(m)` represents something else - energy, amortised hardware, mixed providers, spot
+versus on-demand - then it is not proportional, the budget binds, and both generators are
+unrealistic in a way that has quietly shaped every budget-related result.
+
+**Nothing in the architecture says which.** Section 1.3 lists `price(m)` as "cost of one
+instance of m over the horizon" and `B` as "total GPU budget", with no statement about
+whether they are the same axis. Until that is settled, T3's binding-region result and this
+arm comparison should both be treated as provisional.
+
+
+---
+
 ## What these findings do not establish
 
 Restating §5.7, because early numbers invite over-reading:
