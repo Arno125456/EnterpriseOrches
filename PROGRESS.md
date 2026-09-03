@@ -145,7 +145,7 @@ C+cons             19            2            10       6.11%     21.87%       25
 |---|---|---|---|---|
 | 1 | **T0 / D1 — Ratify the formulation:** Formal team sign-off on §1 mathematical programming model | All | **8 September 2026** | Ready for review |
 | 2 | **Advisor Alignment:** Clarify whether reliability is strictly a floor ($R_{\min}$) or multi-objective trade-off | Team / Advisor | Before T0 | Question prepared |
-| 3 | **Proposal Chapter 3 Drafting:** Ingest benchmark tables from F20–F22 and literature synthesis from `relationship_report.md` | All | Mid-September | Scaffold ready |
+| 3 | **Proposal Chapter 3 Drafting:** Ingest benchmark tables from F20–F22 (`chapter3_benchmark_results.md`) | All | Mid-September | **Done** (Tables ready) |
 | 4 | **Semester 2 Scope Pruning:** Formally excise scoped re-optimization from implementation architecture (F18) | 077 | Milestone M1 | Decided |
 
 ---
