@@ -10,9 +10,16 @@ flag the mismatch and resolve it explicitly, don't silently follow either one.
 
 ## What this project is
 
-A system that receives multiple workflows, each a DAG, and — for the whole batch at once,
-offline — decides **which model profile serves each task** and **how many instances of each
-profile to provision**, minimising provisioning cost under a fixed GPU budget.
+Multi-workflow resource orchestration in which the profiles that drive allocation are
+**measured and kept current**, and the system **re-allocates when they drift**. The optimizer
+is the engine that makes that loop affordable, not the contribution itself — see
+[`docs/proposal_narrative.md`](docs/proposal_narrative.md) for the argument and the evidence
+chain behind it.
+
+The allocation problem underneath: a batch of workflows, each a DAG, and — for the whole
+batch at once, offline — decide **which model profile serves each task** and **how many
+instances of each profile to provision**, minimising provisioning cost under a fixed GPU
+budget.
 
 Two decisions, coupled. Routing determines load; load determines instance counts; instance
 counts consume the budget; a binding budget constrains routing. Formally it is a **modular
@@ -44,6 +51,7 @@ CLAUDE.md                 Working summary + guardrails. Read first
 docs/
   System_Architecture_v2.md   Authoritative design reference
   PoC_and_Validation_Plan.md  Scope, deliverables, schedule, risks
+  proposal_narrative.md       What the contribution is, and why the optimizer serves it
   poc_findings_summary.md     START HERE for results — current beliefs and confidence
   poc_findings.md             Full chronological log, including superseded findings
   research_papers/            Literature tracking, feeds Ch.2
@@ -63,8 +71,9 @@ Nine of the ten build steps are done and tested. Only step 8, Track B, is unbuil
 constraint it relaxes is T1's question (O2), and picking one would prejudge the test the
 track exists to feed.
 
-Results: [`docs/poc_findings_summary.md`](docs/poc_findings_summary.md) is the standing
-summary — what is believed now, at what confidence, and what would overturn it.
+Results: [`docs/proposal_narrative.md`](docs/proposal_narrative.md) explains what the
+findings are *for*. [`docs/poc_findings_summary.md`](docs/poc_findings_summary.md) is the
+standing summary — what is believed now, at what confidence, and what would overturn it.
 [`docs/poc_findings.md`](docs/poc_findings.md) is the full chronological log behind it.
 
 ## Build order
