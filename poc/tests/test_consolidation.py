@@ -11,7 +11,7 @@ from poc.formulation import invariants
 from poc.instances import structured_generator as sg
 from poc.instances.fixtures import adversarial_3t2p as fx
 from poc.instances.generator import generate
-from poc.tracks import (exact_milp, track_a_greedy, track_a_subset,
+from poc.tracks import (exact_milp, track_a_greedy, track_a_m1_subset, track_a_subset,
                         track_c_consolidate, track_c_lp)
 
 
@@ -62,6 +62,13 @@ def test_subset_consolidation_fixes_adversarial_fixture():
     assert fixed.routing[fx.task_id("t2")] == "m2"
     assert fixed.routing[fx.task_id("t3")] == "m1"
     assert invariants.check(fixed, tasks, pools, profiles, budget) == []
+
+    # Verify A+M1+subset also reaches the optimum
+    m1_fixed = track_a_m1_subset.allocate(tasks, pools, profiles, budget)
+    assert m1_fixed.feasible
+    assert m1_fixed.total_cost == fx.OPTIMUM["total_cost"]  # 280!
+    assert invariants.check(m1_fixed, tasks, pools, profiles, budget) == []
+
 
 
 
