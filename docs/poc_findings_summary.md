@@ -74,6 +74,7 @@ faster for under 5% cost** (17.75 s → 0.162 s, 4.58% gap). That is the result 
 | 9 | The exact MILP becomes expensive around 128 tasks — but only on some instance families | **Medium** | 21 s uniform vs 1.9 s structured at 128 | More families; a better solver or formulation |
 | 10 | Instance *structure* drives solver cost more than instance *size* | **Medium** | Structured was harder at 8 tasks, 11× cheaper at 128 | Only two generators exist |
 | 11 | Scoped re-optimisation is well-defined but costs more than a global re-run ~50% of the time, so it should not be built | **Medium-high** | F18, 40 instances x 4 budgets x 2 generators | Global re-optimisation becoming expensive at scale |
+| 12 | Section 4.5's EMA is wrong for reliability: a binary signal under an EMA reports 0.70 after 99 successes and one failure, and that value filters C(t) | **High** | F19, arithmetic, reproduced in tests | Nothing - the mechanism is arithmetic |
 
 ---
 
@@ -123,6 +124,7 @@ faster for under 5% cost** (17.75 s → 0.162 s, 4.58% gap). That is the result 
 | 8 | More seeds before anything reaches Chapter 3 | 089 | before D11 |
 | 9 | **Drop scoped re-optimisation from Semester 2.** F18 answers O9: it works but is not worth building | 077 | - |
 | 10 | Reconcile the [PROPOSED] compatibility score against Hatherley (2025) | 077 | - |
+| 11 | **Amend section 4.5**: EMA for latency, decayed counting estimator for reliability (F19) | 077 | - |
 
 ---
 

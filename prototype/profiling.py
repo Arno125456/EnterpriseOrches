@@ -41,7 +41,15 @@ from dataclasses import dataclass, replace
 
 from poc.formulation.types import Observation, ProfileSpec
 
-DEFAULT_ALPHA = 0.3             # EMA weight on the newest observation
+DEFAULT_ALPHA = 0.3             # EMA weight on the newest observation (latency only)
+# Decay sets the effective sample size at 1/(1 - decay). That ceiling matters more than it
+# looks: with a prior of p, an unbroken run of successes converges to (N + p) / (N + 2p), so
+# a short memory imposes a CEILING on achievable reliability. At decay 0.98 (N = 50) and a
+# Laplace prior of 1.0 that ceiling is 51/52 = 0.981 — and any task with rel_floor 0.99
+# would have been permanently unservable by a measured profile. At decay 0.995 (N = 200)
+# with a Jeffreys prior of 0.5 the ceiling is 0.9975, which clears realistic floors.
+DEFAULT_DECAY = 0.995           # effective sample size ~200
+DEFAULT_PRIOR = 0.5             # Jeffreys prior
 DEFAULT_MIN_OBSERVATIONS = 5    # below this, suppress drift signals (§4.5)
 DEFAULT_THRESHOLD = 0.9         # signal when compatibility drops below this
 
@@ -57,11 +65,21 @@ class ProfileStore:
     meaningful even if observations arrive mid-run.
     """
 
-    def __init__(self, profiles: dict[str, ProfileSpec], alpha: float = DEFAULT_ALPHA):
+    def __init__(self, profiles: dict[str, ProfileSpec], alpha: float = DEFAULT_ALPHA,
+                 decay: float = DEFAULT_DECAY, prior: float = DEFAULT_PRIOR):
         if not 0.0 < alpha <= 1.0:
             raise ValueError(f"alpha must be in (0, 1], got {alpha}")
+        if not 0.0 < decay <= 1.0:
+            raise ValueError(f"decay must be in (0, 1], got {decay}")
         self._profiles = dict(profiles)
         self._alpha = alpha
+        self._decay = decay
+        self._prior = prior
+        # Seeded from the declared reliability so a profile does not start from the prior
+        # and immediately look unreliable. Weighted as a few effective observations.
+        self._counters = {
+            pid: (spec.reliability * 5.0, 5.0) for pid, spec in profiles.items()
+        }
 
     def snapshot(self) -> dict[str, ProfileSpec]:
         """An immutable view. Callers may not mutate the store through it."""
@@ -73,21 +91,50 @@ class ProfileStore:
         return self._profiles[profile_id]
 
     def record(self, observation: Observation) -> ProfileSpec:
-        """Fold one observation into the profile by EMA. Returns the updated spec.
+        """Fold one observation into the profile. Returns the updated spec.
 
-        Latency and reliability are updated; throughput, GPUs and price are properties of
-        the configuration rather than of a call, so an observation cannot move them.
+        Throughput, GPUs and price are properties of the configuration rather than of a
+        call, so an observation cannot move them.
+
+        LATENCY uses the EMA that §4.5 specifies. It is a continuous quantity and an EMA
+        tracks drift in it correctly.
+
+        RELIABILITY DOES NOT, AND §4.5 IS WRONG ABOUT THIS. Applying an EMA to a binary
+        success/failure signal is catastrophically volatile: with alpha 0.3, a profile at
+        0.99 that sees 99 successes and then one failure reports **0.70**. One failed call
+        makes it ineligible for any task with a floor above 0.7, for roughly eight
+        subsequent successes. The reliability floor — the entire mechanism behind the
+        project's reliability pillar — would be driven by single-call noise.
+
+        Instead reliability is a **decayed counting estimator** with a Laplace prior:
+
+            rel = (decayed successes + prior) / (decayed trials + 2 * prior)
+
+        Both counters decay by DECAY per observation, so recent behaviour still dominates
+        and genuine degradation is still detected — the property the EMA was chosen for —
+        but a single failure moves the estimate by roughly one effective sample instead of
+        by 30% of the way to zero. Under the same 99-successes-then-a-failure sequence this
+        reports about 0.97.
+
+        `observations` counts raw observations, so the drift detector's suppression rule is
+        unaffected.
         """
         current = self.get(observation.profile_id)
         a = self._alpha
+        pid = observation.profile_id
+
+        successes, trials = self._counters.get(pid, (0.0, 0.0))
+        successes = successes * self._decay + (1.0 if observation.success else 0.0)
+        trials = trials * self._decay + 1.0
+        self._counters[pid] = (successes, trials)
 
         updated = replace(
             current,
             latency=(1 - a) * current.latency + a * observation.latency,
-            reliability=(1 - a) * current.reliability + a * (1.0 if observation.success else 0.0),
+            reliability=(successes + self._prior) / (trials + 2 * self._prior),
             observations=current.observations + 1,
         )
-        self._profiles[observation.profile_id] = updated
+        self._profiles[pid] = updated
         return updated
 
 

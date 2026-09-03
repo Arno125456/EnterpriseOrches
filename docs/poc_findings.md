@@ -976,6 +976,20 @@ global re-run on roughly half of instances - 20 of 40 at 1.5x and 2.0x uniform, 
 2.0x structured. Loosening the budget does not help; the gap is structural, not a scarcity
 effect.
 
+**How much worse, which the first version of this finding failed to report.** Over 60
+instances at 2.0x budget, 31 were strictly worse, and on those the penalty was:
+
+| | penalty |
+|---|---|
+| mean, over all instances | 11.53% |
+| mean, when strictly worse | **22.32%** |
+| median, when worse | 20.63% |
+| 90th percentile | 39.76% |
+| worst | 51.08% |
+
+Reporting only the frequency understated this badly. A coin flip between "same cost" and
+"20% more expensive" is a much stronger argument against scoping than a coin flip alone.
+
 The reason is exactly Section 3.3's instinct, just arriving as suboptimality rather than as
 undefinedness. Frozen workflows hold their profiles, and those profiles' instance counts are
 ceilings over aggregate load. A global run can move a frozen task to consolidate two
@@ -1003,6 +1017,73 @@ permissive reading - letting re-optimised tasks use headroom inside instances th
 tasks already paid for - would score better, but it double-counts capacity unless the frozen
 instance counts are also recomputed, at which point it is a global run wearing a different
 name. That tension is the real content of Section 3.3's doubt.
+
+
+---
+
+## F19 - Section 4.5's "EMA update per observation" is wrong for reliability
+
+**Outside PoC scope.** Found while stress-testing `prototype/profiling.py`, not by a test
+that was looking for it.
+
+Section 4.5 specifies "EMA update per observation" for the Profile Store. Applied to
+latency that is correct - it is a continuous quantity and an EMA tracks drift in it well.
+Applied to **reliability** it is unusable, because reliability is estimated from a binary
+success/failure signal.
+
+With the specified EMA at alpha 0.3, a profile at 0.99 reliability that observes **99
+successes and then one failure** reports `0.70`. True rate: 0.99. One failed call in a
+hundred moves the estimate 30% of the way to zero, and it takes roughly eight consecutive
+successes to climb back.
+
+### Why this would have been expensive
+
+Reliability is not a display value. It is the filter that builds `C(t)`:
+
+    C(t) = { m : rel(m) >= R_min(t) and lat(t,m) <= L_max(t) }
+
+So under the specified EMA, **one failed call makes a profile ineligible for every task with
+a floor above 0.7**, pools collapse, the drift detector fires, and the batch is re-allocated
+- on the evidence of a single call. The entire reliability pillar would have been driven by
+noise, and the symptom (constant thrashing) sits a long way from the cause (an estimator
+choice in one line of section 4.5).
+
+### The fix, and the second bug inside it
+
+Reliability now uses a **decayed counting estimator** with a weak prior:
+
+    rel = (decayed successes + prior) / (decayed trials + 2 * prior)
+
+Recent behaviour still dominates, so genuine degradation is still caught - the property the
+EMA was chosen for - but a single failure moves the estimate by one observation's worth of
+evidence rather than by 30%.
+
+The first version of that fix had its own bug, worth recording because it is subtle. Decay
+sets the effective sample size at `1/(1 - decay)`, and an unbroken run of successes
+converges to `(N + p) / (N + 2p)` - so **a short memory imposes a ceiling on achievable
+reliability**. At decay 0.98 with a Laplace prior of 1.0 that ceiling is 51/52 = **0.981**,
+and any task with `rel_floor = 0.99` would have been permanently unservable by a measured
+profile. Nothing would have raised an error; those tasks would simply always have been
+infeasible.
+
+Settled at decay 0.995 (effective sample ~200) and a Jeffreys prior of 0.5, ceiling 0.9975.
+
+| sequence | EMA (as specified) | counting estimator |
+|---|---|---|
+| 500 successes | 1.000 | 0.9973 |
+| 99 successes, then 1 failure | **0.700** | 0.9815 |
+| 200 successes, then 50 failures | 0.000 | 0.6913 |
+
+The last row is the check that robustness did not cost sensitivity.
+
+### What this means for the documents
+
+**Section 4.5 needs amending**: EMA for latency, a decayed counting estimator for
+reliability. One line in the document, a real change in behaviour.
+
+Still open for 077: the compatibility score remains **[PROPOSED]** and unreconciled, and it
+requires running the allocator to evaluate - so drift detection is not the cheap signal
+section 4.5 implies.
 
 
 ---
