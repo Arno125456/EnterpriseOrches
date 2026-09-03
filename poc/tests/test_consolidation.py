@@ -6,12 +6,13 @@ Spec: core/consolidation.py, built from findings F17. Owner: 035 / 075
 
 import pytest
 
-from poc.core.consolidation import consolidate, evaluate
+from poc.core.consolidation import consolidate, consolidate_subsets, evaluate
 from poc.formulation import invariants
 from poc.instances import structured_generator as sg
 from poc.instances.fixtures import adversarial_3t2p as fx
 from poc.instances.generator import generate
-from poc.tracks import exact_milp, track_a_greedy, track_c_consolidate, track_c_lp
+from poc.tracks import (exact_milp, track_a_greedy, track_a_subset,
+                        track_c_consolidate, track_c_lp)
 
 
 def test_fixes_the_diagnosed_worst_case():
@@ -42,6 +43,26 @@ def test_does_not_fix_the_adversarial_fixture_and_that_is_expected():
     after = consolidate(greedy.routing, tasks, pools, profiles, budget)
 
     assert evaluate(after, tasks, profiles, budget)[0] == fx.GREEDY_EXPECTED_COST
+
+
+def test_subset_consolidation_fixes_adversarial_fixture():
+    """Subset consolidation moves {t1, t2} to m2 together, achieving the true optimum 280.
+
+    This directly resolves the aggregate-coupling trap that defeats plain greedy and
+    single-move relocate on adversarial_3t2p.
+    """
+    tasks, pools, profiles, budget = fx.build()
+    greedy = track_a_greedy.allocate(tasks, pools, profiles, budget)
+    assert greedy.total_cost == fx.GREEDY_EXPECTED_COST  # 300
+
+    fixed = track_a_subset.allocate(tasks, pools, profiles, budget)
+    assert fixed.feasible
+    assert fixed.total_cost == fx.OPTIMUM["total_cost"]  # 280!
+    assert fixed.routing[fx.task_id("t1")] == "m2"
+    assert fixed.routing[fx.task_id("t2")] == "m2"
+    assert fixed.routing[fx.task_id("t3")] == "m1"
+    assert invariants.check(fixed, tasks, pools, profiles, budget) == []
+
 
 
 @pytest.mark.parametrize("seed", range(8))
