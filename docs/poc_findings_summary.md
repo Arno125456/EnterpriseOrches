@@ -115,7 +115,7 @@ faster for under 5% cost** (17.75 s → 0.162 s, 4.58% gap). That is the result 
 | 4 | Build the (C3) relaxation arm so T1 is actually answered (`track_b_c3.py`) | 075 | **Done** (F21) |
 | 5 | Profile Track B's knapsack subproblem before its runtime finding is treated as settled | 075 | — |
 | 6 | Subset-move neighbourhood — closing both T2's fixture and F17 (`track_a_subset.py`) | 035 | **Done** (F20) |
-| 7 | Reconcile `track_a_m1.py` against Cheng & Nguyen's actual M1 | 035 | — |
+| 7 | Reconcile `track_a_m1.py` against Cheng & Nguyen's actual M1 (Paper P3, C_FEASFIRST) | 035 | **Done** |
 | 8 | More seeds before anything reaches Chapter 3 | 089 | before D11 |
 | 9 | **Drop scoped re-optimisation from Semester 2.** F18 answers O9: it works but is not worth building | 077 | - |
 | 10 | Reconcile the [PROPOSED] compatibility score against Hatherley (2025) | 077 | - |
