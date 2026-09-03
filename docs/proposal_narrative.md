@@ -38,13 +38,16 @@ Finding **F13**: the MILP reaches **21 s** at 128 tasks on the harder instance f
 worst case of 55 s. A system that re-solves on every drift signal cannot pay that.
 
 **Step 4 — A fast track makes the loop viable.**
-Finding **F16**: Track C returns an allocation in **0.162 s** at 128 tasks, **~110× faster than
-exact for under 5% additional cost**, with runtime essentially flat across a 16× increase in
-tasks.
+Finding **F29**: Track C returns an allocation in **0.106 ± 0.020 s** at 128 tasks, compared
+to the exact solver's **12.3 ± 10.3 s** (which is unbounded without a timeout and can run for
+hours), with an optimality gap of **3.03 ± 1.62%**. The claim is **bounded predictability, not
+a speed ratio**: the median speedup is 5×, but the exact solver's heavy tail makes it unusable
+in a control loop.
 
-**Therefore:** the algorithmic work exists *because the loop demands it*. The 110× result is
-not a headline about heuristics — **it is the reason continuous re-optimisation is possible
-at all.** Without step 4, steps 1–3 describe a system that cannot run.
+**Therefore:** the algorithmic work exists *because the loop demands it*. Bounded, predictable
+solving is not an abstract benchmarking goal — **it is the reason continuous re-optimisation
+is possible at all.** Without step 4, steps 1–3 describe a control loop that would periodically
+hang or time out.
 
 That chain is the spine of Chapter 3.
 

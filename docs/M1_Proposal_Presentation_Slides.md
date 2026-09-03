@@ -35,7 +35,7 @@ graph TD
 - **Visuals:** Project title, university header, team members with assigned roles (035 Heuristics, 075 Mathematical Programming, 077 Systems & Profiling, 083 Software Architecture, 089 Empirical Methodology), and advisor name.
 - **Key Message:** We present a mathematically grounded, profile-guided orchestration platform that jointly solves model selection and hardware instance provisioning under hard GPU budgets across concurrent workflow DAGs.
 - **Speaker Script (035 / Lead):**
-  > "Good afternoon, Prof. Tossaphol and members of the examination committee. Today, our team presents our Senior Capstone proposal: the Profile-Guided Multi-Workflow Resource Orchestration Platform. Over the past month, we did not simply draft an abstract proposal—we designed, mathematically formulated, implemented, and benchmarked a complete Proof-of-Concept with 562 automated tests to answer four foundational research questions before building the full system. Today, we share those findings and our Semester 2 implementation architecture."
+  > "Good afternoon, Prof. Tossaphol and members of the examination committee. Today, our team presents our Senior Capstone proposal: the Profile-Guided Multi-Workflow Resource Orchestration Platform. Over the past month, we did not simply draft an abstract proposal—we designed, mathematically formulated, implemented, and benchmarked a complete Proof-of-Concept with 593 automated tests to answer four foundational research questions before building the full system. Today, we share those findings and our Semester 2 implementation architecture."
 
 ---
 
@@ -102,10 +102,10 @@ graph TD
 ---
 
 ### Slide 9: Track B — Lagrangian Duality & Bound Tightness ($T_1$)
-- **Visuals:** Mathematical decomposition of $(C_1)$ relaxation into independent 0/1 knapsack subproblems per profile. Bar chart showing Track B bound gap (5.02%) vs. LP bound gap (25.17%).
-- **Key Message:** Relaxing $(C_1)$ decouples per profile into integer knapsacks, yielding a dual lower bound 3× to 5× tighter than the LP relaxation.
+- **Visuals:** Mathematical decomposition of $(C_1)$ relaxation into independent 0/1 knapsack subproblems per profile. Bar chart showing Track B bound gap vs. LP bound gap, highlighting the paired difference of **12.57 percentage points [9.49, 15.64]** (F30).
+- **Key Message:** Relaxing $(C_1)$ decouples per profile into integer knapsacks, yielding a dual lower bound that is strictly tighter on 100% of tested instances, sitting a paired **12.57 pp [9.49, 15.64]** closer to the optimum than the LP bound.
 - **Speaker Script (075):**
-  > "For question T1, we investigated Lagrangian duality. Track B dualizes the unit assignment constraints C1 with multipliers $\lambda$. This decouples the global problem into independent subproblems per profile. Because each profile subproblem is a discrete 0/1 knapsack with integer instance steps, it preserves the discrete step-function that linear programming relaxes. As our empirical results prove, Track B's Lagrangian bound is strictly tighter than the LP bound on 100% of tested instances—delivering a bound gap of 5.02% against 25.17% for the LP. Track B provides a high-fidelity certificate of optimality."
+  > "For question T1, we investigated Lagrangian duality. Track B dualizes the unit assignment constraints C1 with multipliers $\lambda$. This decouples the global problem into independent subproblems per profile. Because each profile subproblem is a discrete 0/1 knapsack with integer instance steps, it preserves the discrete step-function that linear programming relaxes. As our empirical results prove, Track B's Lagrangian bound is strictly tighter than the LP bound on 100% of tested instances—sitting a paired 12.57 percentage points [9.49, 15.64] closer to the true optimum than the LP bound. Track B provides a high-fidelity certificate of optimality."
 
 ---
 
@@ -118,18 +118,18 @@ graph TD
 ---
 
 ### Slide 11: Track C — Continuous LP Relaxation & Multi-Move Repair
-- **Visuals:** Diagram of continuous LP solve $\to$ fractional instance ceiling $\to$ multi-move profile consolidation pass (`C+cons`). Bar chart illustrating worst-case recovery (halving cost).
+- **Visuals:** Diagram of continuous LP solve $\to$ fractional instance ceiling $\to$ multi-move profile consolidation pass (`C+cons`). Bar chart illustrating worst-case recovery and tail protection: mean paired improvement of **5.31% [0.56, 10.07]** eliminating severe tail failures (F30).
 - **Key Message:** The LP relaxation yields integer routings 96% of the time; the binding challenge is capacity repair. `C+cons` eliminates worst-case step-function waste, achieving < 5% gap at scale.
 - **Speaker Script (089):**
-  > "Track C solves the continuous LP relaxation using CBC. Our empirical findings revealed that the LP returns an integer routing 96% of the time—meaning fractional rounding is not the primary issue. The real challenge is capacity repair: the LP prices profiles by continuous throughput rate, occasionally opening a large instance that sits mostly empty. We developed a multi-move profile consolidation repair pass, C+cons, which diagnoses underutilized instances and re-packs tasks into cheaper profiles. On our diagnosed worst-case instance, C+cons cut total cost in half, making Track C our leading polynomial-time allocator."
+  > "Track C solves the continuous LP relaxation using CBC. Our empirical findings revealed that the LP returns an integer routing 96% of the time—meaning fractional rounding is not the primary issue. The real challenge is capacity repair: the LP prices profiles by continuous throughput rate, occasionally opening a large instance that sits mostly empty. We developed a multi-move profile consolidation repair pass, C+cons, which diagnoses underutilized instances and re-packs tasks into cheaper profiles. On our diagnosed worst-case instance, C+cons cut total cost in half, with a mean paired improvement of 5.31% [0.56, 10.07] eliminating severe tail failures, making Track C our leading polynomial-time allocator."
 
 ---
 
-### Slide 12: Empirical Validation & Multi-Scale Benchmarks (8 to 64 Tasks)
-- **Visuals:** Multi-scale performance comparison table from `chapter3_benchmark_results.md` across 8, 16, 32, and 64 tasks. Plot of runtime vs. optimality gap.
-- **Key Message:** Extensive matched-condition sweeps demonstrate that `A+subset` dominates at small/medium scale, while `C+cons` scales gracefully to 64 tasks in 55 ms with a 4.0% gap.
+### Slide 12: Empirical Validation & Multi-Scale Benchmarks (8 to 128 Tasks)
+- **Visuals:** Multi-scale performance comparison table from `chapter3_benchmark_results.md` across 8, 16, 32, 64, and 128 tasks. Plot of runtime vs. optimality gap.
+- **Key Message:** Track C delivers bounded, predictable execution at 128 tasks (**0.106 ± 0.020 s** at **3.03 ± 1.62%** gap), whereas the exact solver requires **12.3 ± 10.3 s** with unbounded heavy tails (F29).
 - **Speaker Script (089):**
-  > "Here we present our publication-grade scaling benchmarks across 8, 16, 32, and 64 tasks evaluated on both uniform and structured distributions. At 16 tasks, our subset heuristic A+subset matches or approaches the exact MILP with an astonishing 0.22% average gap. At 64 tasks, where exact MILP requires 8 seconds, C+cons solves in 55 milliseconds with an optimality gap of only 4.00%. Furthermore, by extending our budget sweeps to 1.25x reference, we proved that previous heuristic failures at scale were an artifact of testing on a knife-edge cliff. Off the cliff, both heuristics and LP repair scale robustly."
+  > "Here we present our publication-grade scaling benchmarks across 8, 16, 32, 64, and 128 tasks. At 16 tasks, our subset heuristic A+subset matches or approaches the exact MILP with an astonishing 0.22% average gap. At 128 tasks, Track C returns in 0.106 ± 0.020 seconds with a 3.03 ± 1.62% gap, compared to the exact solver's 12.3 ± 10.3 seconds. Crucially, the defensible claim is bounded predictability, not an arbitrary speed ratio: the exact solver exhibits heavy tails that can hang for hours without a timeout, making it unusable in an automated control loop. Track C consistently and predictably returns in 0.1 seconds."
 
 ---
 
@@ -167,13 +167,13 @@ graph TD
 
 ### Slide 16: Conclusion & Committee Q&A
 - **Visuals:** Summary bullets:
-  - 10 PoC build steps complete.
-  - 562 unit tests passing (100% clean).
-  - Four research questions ($T_1 - T_4$) resolved with published findings.
-  - Ready for formulation ratification and Semester 2 construction.
+  - Complete closed loop verified: adaptive re-allocation protects reliability floors under drift (**+0.424 [0.405, 0.442]** vs. silent static violation).
+  - 10 PoC build steps complete; **593 unit tests passing** (100% clean).
+  - Four foundational research questions ($T_1 - T_4$) resolved with 31 published findings.
+  - Ready for formal $T_0$ formulation ratification and Semester 2 construction.
 - **Key Message:** The project is on schedule, scientifically verified, and ready for execution.
 - **Speaker Script (035):**
-  > "In summary, our PoC phase has succeeded in transforming an ambitious systems concept into a verified, mathematically rigorous engineering platform. All 10 build steps are complete, 562 tests pass green, and the algorithmic trade-offs are settled with empirical evidence. We thank Prof. Tossaphol for his guidance and welcome the committee's questions."
+  > "In summary, our PoC phase has transformed an ambitious systems concept into a verified, mathematically grounded engineering platform. All 10 build steps are complete, 593 tests pass green, and the closed loop has demonstrated its critical differentiator: preventing silent reliability floor failures under drift. We thank Prof. Tossaphol for his guidance and welcome the committee's questions."
 
 ---
 
