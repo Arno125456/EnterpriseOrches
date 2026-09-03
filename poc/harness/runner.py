@@ -31,6 +31,7 @@ separate from A so the machinery can be priced rather than assumed (see track_a_
 
 from __future__ import annotations
 
+import dataclasses
 import time
 from dataclasses import dataclass
 
@@ -39,7 +40,8 @@ from poc.formulation.types import AllocationResult
 from poc.instances.generator import ProblemInstance, generate
 from poc.tracks import (exact_milp, static_baseline, track_a_greedy,
                         track_a_m1, track_b_cold, track_b_lagr,
-                        track_c_lp, track_c_multi)
+                        track_c_consolidate, track_c_lp,
+                        track_c_multi)
 
 # Condition name -> module exposing allocate(tasks, pools, profiles, budget, seed).
 STRATEGIES = {
@@ -51,6 +53,7 @@ STRATEGIES = {
     "B-cold": track_b_cold,
     "C": track_c_lp,
     "C2": track_c_multi,
+    "C+cons": track_c_consolidate,
 }
 
 # Named, with the reason, so a run's output can state what it did not measure.
@@ -179,3 +182,42 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+def scale_sweep(sizes,
+                seeds,
+                strategies: list[str] | None = None,
+                generator=generate,
+                budget_multiplier: float = 1.25) -> list[RunRecord]:
+    """Vary instance SIZE rather than budget tightness. Companion to sweep().
+
+    `sizes` is an iterable of (n_tasks, n_profiles).
+
+    WHY budget_multiplier EXISTS, AND WHY ITS DEFAULT IS NOT 1.0.
+
+    `budget_tightness = 1.0` sets the budget to exactly the GPUs used by the most
+    GPU-efficient routing. That is the tightest budget at which a solution is still
+    guaranteed to exist, which makes it the most adversarial setting in the whole design —
+    and at size it is a cliff. Findings F15: at 64 and 128 tasks every track went from 0 of
+    5 feasible at 1.0x to 5 of 5 at 1.25x. A scale study run at 1.0 measures the cliff, not
+    the scaling.
+
+    So this multiplies the budget past the reference. 1.25 is the smallest value measured
+    to clear the cliff on both generators; it is not otherwise tuned.
+
+    This function exists at all because the first scale runs were ad-hoc scripts that
+    bypassed harness.metrics and averaged each condition over whichever instances it
+    happened to solve — reintroducing precisely the survivor bias metrics.summarise was
+    written to prevent (findings F16). Route scale work through here.
+    """
+    records = []
+    for n_tasks, n_profiles in sizes:
+        for seed in seeds:
+            instance = generator(n_tasks=n_tasks, n_profiles=n_profiles,
+                                 budget_tightness=1.0, seed=seed)
+            if budget_multiplier != 1.0:
+                instance = dataclasses.replace(
+                    instance,
+                    budget=max(1, int(round(instance.reference_gpus * budget_multiplier))))
+            records.append(run_conditions(instance, strategies))
+    return records

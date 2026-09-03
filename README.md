@@ -45,7 +45,8 @@ CLAUDE.md                 Working summary + guardrails. Read first
 docs/
   System_Architecture_v2.md   Authoritative design reference
   PoC_and_Validation_Plan.md  Scope, deliverables, schedule, risks
-  poc_findings.md             Running log of measured results — preliminary
+  poc_findings_summary.md     START HERE for results — current beliefs and confidence
+  poc_findings.md             Full chronological log, including superseded findings
   research_papers/            Literature tracking, feeds Ch.2
   v1_superseded/              Retired v1 design. Not current — see its README
 poc/
@@ -63,8 +64,9 @@ Nine of the ten build steps are done and tested. Only step 8, Track B, is unbuil
 constraint it relaxes is T1's question (O2), and picking one would prejudge the test the
 track exists to feed.
 
-Early results are in [`docs/poc_findings.md`](docs/poc_findings.md) — including two that
-contradict the design, and five decisions the team needs to make.
+Results: [`docs/poc_findings_summary.md`](docs/poc_findings_summary.md) is the standing
+summary — what is believed now, at what confidence, and what would overturn it.
+[`docs/poc_findings.md`](docs/poc_findings.md) is the full chronological log behind it.
 
 ## Build order
 

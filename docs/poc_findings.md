@@ -1,5 +1,11 @@
 # PoC Findings — running log
 
+> **Start with [`poc_findings_summary.md`](poc_findings_summary.md).** This file is the
+> chronological record, and several findings here are corrected by later ones — F14 by F15
+> and F16, F6 by F17, F7's headline by F12. The history is kept deliberately, but the
+> summary states what is currently believed. Do not quote a number from this log without
+> checking the summary's "corrected" table first.
+
 **Status: preliminary.** Recorded 2 September 2026, in Week 1 of the §5.4 schedule. These
 are early readings from the harness, not the deliverables. D5/D6 are due 15 Sep, D9 22 Sep,
 D10 26 Sep, and the consolidated report D11 on 29 Sep.
@@ -538,13 +544,12 @@ fragile — and the lookahead is worth much more. This also **overturns F11's ca
 A+M1's advantage narrows under pressure; that was a property of the uniform generator, not
 of the mechanism. Still no measurable runtime cost.
 
-### One thing that got worse, and is worth watching
+### One thing that got worse — since diagnosed and fixed, see F17
 
 Track C's **maximum** gap on structured instances is **100.85%** — a solution costing twice
-the optimum. Its mean is 18.69%, so this is a tail, not typical. But a track whose worst
-case is 2× optimum is not one to put in front of an advisor without knowing why. The
-suspect is the repair pass under a heavy-tailed load: one very large task lands badly and
-drags a whole large instance open. Not diagnosed.
+the optimum. The cause turned out not to be the repair pass but the LP itself: it prices
+profiles by rate and cannot see that a large profile's integer instance will sit mostly
+empty. F17 has the full diagnosis and a fix that halves Track C's mean gap.
 
 ### What this still does not answer
 
@@ -670,9 +675,10 @@ which is itself F13's finding.
 
 ### Track C is the only heuristic that works at scale
 
-Its gap **improves monotonically** with size on both generators — 8.15% → 1.16% on uniform,
-22.53% → 2.86% on structured — while its runtime stays essentially flat, 0.06 s to 0.23 s
-across a 16× increase in tasks.
+Its gap improves with size on both generators here — 8.15% → 1.16% on uniform, 22.53% →
+2.86% on structured — while its runtime stays essentially flat, 0.06 s to 0.23 s across a
+16× increase in tasks. *(The monotonicity is a tightness-1.0 artefact; off the knife edge
+the gap sits in a 2–5% band without a clean trend. See F16.)*
 
 At 64–128 tasks on uniform instances that is a **~100× speedup over the exact solver for
 roughly 1% cost** (11 s → 0.11 s). That is exactly what Objective 1.2.2 asks a non-exact
@@ -769,6 +775,333 @@ are reliably solvable at size.
 Anything measured only at ×1.00 is measured on a cliff edge. **T3's sweep should extend
 above the reference, not just below it.** That is a change to the experimental design, and
 it belongs to 089.
+
+
+---
+
+## F16 — The scale comparison, off the knife edge. Track C earns Objective 1.2.2.
+
+Re-run of F14 at **1.25× the reference budget**, where F15 showed every track can actually
+compete. 3 seeds per row. `inf` is A/A+M1/C.
+
+**uniform** — all tracks feasible on every instance, so the gap columns are comparable
+
+| tasks | MILP s | C s | C gap | A gap | A+M1 gap | inf |
+|---|---|---|---|---|---|---|
+| 16 | 0.106 | 0.054 | 5.09% | 10.95% | 10.95% | 0/0/0 |
+| 32 | 0.252 | 0.079 | 5.20% | 8.48% | 8.48% | 0/0/0 |
+| 64 | 5.127 | 0.086 | **2.47%** | 12.79% | 12.79% | 0/0/0 |
+| 128 | **17.750** | **0.162** | **4.58%** | 15.38% | 15.38% | 0/0/0 |
+
+**structured** — greedy still fails here, so read the caveat below before comparing columns
+
+| tasks | MILP s | C s | C gap | A gap | A+M1 gap | inf |
+|---|---|---|---|---|---|---|
+| 16 | 0.198 | 0.077 | 23.64% | 8.31% | 37.39% | 2/0/0 |
+| 32 | 0.250 | 0.112 | 12.40% | 34.52% | 25.65% | 2/1/0 |
+| 64 | 0.337 | 0.096 | 11.55% | 27.42% | 27.42% | 1/1/0 |
+| 128 | 0.343 | 0.188 | **3.44%** | 17.96% | 17.96% | 1/1/0 |
+
+### The result Objective 1.2.2 actually asked for
+
+On uniform instances at 128 tasks: the exact solver takes **17.75 s**, Track C takes
+**0.162 s** and lands **4.58%** above optimum. That is a **~110× speedup for under 5% cost**,
+with every track feasible so the comparison is like-for-like.
+
+That is the first clean statement in this log of the form the project's objective requires:
+a non-exact alternative that is dramatically cheaper than the MILP at a bounded quality
+cost. It holds on the instance family where the MILP is actually expensive — which is the
+only family where the question matters.
+
+**Track C beats greedy at every size, and the margin widens.** 5.09% against 10.95% at 16
+tasks; 4.58% against 15.38% at 128. Greedy gets *worse* with scale (10.95% → 15.38%) while
+Track C does not.
+
+### Correcting F14 again: "improves monotonically" was also a tightness-1.0 artefact
+
+F14 said Track C's gap improves monotonically with size. At 1.25× it does not — 5.09, 5.20,
+2.47, 4.58 on uniform. The supportable claim is that **Track C's gap stays in a 2–5% band
+and does not degrade with scale**, which is what matters and is weaker than what F14 said.
+
+### A flaw in my own comparison script, on the structured rows
+
+The structured gap columns average over **different subsets of instances**, because greedy
+was infeasible on some and the ad-hoc script excluded failures per condition rather than
+per instance. At 16 tasks, Track A's 8.31% is the average over the single instance it
+solved, while A+M1's 37.39% is over all three. **A+M1 is not worse than A there** — it is
+being scored on harder instances that A simply failed.
+
+`harness/metrics.py` was written specifically to prevent this: it excludes unsolvable
+instances from every aggregate and counts infeasible runs beside the gap rather than
+averaging over them. The scale scripts bypassed it for speed and reintroduced the exact bias
+the module exists to stop. **The structured rows should be re-run through the harness before
+any of them is quoted.**
+
+The uniform rows are unaffected — nothing was infeasible, so every condition is averaged
+over the same three instances.
+
+### Where this leaves the tracks
+
+| | verdict |
+|---|---|
+| **Track C** | The result. ~110× faster than exact at 128 tasks for under 5%, flat runtime, feasible everywhere on uniform |
+| **Track A / A+M1** | Fast but 8–15% off and worsening with scale. Cheap enough to keep as a warm start or fallback; not the answer |
+| **Track B** | Best bound in the log (F7) and ~100× slower than exact as an allocator (F13). A bound generator, not an allocator |
+| **MILP** | Optimal and cheap below ~32 tasks. The heuristics only justify themselves beyond that |
+
+
+---
+
+## F17 — Track C's worst case, diagnosed and fixed. The LP cannot see rounding waste.
+
+F12 recorded a 100.85% maximum gap for Track C and left it undiagnosed. It is now
+diagnosed, and the cause refines F6.
+
+### The failure, in full
+
+Structured generator, 8 tasks, seed 3, tightness 1.0:
+
+```
+optimum   395.2   n={m1:1, m2:1}   4 of 8 GPUs
+track C   793.8   n={m2:2, m3:1}   8 of 8 GPUs
+LP bound  303.5
+
+m1: gpu=2  thr=15.57  price=199.20   price/thr=12.79
+m3: gpu=4  thr=33.54  price=401.74   price/thr=11.98   <- better rate
+```
+
+Three tasks (`t5, t2, t6`, total load **7.88**) are ineligible for `m2`. The LP sent them to
+`m3` because `m3` has the better price per unit throughput — 11.98 against 12.79. **In the
+relaxation that is correct**: `n[m3] = 7.88/33.54 = 0.235` instances costs 94.4, cheaper
+than `m1`'s 0.506 instances at 100.8.
+
+Integrally it is a disaster. `m3` costs a whole 401.74 instance to carry 7.88 units,
+**wasting 76% of it**, where `m1` would have cost 199.20.
+
+**The LP prices profiles by rate; an integer allocation pays for whole instances.** The
+larger the profile, the wider that gap. This is the integrality gap of §1.7 with a concrete
+face on it.
+
+### This refines F6, which was too optimistic
+
+F6 found the LP returns an integral routing 96% of the time and concluded that rounding the
+routing is "nearly free". Mechanically true — but the routing is integral **and still
+wrong**, because it was chosen under a relaxation that never sees large-profile waste. The
+cheapness of rounding says nothing about the quality of what is being rounded.
+
+### The fix, and why single-move relocate cannot do it
+
+`core/consolidation.py`: relocate **every** task on one profile to another, together. Moving
+one task off an underused profile leaves the instance open and still paid for, so every
+single-move neighbourhood sees a local optimum. Only closing the instance recovers its price.
+
+Measured, as condition `C+cons`:
+
+| | C | C+cons |
+|---|---|---|
+| uniform, 8 tasks — mean gap | 14.58% | **7.21%** |
+| uniform — matched optimum | 16 | **23** |
+| structured, 8 tasks — mean gap | 19.05% | **9.66%** |
+| structured — matched optimum | 17 | **24** |
+| structured — **max gap** | **100.85%** | **44.01%** |
+| runtime | 0.030 s | 0.026 s |
+| bound | unchanged | unchanged |
+
+**It halves Track C's mean gap on both generators at no runtime cost.** It does not change
+feasibility — it improves cost, it does not rescue a failed allocation — and it cannot
+change the bound, which is a relaxation property.
+
+At scale the gain is smaller (uniform 4.25% → 3.35%, structured 15.86% → 13.52%) simply
+because Track C is already close there. The pass matters most where Track C is worst.
+
+### The limitation, which is not a bug
+
+This neighbourhood is *"all tasks on a profile → one other profile"*. The adversarial
+fixture needs *"**some** tasks on a profile"* — `t1` and `t2` to `m2` while `t3` stays on
+`m1`, because `t3` is eligible only for `m1`. The intersection of destinations over all of
+`m1`'s tasks is empty, so no move exists and the pass correctly leaves greedy's 300 alone.
+
+**Two different multi-move neighbourhoods, and this implements one of them.** F1's fixture
+and F17's failure are the same phenomenon from opposite ends — one where consolidating is
+right, one where de-consolidating is. A subset-move neighbourhood would cover both and is
+not built. There is a test asserting the fixture is *unchanged*, so the limitation cannot be
+mistaken for a regression.
+
+### Scope
+
+v2 §6.5 defers relocate/consolidate to T4. The pass lives in `core/` and is wired only into
+a separate condition, so no existing track changes behaviour and T4 can still price it.
+
+
+---
+
+## F18 - O9 answered: scoped re-optimisation works, and is not worth building
+
+**Outside PoC scope** (see `prototype/README.md`) - built because the question is cheap to
+answer and expensive to get wrong in Semester 2.
+
+Section 3.3 specifies J9 as re-invoking J3 "for affected workflows only", then doubts its
+own specification: *"Under (C2), re-routing one workflow changes load on shared profiles,
+which changes instance counts, which affects every other workflow using those profiles.
+Scoped re-optimisation may not be well-defined."* Deferred to Semester 2 as O9.
+
+Global versus scoped, 40 instances of 12 tasks / 5 profiles, one of three workflows marked
+affected, exact MILP as the allocator:
+
+| generator | budget | infeasible | more expensive | matched global |
+|---|---|---|---|---|
+| uniform | 1.00x | **24** | 8 | 8 |
+| uniform | 1.25x | 6 | 18 | 16 |
+| uniform | 1.50x | 0 | 20 | 20 |
+| uniform | 2.00x | 0 | 20 | 20 |
+| structured | 1.00x | **32** | 6 | 2 |
+| structured | 1.50x | 3 | 20 | 17 |
+| structured | 2.00x | 0 | 22 | 18 |
+
+### It is well-defined - the infeasibility was the anchor again
+
+At 1.00x scoped re-optimisation failed on 24 of 40 uniform and 32 of 40 structured
+instances, which looks like Section 3.3's fear confirmed. It is not: by 1.50x the failures
+are gone entirely. This is the same knife edge as F15, caught this time *before* the finding
+was written rather than after.
+
+So the answer to O9 as literally asked - *is it well-defined?* - is **yes**.
+
+### But it is vacuous, which is the real finding [CORRECTED]
+
+**The first version of this finding measured the wrong thing, and its headline was wrong.**
+It marked one arbitrary workflow as affected and concluded that scoping is worse than a
+global re-run about half the time, at a mean 22% cost penalty.
+
+That is not how J9 is triggered. Drift is detected on a **profile**, so the affected
+workflows are *those with a task routed to the drifted profile* - not an arbitrary one.
+Re-run that way, over the same 60 instances:
+
+| affected set | infeasible | worse | same | mean penalty | workflows affected |
+|---|---|---|---|---|---|
+| arbitrary, one workflow | 0 | 31 | 29 | 11.53% | 1.00 of 3 |
+| **derived from the drifted profile** | 0 | **0** | **60** | **0.00%** | **2.95 of 3** |
+
+Scoped re-optimisation is not worse. It is **identical to global, every time** - because the
+affected set is almost the entire batch.
+
+That degeneracy is structural, not an artifact of these instances having only three
+workflows. Relabelling 24-task instances into more workflows and drifting the most-used
+profile:
+
+| workflows | affected (mean) | as % | affected = all |
+|---|---|---|---|
+| 2 | 2.00 | 100% | 40 of 40 |
+| 3 | 3.00 | 100% | 40 of 40 |
+| 5 | 4.90 | 98% | 36 of 40 |
+| 8 | 7.38 | 92% | 20 of 40 |
+| 12 | 10.05 | **84%** | 8 of 40 |
+
+**A shared profile is shared by nearly everyone.** Even at twelve workflows, drift on one
+profile touches ten of them.
+
+### What the two experiments say together
+
+They bracket the design. Scope the re-optimisation **correctly** - to every workflow
+actually touching the drifted profile - and it does the same work as a global run, so it
+saves nothing. Scope it **narrower** than reality, as the first experiment did by taking one
+workflow, and it costs a mean 22% and up to 51% more.
+
+So "affected workflows only" is either a no-op or a penalty, and there is no setting where
+it pays. Section 3.3's instinct was exactly right - *"re-routing one workflow changes load
+on shared profiles, which affects every other workflow using those profiles"* - it just
+surfaces as vacuousness rather than as undefinedness.
+
+### Why this says "do not build it"
+
+Unchanged, and now better supported. A global re-optimisation costs about 0.1 s on these
+instances. Scoping adds a component, a correctness question, and a failure mode, in
+exchange for excluding roughly 16% of workflows from a re-run that is already cheap.
+
+**Recommendation for 077: do not build scoped re-optimisation. Re-optimise globally on every
+drift signal.** That removes a component from Semester 2, closes O9, and removes the
+"affected workflows only" language from Section 3.3 and J9.
+
+The condition that would change this: if global re-optimisation becomes expensive at scale -
+plausible, since F13 shows the MILP reaching 21 s at 128 tasks - then scoping is worth
+revisiting, against Track C rather than the exact solver. But the affected set would still
+be ~84% of workflows, so the saving would remain small.
+
+### Caveat on the interpretation
+
+Section 3.3 does not define "scoped" precisely. The reading implemented is the conservative
+one: frozen tasks keep their profiles and their GPUs are deducted from the budget. A more
+permissive reading - letting re-optimised tasks use headroom inside instances the frozen
+tasks already paid for - would score better, but it double-counts capacity unless the frozen
+instance counts are also recomputed, at which point it is a global run wearing a different
+name. That tension is the real content of Section 3.3's doubt.
+
+
+---
+
+## F19 - Section 4.5's "EMA update per observation" is wrong for reliability
+
+**Outside PoC scope.** Found while stress-testing `prototype/profiling.py`, not by a test
+that was looking for it.
+
+Section 4.5 specifies "EMA update per observation" for the Profile Store. Applied to
+latency that is correct - it is a continuous quantity and an EMA tracks drift in it well.
+Applied to **reliability** it is unusable, because reliability is estimated from a binary
+success/failure signal.
+
+With the specified EMA at alpha 0.3, a profile at 0.99 reliability that observes **99
+successes and then one failure** reports `0.70`. True rate: 0.99. One failed call in a
+hundred moves the estimate 30% of the way to zero, and it takes roughly eight consecutive
+successes to climb back.
+
+### Why this would have been expensive
+
+Reliability is not a display value. It is the filter that builds `C(t)`:
+
+    C(t) = { m : rel(m) >= R_min(t) and lat(t,m) <= L_max(t) }
+
+So under the specified EMA, **one failed call makes a profile ineligible for every task with
+a floor above 0.7**, pools collapse, the drift detector fires, and the batch is re-allocated
+- on the evidence of a single call. The entire reliability pillar would have been driven by
+noise, and the symptom (constant thrashing) sits a long way from the cause (an estimator
+choice in one line of section 4.5).
+
+### The fix, and the second bug inside it
+
+Reliability now uses a **decayed counting estimator** with a weak prior:
+
+    rel = (decayed successes + prior) / (decayed trials + 2 * prior)
+
+Recent behaviour still dominates, so genuine degradation is still caught - the property the
+EMA was chosen for - but a single failure moves the estimate by one observation's worth of
+evidence rather than by 30%.
+
+The first version of that fix had its own bug, worth recording because it is subtle. Decay
+sets the effective sample size at `1/(1 - decay)`, and an unbroken run of successes
+converges to `(N + p) / (N + 2p)` - so **a short memory imposes a ceiling on achievable
+reliability**. At decay 0.98 with a Laplace prior of 1.0 that ceiling is 51/52 = **0.981**,
+and any task with `rel_floor = 0.99` would have been permanently unservable by a measured
+profile. Nothing would have raised an error; those tasks would simply always have been
+infeasible.
+
+Settled at decay 0.995 (effective sample ~200) and a Jeffreys prior of 0.5, ceiling 0.9975.
+
+| sequence | EMA (as specified) | counting estimator |
+|---|---|---|
+| 500 successes | 1.000 | 0.9973 |
+| 99 successes, then 1 failure | **0.700** | 0.9815 |
+| 200 successes, then 50 failures | 0.000 | 0.6913 |
+
+The last row is the check that robustness did not cost sensitivity.
+
+### What this means for the documents
+
+**Section 4.5 needs amending**: EMA for latency, a decayed counting estimator for
+reliability. One line in the document, a real change in behaviour.
+
+Still open for 077: the compatibility score remains **[PROPOSED]** and unreconciled, and it
+requires running the allocator to evaluate - so drift detection is not the cheap signal
+section 4.5 implies.
 
 
 ---
