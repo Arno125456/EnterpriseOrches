@@ -94,7 +94,11 @@ class RunRecord:
 
     @property
     def solvable(self) -> bool:
-        """Whether the exact solver found anything. Nothing else is interpretable if not."""
+        """Whether the exact solver PROVED an optimum. Nothing else is interpretable if not.
+
+        False covers two different situations that are both unusable as ground truth: no
+        feasible allocation exists, and CBC hit its time limit with an unproven incumbent.
+        """
         return self.optimum is not None
 
 
@@ -120,9 +124,13 @@ def run_conditions(instance: ProblemInstance,
             violations=invariants.check(result, tasks, pools, profiles, budget),
         )
 
+    # The optimum is only an optimum if CBC PROVED it. A timed-out incumbent is an upper
+    # bound, and measuring gaps against it would silently understate every heuristic's error
+    # — including reporting a negative gap when a heuristic beats the "optimum".
     optimum = None
-    if "MILP" in conditions and conditions["MILP"].feasible:
-        optimum = conditions["MILP"].result.total_cost
+    milp = conditions.get("MILP")
+    if milp is not None and milp.feasible and milp.result.converged is not False:
+        optimum = milp.result.total_cost
 
     return RunRecord(instance=instance, conditions=conditions, optimum=optimum,
                      wall_time=time.perf_counter() - started)

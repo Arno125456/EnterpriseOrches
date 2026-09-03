@@ -91,7 +91,7 @@ def _solve_relaxation(tasks, pools, profiles, budget):
         problem += (routed <= n[m] * profiles[m].throughput, f"C2_{m}")
     problem += (pulp.lpSum(n[m] * profiles[m].gpus for m in profiles) <= budget, "C3")
 
-    problem.solve(pulp.PULP_CBC_CMD(msg=0))
+    problem.solve(pulp.PULP_CBC_CMD(msg=0, timeLimit=60))
     if pulp.LpStatus[problem.status] != "Optimal":
         return None, None, None
 

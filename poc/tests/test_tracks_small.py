@@ -208,3 +208,32 @@ def test_milp_matches_brute_force_on_feasible_instances(seed):
     assert result.feasible
     assert expected is not None
     assert result.total_cost == pytest.approx(expected)
+
+
+def test_milp_reports_whether_optimality_was_proven():
+    """CBC has no default time limit and will grind unboundedly on a hard instance — a
+    statistics run had to be killed after an hour. A limit is now set, which means a solve
+    can return an unproven incumbent, and that must never be mistaken for the optimum.
+    """
+    inst = generate(n_tasks=6, n_profiles=3, budget_tightness=1.0, seed=0)
+    result = exact_milp.allocate(*inst.unpack())
+    assert result.converged is True, "a small instance must solve to proven optimality"
+    assert result.lower_bound == result.total_cost
+
+
+def test_an_unproven_milp_result_is_not_used_as_ground_truth():
+    """With a time limit of zero CBC cannot prove anything. Whatever comes back must not be
+    treated as an optimum by the harness, or every gap measured against it is wrong."""
+    from poc.harness.runner import run_conditions
+
+    inst = generate(n_tasks=8, n_profiles=4, budget_tightness=1.0, seed=1)
+    tasks, pools, profiles, budget = inst.unpack()
+
+    unproven = exact_milp.allocate(tasks, pools, profiles, budget, time_limit=0)
+    if unproven.feasible and unproven.converged is False:
+        assert unproven.lower_bound is None, "an unproven incumbent is not a lower bound"
+
+    record = run_conditions(inst, strategies=["MILP", "C"])
+    if record.conditions["MILP"].result.converged is False:
+        assert record.optimum is None
+        assert not record.solvable

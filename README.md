@@ -53,6 +53,7 @@ the row for your part.
 |---|---|---|
 | **everyone** | [`docs/T0_briefing.md`](docs/T0_briefing.md) | The 8 Sep session. Short, and it is the only thing with a deadline |
 | **everyone** | [`docs/poc_findings_summary.md`](docs/poc_findings_summary.md) | What we currently believe, at what confidence. Includes a table of numbers **not** to quote |
+| **presenting** | [`docs/study_guide.md`](docs/study_guide.md) | Nine steps to being able to defend every choice. Things to run and predict, not to read |
 | 035 — Track A | `poc/tracks/track_a_greedy.py`, `track_a_m1.py`, findings F1, F8, F20 | Your track, and the M1 analogue that needs your sign-off |
 | 075 — Tracks B & C | `poc/tracks/track_b_lagr.py`, `track_c_lp.py`, findings F7, F13, F16, F17 | The bound result, and the 110× speedup that carries Objective 1.2.2 |
 | 077 — Phase C | `prototype/profiling.py`, `loop.py`, findings F18, F19, F20 | The profiling loop, and the two design decisions awaiting your sign-off |

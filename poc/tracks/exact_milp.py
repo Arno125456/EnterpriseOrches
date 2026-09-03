@@ -39,6 +39,11 @@ from poc.formulation.types import AllocationResult, Infeasible, ProfileSpec, Tas
 
 STRATEGY = "MILP"
 
+# Seconds. CBC has no default limit, and on a pathological 128-task instance it will grind
+# essentially without bound — a statistics run was killed after an hour on one. The limit is
+# generous enough that ordinary instances still solve to proven optimality.
+DEFAULT_TIME_LIMIT = 120
+
 
 def _instance_upper_bound(profile: ProfileSpec, total_load: float, budget: int) -> int:
     """A finite, valid cap on n[m]. Unbounded integers make CBC work harder than it needs.
@@ -66,10 +71,25 @@ def allocate(tasks: list[Task],
              pools: dict[TaskId, list[str]],
              profiles: dict[str, ProfileSpec],
              budget: int,
-             seed: int = 0) -> AllocationResult:
-    """Solve to proven optimality. seed is accepted for interface parity (P5); CBC is
-    deterministic here and does not use it."""
+             seed: int = 0,
+             time_limit: int | None = None) -> AllocationResult:
+    """Solve to proven optimality where possible. seed is accepted for interface parity (P5).
+
+    `converged` is the honest signal and callers MUST check it:
+
+        converged=True   CBC proved optimality. Safe to use as ground truth.
+        converged=False  the time limit was hit. The result is feasible but NOT proven
+                         optimal, so any gap measured against it is meaningless.
+
+    Without a limit CBC can run unboundedly on a hard instance. Without `converged`, a
+    timed-out answer would be silently reported as the optimum and every gap in the project
+    measured against it would be wrong — the same class of failure the n[m] cap test guards
+    against, arriving from a different direction.
+    """
     started = time.perf_counter()
+    # Read at call time, not bound at definition, so experiments can lower it globally.
+    if time_limit is None:
+        time_limit = DEFAULT_TIME_LIMIT
 
     for task in tasks:
         if not pools.get(task.id):
@@ -106,16 +126,26 @@ def allocate(tasks: list[Task],
 
     problem += (pulp.lpSum(n[m] * profiles[m].gpus for m in profiles) <= budget, "C3")
 
-    problem.solve(pulp.PULP_CBC_CMD(msg=0))
+    problem.solve(pulp.PULP_CBC_CMD(msg=0, timeLimit=time_limit))
     elapsed = time.perf_counter() - started
     status = pulp.LpStatus[problem.status]
 
-    if status != "Optimal":
+    if status == "Infeasible":
         return AllocationResult.failure(
             STRATEGY,
-            Infeasible(f"MILP returned {status} — no allocation fits the GPU budget",
+            Infeasible("no allocation fits the GPU budget", None, "C3"),
+            elapsed)
+
+    has_solution = all(x[(t.id, m)].value() is not None
+                       for t in tasks for m in pools[t.id])
+    if status != "Optimal" and not has_solution:
+        return AllocationResult.failure(
+            STRATEGY,
+            Infeasible(f"MILP returned {status} within {time_limit}s with no incumbent",
                        None, "C3"),
             elapsed)
+
+    proven = status == "Optimal"
 
     routing = {t.id: m for t in tasks for m in pools[t.id]
                if round(x[(t.id, m)].value() or 0) == 1}
@@ -128,14 +158,27 @@ def allocate(tasks: list[Task],
         routing=routing, provisioning=provisioning,
         total_cost=total_cost, gpus_used=gpus_used,
         strategy=STRATEGY,
-        lower_bound=total_cost,     # exact — the bound is the optimum
+        # The bound equals the cost only when optimality was PROVEN. A timed-out incumbent
+        # is an upper bound on the optimum, not the optimum, so it reports no lower bound.
+        lower_bound=total_cost if proven else None,
+        converged=proven,
         compute_time=elapsed, feasible=True,
     )
 
     violations = invariants.check(result, tasks, pools, profiles, budget)
     if violations:
-        # v2 §4.1: verification failure is an internal error. Fail loudly — a MILP that
-        # violates its own constraints means the encoding is wrong, not the instance.
-        raise RuntimeError(f"exact MILP produced a result violating {violations}")
+        if proven:
+            # v2 §4.1: verification failure is an internal error. Fail loudly — a MILP that
+            # PROVED optimality yet violates its own constraints means the encoding is wrong.
+            raise RuntimeError(f"exact MILP produced a result violating {violations}")
+        # Not proven, and the incumbent does not satisfy the constraints. CBC can return
+        # leftover variable values when it times out before finding anything feasible, so
+        # this is a normal outcome of a tight limit rather than a bug. Report no incumbent
+        # instead of trusting values that were never a solution.
+        return AllocationResult.failure(
+            STRATEGY,
+            Infeasible(f"MILP hit its {time_limit}s limit with no feasible incumbent "
+                       f"(violated {violations})", None, "C3"),
+            elapsed)
 
     return result

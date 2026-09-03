@@ -81,7 +81,9 @@ def _solve_budget_relaxed(tasks, pools, profiles, mu):
         routed = pulp.lpSum(x[(t.id, m)] * t.load for t in tasks if m in pools[t.id])
         problem += routed <= n[m] * profiles[m].throughput
 
-    problem.solve(pulp.PULP_CBC_CMD(msg=0))
+    # This is called once per subgradient iteration, so an unbounded solve here is
+    # far worse than in exact_milp. Deliberately tighter.
+    problem.solve(pulp.PULP_CBC_CMD(msg=0, timeLimit=30))
     if pulp.LpStatus[problem.status] != "Optimal":
         return None
 
