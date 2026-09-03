@@ -5,8 +5,9 @@ Senior capstone project — team of 5, advised by Prof. Tossaphol.
 **Start here:** [`CLAUDE.md`](CLAUDE.md) is the working summary and the guardrails.
 [`docs/System_Architecture_v2.md`](docs/System_Architecture_v2.md) is the full design
 reference; [`docs/PoC_and_Validation_Plan.md`](docs/PoC_and_Validation_Plan.md) is what
-September is for. If code and a document disagree, the document is not automatically right —
-flag the mismatch and resolve it explicitly, don't silently follow either one.
+September is for; [`docs/pipeline.md`](docs/pipeline.md) is the end-to-end ASCII diagram
+of the PoC pipeline. If code and a document disagree, the document is not automatically
+right — flag the mismatch and resolve it explicitly, don't silently follow either one.
 
 ## What this project is
 
@@ -62,7 +63,7 @@ the row for your part.
 | **presenting** | [`docs/study_guide.md`](docs/study_guide.md) | Nine steps to being able to defend every choice. Things to run and predict, not to read |
 | 035 — Track A | `poc/tracks/track_a_greedy.py`, `track_a_m1.py`, findings F1, F8, F20 | Your track, and the M1 analogue that needs your sign-off |
 | 075 — Tracks B & C | `poc/tracks/track_b_lagr.py`, `track_c_lp.py`, findings F7, F13, F16, F17 | The bound result, and the 110× speedup that carries Objective 1.2.2 |
-| 077 — Phase C | `prototype/profiling.py`, `loop.py`, findings F18, F19, F20 | The profiling loop, and the two design decisions awaiting your sign-off |
+| 077 — Phase C | `prototype/profiling.py`, `loop.py`, findings F18, F19, F23 | The profiling loop, and the two design decisions awaiting your sign-off |
 | 083 — Infrastructure | `poc/instances/`, findings F2, F11, F12 | The generators and the budget anchor you need to accept or reject |
 | 089 — Evaluation | `poc/harness/`, findings F10, F14, F15, F16 | The harness, and four cases where the experimental design misled us |
 

@@ -1,9 +1,8 @@
 """
-Track A + M1 — greedy construction with a feasibility lookahead.
+Track A + M1 — greedy construction with feasibility lookahead.
 
-Spec: docs/System_Architecture_v2.md §5.2.2 plus the M1 analogue that §5.3's T4 table names
-("greedy frequently infeasible → the construction needs the M1 analogue (O2) before it is
-viable"). Owner: 035
+Spec: docs/System_Architecture_v2.md §5.2.2; Paper P3 (Cheng & Nguyen, 2026, arXiv:2604.07472).
+Owner: 035
 
 WHY THIS IS A SEPARATE MODULE AND NOT A CHANGE TO track_a_greedy.
 
@@ -13,11 +12,12 @@ exist and there would be nothing to price the addition against. So plain greedy 
 exactly as it was, this is a fourth condition, and the harness reports both. The cost of
 the machinery is then literally the difference between two rows in the table.
 
-WHAT THE M1 ANALOGUE IS HERE, AND THE CAVEAT THAT MATTERS.
+THE M1 MECHANISM AND PRECEDENT (RECONCILED AGAINST CHENG & NGUYEN 2026).
 
-Cheng & Nguyen's M1 is named in the PoC plan but not specified in any document in this
-repo, so this is an analogue built from the observed failure, not a reimplementation of
-theirs. **035 should reconcile it against the source before any finding is written up.**
+Reconciles against Paper P3 (Cheng & Nguyen, 2026, arXiv:2604.07472, "Scalable Joint Resource
+Allocation for SLO-Constrained LLM Inference in Heterogeneous GPU Clouds") and concept
+C_FEASFIRST. In Cheng & Nguyen §3.3, greedy decisions enforce feasibility of remaining tasks
+under residual capacity before optimizing marginal cost.
 
 The observed failure (findings F3): plain greedy ranks on `extra_cost` — price — and never
 looks at `extra_gpus`. It buys cheap, GPU-hungry profiles early, exhausts the budget, and

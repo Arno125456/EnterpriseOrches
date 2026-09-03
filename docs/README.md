@@ -48,7 +48,7 @@ That is enough to hold a conversation about the project.
 
 | document | use it when |
 |---|---|
-| [`poc_findings.md`](poc_findings.md) | The full chronological log, 27 findings **including superseded ones**. Do not quote from it without checking the summary's corrections table |
+| [`poc_findings.md`](poc_findings.md) | The full chronological log, 30 findings **including superseded ones**. Do not quote from it without checking the summary's corrections table |
 | [`PoC_and_Validation_Plan.md`](PoC_and_Validation_Plan.md) | The September plan — scope, deliverables, schedule, risks |
 
 ### Archive
@@ -73,7 +73,7 @@ poc_findings.md          what happened, in order        -- full evidence, incl. 
 ```
 
 **Read down, not up.** The log contains findings that were later corrected or retracted —
-F14 was corrected by F15 and again by F16, F7's headline by F27, F16's speedup by F26. The
+F14 was corrected by F15 and again by F16, F7's headline by F30, F16's speedup by F29. The
 summary states the current position; the log preserves how it got there.
 
 ---

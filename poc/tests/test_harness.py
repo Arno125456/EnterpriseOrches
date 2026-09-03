@@ -209,3 +209,17 @@ def test_scale_sweep_results_go_through_metrics():
         assert summary.instances == solvable, (
             f"{summary.condition} scored over {summary.instances} of {solvable}")
         assert summary.feasible + summary.infeasible == summary.instances
+
+
+def test_sweep_supports_tightness_above_reference():
+    """T3 sweep must cleanly support budget tightness > 1.0 past the cliff edge."""
+    tightness = [0.8, 1.0, 1.25, 1.5]
+    records = sweep(n_tasks=6, n_profiles=3, tightness_values=tightness,
+                    seeds=range(3), strategies=["MILP", "A", "A+subset", "B-C3", "C"])
+    counts = metrics.solvability(records)
+
+    for t in tightness:
+        assert t in counts
+        if t >= 1.0:
+            assert counts[t][0] == counts[t][1], f"expected fully solvable at tightness {t}"
+

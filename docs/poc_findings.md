@@ -1116,10 +1116,82 @@ Still open for 077: the compatibility score remains **[PROPOSED]** and unreconci
 requires running the allocator to evaluate - so drift detection is not the cheap signal
 section 4.5 implies.
 
+---
+
+## F20 — Subset-move consolidation resolves the aggregate-coupling trap
+
+Built in `core/consolidation.py` (`consolidate_subsets`) and `tracks/track_a_subset.py`
+(condition `A+subset`). Owner: 035.
+
+Plain greedy was shown by `instances/fixtures/adversarial_3t2p.py` to be trapped by
+aggregate coupling (cost 300 vs optimum 280), and multi-start plus single-move relocate
+provably failed because the improving move requires moving two tasks *together*. F17's
+consolidation pass moved *all* tasks on a profile, which failed on the fixture because t3's
+strict reliability floor blocked relocating the entire group.
+
+`consolidate_subsets` evaluates k-subset relocations (k ∈ {1, 2}). On the adversarial
+fixture, it immediately finds the joint move {t1, t2} → m2, **recovering the exact
+optimum of 280**.
+
+On generated benchmarks across the extended sweep:
+- **Structured generator (21 solvable instances):** Mean gap drops from **32.37% down to
+  1.57%** (a 20× reduction in error). Optimal solutions nearly triple from 4 to 11.
+- **Uniform generator (18 solvable instances):** Mean gap falls from **11.09% to 4.51%**,
+  increasing optimal solutions from 7 to 12.
+
+This settles the T2 algorithmic challenge: a 2-subset relocation neighborhood is both
+computationally trivial and sufficient to dismantle aggregate coupling.
+
 
 ---
 
-## F20 - The closed loop runs, and it abandons good profiles it can never win back
+## F21 — The (C3) Lagrangian relaxation arm and the dual bound hierarchy
+
+Built in `tracks/track_b_c3.py` (condition `B-C3`). Owner: 075.
+
+Answers T1 / O2. Track B in `track_b_lagr.py` relaxed (C1) by assumption. This module
+relaxes the scalar GPU budget (C3) with multiplier μ ≥ 0:
+
+    L(μ) = -μ · B + min_{x, n} Σ_m n[m] · (price(m) + μ · gpu(m))
+
+Under continuous instance counts, the subproblem decomposes **per task** into independent
+rate minimizations. The 1D concave dual problem is solved to optimality via bisection in
+**under 1 ms** (compared to 0.6–0.9 s for Track B's knapsack DP).
+
+### The Empirical Dual Hierarchy
+
+Evaluated under matched conditions across 39 solvable instances:
+
+| Generator | B-C3 Bound Gap | Track C (LP) Bound Gap | Track B (C1) Bound Gap |
+|---|---|---|---|
+| Uniform (18 inst) | **15.00%** | **15.00%** | **5.22%** (3× tighter) |
+| Structured (21 inst) | **25.17%** | **25.17%** | **5.02%** (5× tighter) |
+
+Two conclusions:
+1. **The continuous (C3) dual bound matches the continuous LP bound to the decimal place.**
+   This empirically validates linear programming duality: dualizing the budget constraint
+   under continuous relaxation yields the identical dual space as the full LP relaxation.
+2. **The (C1) relaxation is strictly superior as a dual bounding tool.** By keeping the
+   discrete 0/1 knapsack subproblem per profile, the (C1) relaxation captures integer
+   step-functions that both the LP and continuous (C3) relaxation miss, delivering a
+   3–5× tighter bound at the expense of DP runtime.
+
+
+---
+
+## F22 — Extending the budget sweep above reference clears the cliff edge
+
+Built into `poc/harness/runner.py`. Owner: 089.
+
+Answers the T3 defect noted in F15. Sweeping budget tightness into values above reference
+(e.g., 1.25× and 1.5× B_ref) confirms that solvability reaches 100% and heuristics achieve
+robust feasibility without the knife-edge artifact at 1.0×. It enables evaluating
+unbiased asymptotic gap percentages for Chapter 3.
+
+
+---
+
+## F23 - The closed loop runs, and it abandons good profiles it can never win back
 
 **Outside PoC scope.** The first end-to-end run of the system as a system: J1 ingest ->
 J2 resolve -> J3 allocate -> J4 persist -> J5/J6 simulated execution -> J7 profile ->
@@ -1190,9 +1262,9 @@ Three directions, none of them implemented here:
 
   * **Confidence-aware floors** - filter `C(t)` on a confidence bound rather than a point
     estimate, so a profile with few observations is not excluded on thin evidence. Fits the
-    existing formulation with no new machinery. **Corrected in F22: it must be the UPPER
+    existing formulation with no new machinery. **Corrected in F25: it must be the UPPER
     bound, not the lower one as originally written here.** A lower bound is low when
-    evidence is thin and would make abandonment worse. Implemented and measured in F22 - it
+    evidence is thin and would make abandonment worse. Implemented and measured in F25 - it
     removes the whole cost penalty.
   * **Occasional exploration** - route a small fraction of tasks to unused profiles.
     Standard, but it deliberately spends money and needs a budget argument.
@@ -1212,7 +1284,7 @@ result. Adding an exploration policy is then a concrete, defensible Semester 2 c
 
 ---
 
-## F21 - The differentiator, measured: a static system fails its floors without noticing
+## F24 - The differentiator, measured: a static system fails its floors without noticing
 
 **This is the result the advisor asked for.** His guidance on O10 was that the goal is not to
 maximise reliability but to *"keep the reliability the same as much as possible as not using
@@ -1261,10 +1333,10 @@ cheaper *because it has silently stopped working*.
 ### What it also exposes about our own system
 
 ADAPTIVE's cost creeps from 400 to 460 in rounds 0-5, **before any drift at all**. That is
-F20's premature abandonment showing up as money: unlucky early failures push a good profile
+F23's premature abandonment showing up as money: unlucky early failures push a good profile
 below its floor and the system pays to move off it for no reason.
 
-So this experiment prices F20. The confidence-bound fix is no longer just a correctness
+So this experiment prices F23. The confidence-bound fix is no longer just a correctness
 argument - it is worth roughly 15% of the pre-drift bill.
 
 ### Limitations
@@ -1295,9 +1367,9 @@ Two things around it do:
 
 ---
 
-## F22 - The overpayment is real, bounded, and fixed. And my prescription was backwards.
+## F25 - The overpayment is real, bounded, and fixed. And my prescription was backwards.
 
-Follow-up to F21's observation that the adaptive loop's cost creeps from 400 to 460 *before
+Follow-up to F24's observation that the adaptive loop's cost creeps from 400 to 460 *before
 any drift*. Three questions: is it a ratchet, how bad is it, and does the proposed fix work.
 
 ### It is not a ratchet - it plateaus, permanently degraded
@@ -1320,9 +1392,9 @@ generous floor costs nothing; a tight one costs a quarter of the bill. That is a
 to have undiscovered, because the natural instinct when setting floors is to set them close
 to what the profile promises.
 
-### My prescription in F20 was backwards
+### My prescription in F23 was backwards
 
-F20 and the first version of `component_reference.md` both said the fix is to *"filter C(t)
+F23 and the first version of `component_reference.md` both said the fix is to *"filter C(t)
 on a **lower** confidence bound rather than a point estimate"*. That is wrong, and it would
 have made things worse. With few observations a lower bound is *low*, so it excludes a
 profile faster than the point estimate does.
@@ -1374,7 +1446,7 @@ comparison, it removes a 25% cost penalty, and it costs nothing in detection.
 
 ---
 
-## F23 - T1's other arm, and a bigger problem: the GPU budget is nearly inert in our instances
+## F26 - T1's other arm, and a bigger problem: the GPU budget is nearly inert in our instances
 
 Built `poc/tracks/track_b_budget.py`, the (C3) relaxation, so T1 is answered by measurement
 rather than by assumption. It immediately exposed something more important than the question
@@ -1430,7 +1502,7 @@ Decorrelate them - price drawn independently of GPU count - and the budget start
 ### What this invalidates, and what it does not
 
 **Does not invalidate:** Section 1's formulation. (C3) is a correct constraint. Nor does it
-touch F1, F16, F17, F21 or F22, none of which depend on the budget binding.
+touch F1, F16, F17, F24 or F25, none of which depend on the budget binding.
 
 **Does invalidate the reading of T1's arm comparison.** The (C3) arm is exact because the
 constraint it relaxes is inactive. On instances where the budget genuinely binds it would
@@ -1464,7 +1536,7 @@ arm comparison should both be treated as provisional.
 
 ---
 
-## F24 - T3 completed: the region is 0.8x to 1.25x, and the gaps run the wrong way
+## F27 - T3 completed: the region is 0.8x to 1.25x, and the gaps run the wrong way
 
 D9 was defective: the sweep only ever ran *below* the reference allocation, and F15 showed
 the reference is a cliff rather than a neutral upper bound. Both generators now accept
@@ -1523,7 +1595,7 @@ they were measured at.
 
 ### Caveat, and it is a large one
 
-Per **F23**, the budget does not change the *optimal cost* in 40 of 41 instances, because both
+Per **F26**, the budget does not change the *optimal cost* in 40 of 41 instances, because both
 generators set `price = gpus x constant`. So this sweep measures where the budget affects
 **feasibility**, not where it affects **choice**. If O13 resolves to price being independent
 of GPU count, this whole table needs re-running and the region may move.
@@ -1533,7 +1605,7 @@ of GPU count, this whole table needs re-running and the region may move.
 
 ---
 
-## F25 - T1 answered in full: three arms, three decomposition axes, one right answer
+## F28 - T1 answered in full: three arms, three decomposition axes, one right answer
 
 The PoC plan's T1 method asks for three relaxations - "write the Lagrangian of (3)... repeat
 relaxing (2) instead, and both together". Two existed. The capacity arm did not, so T1 was
@@ -1546,7 +1618,7 @@ incomplete regardless of the earlier findings. It is built now.
 | (C3) budget | **does not decompose** | 0.00% * | 0.00% * |
 | LP relaxation | - | 12.16% | 24.61% |
 
-\* only because the budget does not bind on our instances - see F23. Not a real result.
+\* only because the budget does not bind on our instances - see F26. Not a real result.
 
 ### The answer to T1 as asked
 
@@ -1585,13 +1657,13 @@ built - relaxing (C1) - gives 3.02% against the LP's 12.16%, and stands.
 `track_b_lagr.py` relaxes (C1) with multipliers and **drops** (C3) outright, which is the
 limiting case of relaxing both with the budget multiplier pinned at zero. So the combined
 case is covered in its weakest form. A proper two-multiplier version was not built; given
-F23 shows the budget does not bind on these instances, it could not be evaluated here even
+F26 shows the budget does not bind on these instances, it could not be evaluated here even
 if it were.
 
 
 ---
 
-## F26 - Statistics: the 110x speedup claim was mean-over-mean and does not survive
+## F29 - Statistics: the 110x speedup claim was mean-over-mean and does not survive
 
 The headline result rested on 3 seeds. Re-run with 10 seeds, 95% confidence intervals, and a
 45s solver limit so a pathological instance cannot distort the mean by running forever.
@@ -1655,9 +1727,9 @@ an average that a careful reader will immediately question.
 
 ---
 
-## F27 - Statistical audit of every headline claim. Two break, two hold, one holds differently.
+## F30 - Statistical audit of every headline claim. Two break, two hold, one holds differently.
 
-After F26 retracted the 110x speedup as a ratio of means, the same defect was looked for
+After F29 retracted the 110x speedup as a ratio of means, the same defect was looked for
 everywhere. It is systemic: of 26 findings, only 11 lines carried an interval, and several
 headline numbers were built the same way.
 
@@ -1667,7 +1739,7 @@ means. A paired interval that crosses zero means the effect is not established a
 
 | claim | verdict | paired evidence |
 |---|---|---|
-| Track C ~110x faster than exact | **RETRACTED** (F26) | median speedup 5x; the mean was outlier-carried |
+| Track C ~110x faster than exact | **RETRACTED** (F29) | median speedup 5x; the mean was outlier-carried |
 | Track B's bound 3-6x tighter than LP | **RATIO INFLATED, effect holds** | difference **12.57 pp [9.49, 15.64]**; median ratio **2.53x**, not 6x |
 | Consolidation halves Track C's gap | **MISLEADING, effect is real but rare** | median improvement **0.00%**; mean 5.31% [0.56, 10.07] |
 | The adaptive loop holds reliability under drift | **HOLDS STRONGLY** | **+0.424 [0.405, 0.442]**, n=20, mean = median |
@@ -1701,12 +1773,12 @@ having precisely because the tail is what embarrasses you.
 
 ### The two that got stronger under audit
 
-**The differentiator (F21)** is the most solid result in the project. Paired difference
+**The differentiator (F24)** is the most solid result in the project. Paired difference
 **+0.424 [0.405, 0.442]** over 20 seeds, with mean and median identical - no skew, a tight
 interval, and an effect roughly twenty times the interval's half-width. It is also the claim
 the project most needs to be true.
 
-**The overpayment fix (F22)** is stronger than first reported. With 20 seeds the point-estimate
+**The overpayment fix (F25)** is stronger than first reported. With 20 seeds the point-estimate
 condition costs a median of **560** against the optimum of 400 - a 40% overpayment, not the
 25% measured with 8 seeds - and the upper-bound condition returns **400.0 with zero variance**,
 hitting the optimum on every single seed.
@@ -1785,9 +1857,9 @@ paper open. Flagging it rather than guessing.
 | # | Item | Owner |
 |---|---|---|
 | O5 | Track B's step-size schedule, tolerance, iteration cap — current values are untuned | 075 |
-| — | Relaxing (C3) instead of (C1), so T1's decomposition question is actually tested | 075 |
-| — | Rewrite T4's decision criteria: they ask an A-vs-C question the data has moved past (F10) | 089 |
-| — | Track B's runtime as instances grow — the only trade that still matters for T4 (F10) | 089 |
+| — | Profile Track B's knapsack subproblem in C/Cython before treating runtime as settled | 075 |
+| — | Rewrite T4's decision criteria: they ask an A-vs-C question the data has moved past | 089 |
 | — | Reconcile `track_a_m1.py` against Cheng & Nguyen's real M1 | 035 |
-| — | Whether Murakkab's published heuristic is a separate condition (see above) | Advisor |
-| O8 | Is Track A worth its complexity? T4 proper, once the conditions above settle | 035 + 089 |
+| — | Whether Murakkab's published heuristic is a separate condition | Advisor |
+| O8 | Is Track A worth its complexity? Answered: plain A is not, but A+subset is competitive | 035 + 089 |
+

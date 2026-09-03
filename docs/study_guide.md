@@ -181,7 +181,7 @@ headline about heuristics; it is what makes continuous re-optimisation possible.
 
 **You will be asked:** *"What is novel here? Facility location is solved."* Correct — and say
 so first, it builds credibility. The novelty is the **closed loop**: neither Murakkab nor
-Cheng & Nguyen measures profiles or re-optimises on drift. Then show the F21 result.
+Cheng & Nguyen measures profiles or re-optimises on drift. Then show the F24 result.
 
 ---
 
@@ -215,7 +215,7 @@ Write your own answers before reading the suggested ones.
 | Why not just always use the exact solver? | It is 21 s at 128 tasks, and the loop re-solves on every drift signal |
 | Why is Track C better than greedy at scale but not at 8 tasks? | Rounding error amortises over more tasks (F16) |
 | Your adaptive system costs 2.5× more. Why is that good? | It isn't cheaper — the static system is failing its requirement silently. Not like-for-like |
-| What happens if a profile is briefly unlucky? | It gets abandoned and never re-tested (F20). Fixed by an upper confidence bound (F22) |
+| What happens if a profile is briefly unlucky? | It gets abandoned and never re-tested (F23). Fixed by an upper confidence bound (F25) |
 | Why does the budget never seem to matter? | Because we tied price to GPU count. That is O13 and it is open |
 | What would you do differently? | Measure the methods, not just the deliverables — two gaps were found by re-reading the plan's method sections |
 

@@ -137,7 +137,7 @@ production system that pre-warms capacity, or that keeps an instance alive acros
 re-optimisations to avoid cold starts, needs a different container.
 
 **Expected improvement.** Once execution is real, instance *churn* between re-optimisations
-becomes a cost the current model cannot express — F20's loop re-allocates without ever
+becomes a cost the current model cannot express — F23's loop re-allocates without ever
 asking what tearing down an instance costs.
 
 ### `core/decision_rule.py` — select_profile · **Change**
@@ -149,7 +149,7 @@ asking what tearing down an instance costs.
 free, `t2` goes to `m2` over a fresh `m1`.
 
 **Fits.** Yes as a mechanism. **No as a policy** — it ranks on `extra_cost` and never looks
-at `extra_gpus`, which is the mechanism behind F3's infeasibility and, downstream, F20's
+at `extra_gpus`, which is the mechanism behind F3's infeasibility and, downstream, F23's
 abandonment.
 
 **Becomes.** Needs a budget-aware ranking. `track_a_m1.py` shows a feasibility lookahead
@@ -163,7 +163,7 @@ function, and it is upstream of every track's feasibility.
 **Does.** Relocates *every* task on one profile to another, together.
 
 **Behaves.** Cuts Track C's worst case from 100.85% to 44.01% at no runtime cost. Audited
-(F27): the **median** paired improvement is **0.00%** — it does nothing on a typical instance.
+(F30): the **median** paired improvement is **0.00%** — it does nothing on a typical instance.
 The mean improvement is real (5.31% [0.56, 10.07]) but tail-carried, so describe it as a
 rare-severe-failure fix, not as halving the gap. **It does not fix the adversarial fixture** — that needs
 a *subset* move, and there is a test asserting the fixture is unchanged so the limitation is
@@ -206,7 +206,7 @@ instance — is diagnosed (F17) and fixed by consolidation.
 **Becomes.** The production allocator. Needs: a time limit, warm starting from the previous
 allocation across re-optimisations, and the subset-move neighbourhood.
 
-**Expected improvement.** Warm starting matters most — F20's loop re-solves from scratch
+**Expected improvement.** Warm starting matters most — F23's loop re-solves from scratch
 every round, and a re-optimisation after small drift should be much cheaper than a cold one.
 
 ### `tracks/track_b_lagr.py` (+ `_cold`) — Lagrangian · **Change — bound only**
@@ -299,11 +299,11 @@ floors remain achievable.
 **Becomes.** Three things: reconcile the **[PROPOSED]** compatibility score against Hatherley
 (2025); make drift detection cheap (it currently runs the allocator, so it is not the
 lightweight signal §4.5 implies); and add a **confidence bound** - specifically an UPPER bound, exclude only when
-confident the profile is below floor. F22 corrects an earlier statement here that said
+confident the profile is below floor. F25 corrects an earlier statement here that said
 lower bound, which was backwards, and measures the fix recovering the full 25% penalty.
 
 **Expected improvement.** The confidence bound is the highest-value single change in the
-whole project — it directly addresses F20's abandonment, needs no new machinery, and sits in
+whole project — it directly addresses F23's abandonment, needs no new machinery, and sits in
 the novel half.
 
 ### `reoptimisation.py` — J9 · **Change**
@@ -319,7 +319,7 @@ evidence for why.
 
 **Behaves.** The loop runs J1–J9 on the real Zookeeper batch without thrashing, converges,
 and catches genuine degradation — but **abandons within-floor profiles on noise in 8 of 10
-runs and can never re-test them** (F20). Ingestion refuses to invent the load and floors the
+runs and can never re-test them** (F23). Ingestion refuses to invent the load and floors the
 manifest does not carry.
 
 **Becomes.** The simulator is a stand-in for J5/J6 and must be replaced by a real Execution
@@ -335,7 +335,7 @@ over time? Nothing in the PoC answers that, and this is the harness that would.
 
 | Change | Where | Why it matters |
 |---|---|---|
-| Confidence-bound eligibility — **built, measured, off by default** | `profiling.py` + `registry.resolve` | Fixes F20's abandonment and recovers a 25% cost penalty with no loss of drift sensitivity (F22). Needs 077's sign-off to become the default |
+| Confidence-bound eligibility — **built, measured, off by default** | `profiling.py` + `registry.resolve` | Fixes F23's abandonment and recovers a 25% cost penalty with no loss of drift sensitivity (F25). Needs 077's sign-off to become the default |
 | Budget-aware ranking | `core/decision_rule.py` | Upstream of every track's feasibility (F3) |
 | Subset-move neighbourhood | `core/consolidation.py` | Closes both F1 and F17 with one mechanism |
 | Warm-started re-optimisation | `track_c_lp.py` | The loop re-solves from scratch every round |

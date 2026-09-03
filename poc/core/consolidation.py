@@ -117,3 +117,80 @@ def consolidate(routing: dict[TaskId, str],
             break
 
     return routing
+
+
+def consolidate_subsets(routing: dict[TaskId, str],
+                        tasks: list[Task],
+                        pools: dict[TaskId, list[str]],
+                        profiles: dict[str, ProfileSpec],
+                        budget: int,
+                        max_k: int = 2,
+                        max_passes: int = 8) -> dict[TaskId, str]:
+    """Repeatedly move all tasks, or subsets of up to max_k tasks, from one profile to another.
+
+    Extends consolidate() to multi-move subset neighborhoods. This directly closes the
+    aggregate-coupling gap diagnosed on instances/fixtures/adversarial_3t2p.py, where
+    moving all tasks is blocked by an ineligible tail task, but moving a subset of tasks
+    together opens an instance on an efficient profile with lower aggregate cost.
+
+    Deterministic: candidates and destinations are explored in sorted order; strict
+    improvements only (P10).
+    """
+    import itertools
+
+    routing = dict(routing)
+    current = evaluate(routing, tasks, profiles, budget)
+    if current is None:
+        return routing
+    best_cost = current[0]
+
+    by_id = {t.id: t for t in tasks}
+
+    for _ in range(max_passes):
+        improved = False
+
+        # First, run the full-profile consolidation pass
+        routing_after_all = consolidate(routing, tasks, pools, profiles, budget, max_passes=1)
+        if routing_after_all != routing:
+            current_after = evaluate(routing_after_all, tasks, profiles, budget)
+            if current_after is not None and current_after[0] < best_cost - 1e-9:
+                routing, best_cost, improved = routing_after_all, current_after[0], True
+                continue
+
+        # Next, search for subset moves of size k in [max_k, ..., 2, 1]
+        for k in range(max_k, 0, -1):
+            for source in sorted({m for m in routing.values()}):
+                movers = sorted((tid for tid, m in routing.items() if m == source),
+                                key=lambda tid: (by_id[tid].id.workflow_id,
+                                                 by_id[tid].id.task_name))
+                if len(movers) < k:
+                    continue
+
+                for subset in itertools.combinations(movers, k):
+                    eligible = sorted(set.intersection(
+                        *(set(pools[tid]) for tid in subset)) - {source})
+                    if not eligible:
+                        continue
+
+                    for destination in eligible:
+                        trial = dict(routing)
+                        for tid in subset:
+                            trial[tid] = destination
+
+                        outcome = evaluate(trial, tasks, profiles, budget)
+                        if outcome is not None and outcome[0] < best_cost - 1e-9:
+                            routing, best_cost, improved = trial, outcome[0], True
+                            break
+
+                    if improved:
+                        break
+                if improved:
+                    break
+            if improved:
+                break
+
+        if not improved:
+            break
+
+    return routing
+

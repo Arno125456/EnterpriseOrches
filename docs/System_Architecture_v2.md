@@ -94,7 +94,7 @@ L_max(t)    latency ceiling for task t
             low, the optimiser will legally trade reliability for cost: given two profiles
             both passing a 0.90 floor it correctly takes 0.910 over 0.999 and saves 200.
             Anchored to the baseline, the existing program enforces the requirement with no
-            change to the objective or to (C1)-(C3). See poc_findings.md F21.
+            change to the objective or to (C1)-(C3). See poc_findings.md F24.
 ```
 
 ### 1.4 Decision variables
@@ -455,7 +455,7 @@ That last metric is not optional. On cost alone a static allocator wins any drif
 it keeps the cheap plan and reports an unchanged bill while silently violating its floors.
 Measured over 16 rounds with a mid-run degradation, a static allocator delivered 0.542
 against a 0.95 floor, at cost 400, and reported nothing wrong; the adaptive loop delivered
-0.938 at cost 1013 (F21). Reporting cost without delivered reliability would have scored the
+0.938 at cost 1013 (F24). Reporting cost without delivered reliability would have scored the
 failing system as the better one. Any condition
 this project introduces that Murakkab's evaluation did not use requires the MILP baseline to be
 re-run under it before an improvement is claimed.
@@ -868,7 +868,7 @@ catches that class of bug regardless of source.
 | O10 | Fallback/retry — the reliability pillar | Advisor | High |
 | O11 | Framework integration or standalone | Advisor | High |
 | O12 | Novelty positioning vs Cheng & Nguyen | Advisor | High |
-| O13 | **Is `price(m)` independent of `gpu(m)`?** §1.3 defines price as "cost of one instance over the horizon" and `B` as a "total GPU budget" without saying whether they are the same axis. Measured, both generators have corr(price, gpus) ≈ 0.95–1.0, and consequently the budget does not change the optimal cost in 40 of 41 instances — (C3) is nearly inert. If GPUs are rented per hour that is realistic and (C3) is close to redundant with the objective, which is itself a finding. If price means energy, amortised hardware or mixed providers, both generators are unrealistic and every budget result is shaped by it. **T3's binding-region result and T1's arm comparison are provisional until this is settled** (F23) | **Advisor / Murakkab paper** | High |
+| O13 | **Is `price(m)` independent of `gpu(m)`?** §1.3 defines price as "cost of one instance over the horizon" and `B` as a "total GPU budget" without saying whether they are the same axis. Measured, both generators have corr(price, gpus) ≈ 0.95–1.0, and consequently the budget does not change the optimal cost in 40 of 41 instances — (C3) is nearly inert. If GPUs are rented per hour that is realistic and (C3) is close to redundant with the objective, which is itself a finding. If price means energy, amortised hardware or mixed providers, both generators are unrealistic and every budget result is shaped by it. **T3's binding-region result and T1's arm comparison are provisional until this is settled** (F26) | **Advisor / Murakkab paper** | High |
 
 ---
 

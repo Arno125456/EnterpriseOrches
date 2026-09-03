@@ -94,7 +94,7 @@ class ProfileStore:
     def reliability_upper_bound(self, profile_id: str, z: float = 1.96) -> float:
         """Optimistic bound on reliability, for eligibility filtering.
 
-        WHY AN UPPER BOUND AND NOT A LOWER ONE. Findings F20 and the first version of the
+        WHY AN UPPER BOUND AND NOT A LOWER ONE. Findings F23 and the first version of the
         component reference both said "filter on a lower confidence bound". That is
         backwards: with few observations a lower bound is *low*, so it would exclude a
         profile faster than the point estimate does, making premature abandonment worse.

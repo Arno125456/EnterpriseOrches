@@ -13,13 +13,15 @@ document is the detail behind those steps.
 ## 1. Where things stand in one paragraph
 
 The proof-of-concept is complete: all four tests answered against the plan's *methods*, not
-just its deliverables. 586 tests pass, reproducible from a clean clone. The optimizer works
+just its deliverables. 593 tests pass, reproducible from a clean clone. The optimizer works
 and Track C is the result. Beyond the PoC, the closed loop was built and run end to end, and
-it produced the project's strongest claim. Twenty-seven findings are recorded, of which
-several correct earlier ones — **the corrections are as important as the results, and three
-headline numbers were retracted after a statistical audit.**
+it produced the project's strongest claim. Thirty findings are recorded, of which several
+correct earlier ones — **the corrections are as important as the results, and three headline
+numbers were retracted after a statistical audit.**
 
-Two branches are live and have diverged. **Read `BRANCHES.md` before merging anything.**
+**The two branches were merged on 3 September** (step 1 of `PLAN.md`). `mickie`'s F20–F22 kept
+their numbers; `main`'s F20–F27 became F23–F30. `BRANCHES.md` is retained as the record of
+what was decided and why.
 
 ---
 
@@ -49,7 +51,7 @@ up.**
 ### Chapter 3 — design and methodology
 
 **Have, and this is the strongest chapter.** The formulation, the three tracks, the harness,
-and 27 findings. `docs/D11_poc_report.md` is written for the advisor and is the natural
+and 30 findings. `docs/D11_poc_report.md` is written for the advisor and is the natural
 skeleton. `docs/proposal_narrative.md` §6 proposes the section order — deliberately putting
 the optimizer *inside* the contribution rather than as the contribution.
 
@@ -109,7 +111,7 @@ track makes the loop affordable. **The algorithm work exists because the loop de
 
 ## 5. What must not be quoted
 
-Three headline numbers were retracted after a statistical audit (F26, F27). **All three failed
+Three headline numbers were retracted after a statistical audit (F29, F30). **All three failed
 the same way — a ratio of two means, which is not a typical ratio when either distribution has
 a tail.**
 
@@ -134,8 +136,8 @@ the audit** and may carry the same defect.
 | **O13** | Is `price(m)` independent of `gpu(m)`? | **Advisor / Murakkab paper** | T3's region, T1's arm comparison |
 | **O12** | Is the closed loop a sufficient novelty claim? | **Advisor** | Chapter 2, and the framing of everything |
 | **D1** | Formulation ratification, due 8 Sep | Team | Nominally everything, though §1 has not needed to change |
-| — | Which duplicate implementation ships | 035 / 075 | The branch merge |
-| — | Finding renumbering | Team | The branch merge |
+| — | ~~Which duplicate implementation ships~~ | 035 / 075 | **Closed 3 Sep** — `mickie`'s ship; `main`'s stay registered as `B-C3-alt`, `A+rel` |
+| — | ~~Finding renumbering~~ | Team | **Closed 3 Sep** — `main`'s F20–F27 → F23–F30 |
 | — | Reconcile the `[PROPOSED]` compatibility score with Hatherley (2025) | 077 | Any drift-detection number |
 
 **O13 and O12 are advisor questions and both are cheap to ask.** O10 was answered in one
@@ -160,7 +162,7 @@ sentence this session and it materially improved the project — these two would
 ```bash
 python -m venv venv && venv/Scripts/activate
 pip install -r requirements.txt
-pytest poc/tests prototype/tests      # 586 pass, 4 skip
+pytest poc/tests prototype/tests      # 593 pass, 4 skip
 python -m poc.harness.runner          # the comparison table
 ```
 

@@ -1,8 +1,8 @@
 # Paper Relationship Report
 
-Generated: 2026-08-29T07:26:53.510847+00:00
+Generated: 2026-09-03T05:45:21.136692+00:00
 
-**11 papers, 30 concepts, ~11490 words**
+**12 papers, 30 concepts, ~12260 words**
 
 ## Integrity Check
 
@@ -15,7 +15,7 @@ S1: 10 concepts
 S2: 16 concepts
 S3: 11 concepts
 
-Total papers: 11, total concepts: 30
+Total papers: 12, total concepts: 30
 ```
 
 ## Growth Log
@@ -29,6 +29,7 @@ Total papers: 11, total concepts: 30
 | P9 | 9 | 25 | 7152 |
 | P9 | 9 | 25 | 8554 |
 | P11 | 11 | 30 | 11490 |
+| P12 | 12 | 30 | 12260 |
 
 ## Scope Coverage
 
@@ -443,5 +444,40 @@ Total papers: 11, total concepts: 30
 | C_EVAL_METRICS | medium | hallucination rate | Introduces accuracy/precision/recall and a hallucination-rate metric specifically for document-processing tasks where correctness is hard to verify automatically -- relevant candidate metrics if document processing becomes this project's second domain and ground truth is not directly available (unlike this project's OS-log domain, where fault injection provides known ground truth). |
 
 **Caveats:** Included primarily for domain relevance (document processing, this project's leading Phase 2 candidate) and for its concrete decomposition pattern (split-gather-map-reduce), not as a mechanism precedent -- its actual rewriting mechanism (LLM proposes, LLM verifies) is architecturally different from and in tension with the rule-based, NLP-free rewriting mechanism this project has adopted from Palimpzest. If cited, should be cited narrowly for the decomposition pattern and the observation that data/task decomposition (not just model selection) can be the binding constraint on document-processing quality, with an explicit note that this project's own rewriting mechanism deliberately differs from DocETL's LLM-based approach.
+
+---
+
+### P12 — DSPy
+*Khattab, O., Singhvi, A., Maheshwari, P., Zhang, Z., Santhanam, K., Vardhamanan, S., Haq, S., Sharma, A., Joshi, T. T., Moazam, H., Miller, H., Zaharia, M., & Potts, C. (2024). DSPy: Compiling Declarative Language Model Calls into Self-Improving Pipelines. The Twelfth International Conference on Learning Representations (ICLR 2024). arXiv:2310.03714.*
+
+- **Role:** foundation (Foundational precedent for declarative pipeline abstraction, modular DAG-based workflow composition, and separating logical pipeline structure from physical execution parameters (supports S1 and S2))
+- **Status:** recommended_add_to_references
+
+**Summary:** Introduces DSPy, a programming model and framework that separates the abstract structure of an information-processing pipeline (modules expressing text transformations and control flow) from the concrete parameters that execute it (model selection, prompts, and weights). Rather than brittle manual prompt engineering, DSPy pipelines are expressed declaratively as composable modules (Predict, ChainOfThought, ProgramOfThought, ReAct) in Python code. A compiler (teleprompter / optimizer) automatically optimizes the pipeline end-to-end against a user-defined metric (accuracy, format compliance, cost) by selecting demonstration examples, generating instructions, and updating weights. Evaluated across complex multi-hop QA, math reasoning, and system tasks; compiles pipelines that match or outperform expert-crafted prompts and larger models (e.g. compiling a 770M/7B parameter model to outperform uncompiled GPT-3.5) with orders of magnitude less manual effort.
+
+**Problem:** Existing LLM applications are built through manual, trial-and-error prompt engineering that tightly couples the logical task definition with specific prompt templates and model quirks. When the underlying model, data distribution, or task requirements change, the entire pipeline must be manually re-tuned. Moreover, multi-step pipelines (chains of thought, multi-agent interactions, retrieval-augmented generation) suffer from cascading failure modes and combinatorial parameter spaces that human developers cannot effectively navigate by hand.
+
+**Method:** DSPy introduces three core abstractions: (1) Signatures, which declaratively specify input/output behavior (e.g. 'question -> answer' or 'context, question -> rationale, answer') without prescribing prompting syntax; (2) Modules, which are composable, parameterized building blocks (Predict, ChainOfThought, ReAct, MultiChainComparison) that instantiate signatures and can be nested into arbitrary acyclic execution graphs (DAGs); and (3) Teleprompters / Optimizers (e.g. BootstrapFewShot, MIPRO, BootstrapFewShotWithRandomSearch), which take a declarative program, training/validation data, and an evaluation metric, and automatically optimize the pipeline end-to-end via multi-stage search, prompt synthesis, and candidate filtering. Optimization is programmatic, metric-driven, and reproducible.
+
+**Results:** Evaluated across HotpotQA (multi-hop QA), GSM8K (math reasoning), and SQuAD, DSPy programs consistently outperform expert hand-written prompts and single-model baselines. In HotpotQA, compiled 2-step retrieval-augmented DSPy pipelines achieved 30-40% higher accuracy than standard zero-shot and few-shot baselines; compiling a smaller, cheaper open-source model (Llama-2-13B) enabled it to match or exceed the performance of uncompiled GPT-3.5-turbo while drastically reducing API serving cost. Compilation converged within tens to hundreds of metric-evaluated trials, demonstrating high sample efficiency relative to naive grid search.
+
+**Limitations:** DSPy focuses on compiling prompting strategies, few-shot demonstrations, and model weights within a given software application process; it does not model hardware-level execution constraints (GPU instance allocation, throughput limits, GPU budget caps), which is this project's distinct systems contribution. Compilation requires an executable metric and a modest set of representative examples; where reliable automatic metrics are absent, optimization requires proxy evaluators or human annotation. DSPy assumes a centralized client runtime rather than multi-tenant cloud-scale hardware resource scheduling.
+
+**Key numbers:**
+- HotpotQA multi-hop QA: DSPy compiled pipeline achieves 30-40% higher accuracy vs standard zero-shot/few-shot baselines
+- Compiled open-source model (Llama-2-13B) matches or exceeds performance of uncompiled GPT-3.5-turbo on multi-hop reasoning
+- Demonstrates sample-efficient compilation converging within tens to hundreds of metric-evaluated pipeline passes
+
+**Concept links:**
+
+| Concept | Strength | Excerpt | Detail |
+|---|---|---|---|
+| C_DAG | strong | composable modules into pipelines | DSPy programs assemble modules into parameterized execution graphs (DAGs) executed in dependency order, providing direct architectural support for S1's declarative workflow pipeline abstraction. |
+| C_LOGICAL_PHYSICAL_SPLIT | strong | separating the flow of your program ... from the parameters | Core conceptual contribution: decoupling the logical definition of sub-tasks and control flow from the physical parameters (model choice, prompt text, execution parameters), directly reinforcing the logical/physical optimization split adopted in this project. |
+| C_PGO | strong | compiles pipelines to optimize | Direct precedent for profile-guided optimization: pipelines are not fixed at design time but compiled and adapted using empirical execution metrics and observed trace behavior. |
+| C_FORMAL_OBJ | medium | maximizing a given metric | Optimization in DSPy requires a formal, computable metric function over pipeline outputs (e.g. accuracy, exact match, cost penalty), supporting this project's formal objective framing. |
+| C_EVAL_METRICS | medium | evaluation metric | Validates the methodology of evaluating multi-step pipelines via end-to-end task metrics rather than isolating per-step model accuracy. |
+
+**Caveats:** DSPy addresses software-level compilation (optimizing prompts, demonstrations, and model weights) for a single application pipeline, whereas this project addresses cloud-level resource orchestration (joint model/hardware instance provisioning and routing under hard GPU budget constraints across multiple concurrent workflows). DSPy is the definitive academic precedent for declarative, decoupled agentic pipelines (strengthening S1), and should be cited as the programming-model precedent that this project's resource allocator operates beneath.
 
 ---

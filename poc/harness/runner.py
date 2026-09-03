@@ -39,9 +39,10 @@ from poc.formulation import invariants
 from poc.formulation.types import AllocationResult
 from poc.instances.generator import ProblemInstance, generate
 from poc.tracks import (exact_milp, static_baseline, track_a_greedy,
-                        track_a_m1, track_a_relocate, track_b_budget,
-                        track_b_capacity, track_b_cold,
-                        track_b_lagr, track_c_consolidate, track_c_lp,
+                        track_a_m1, track_a_m1_subset, track_a_relocate,
+                        track_a_subset, track_b_budget, track_b_c3,
+                        track_b_capacity, track_b_cold, track_b_lagr,
+                        track_c_consolidate, track_c_lp,
                         track_c_multi)
 
 # Condition name -> module exposing allocate(tasks, pools, profiles, budget, seed).
@@ -51,9 +52,15 @@ STRATEGIES = {
     "A": track_a_greedy,
     "A+M1": track_a_m1,
     "A+rel": track_a_relocate,
+    "A+subset": track_a_subset,
+    "A+M1+subset": track_a_m1_subset,
     "B": track_b_lagr,
     "B-cold": track_b_cold,
-    "B-C3": track_b_budget,
+    # (C3) relaxation: `mickie`'s arm ships (bisection on a scalar mu). `main`'s independent
+    # implementation stays registered as B-C3-alt so the alternative remains reproducible
+    # rather than merely asserted — see BRANCHES.md.
+    "B-C3": track_b_c3,
+    "B-C3-alt": track_b_budget,
     "B-C2": track_b_capacity,
     "C": track_c_lp,
     "C2": track_c_multi,
@@ -157,8 +164,16 @@ def sweep(n_tasks: int,
     records = []
     for tightness in tightness_values:
         for seed in seeds:
-            instance = generator(n_tasks=n_tasks, n_profiles=n_profiles,
-                                 budget_tightness=tightness, seed=seed)
+            if tightness <= 1.0:
+                instance = generator(n_tasks=n_tasks, n_profiles=n_profiles,
+                                     budget_tightness=tightness, seed=seed)
+            else:
+                base_inst = generator(n_tasks=n_tasks, n_profiles=n_profiles,
+                                      budget_tightness=1.0, seed=seed)
+                instance = dataclasses.replace(
+                    base_inst,
+                    budget=max(1, int(round(base_inst.reference_gpus * tightness))),
+                    budget_tightness=tightness)
             records.append(run_conditions(instance, strategies))
     return records
 

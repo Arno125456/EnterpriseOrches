@@ -110,11 +110,11 @@ def test_genuine_degradation_is_detected(batch):
 
 
 def test_a_within_floor_profile_is_abandoned_on_noise(batch):
-    """F20, pinned. The cheap profiles are GENUINELY acceptable — true reliability 0.93
+    """F23, pinned. The cheap profiles are GENUINELY acceptable — true reliability 0.93
     against a 0.90 floor — yet most runs abandon them permanently after early failures.
 
     If this test starts passing trivially (no abandonment), the loop has gained an
-    exploration or confidence mechanism and F20 should be revisited.
+    exploration or confidence mechanism and F23 should be revisited.
     """
     abandoned = 0
     for seed in range(10):
@@ -127,7 +127,7 @@ def test_a_within_floor_profile_is_abandoned_on_noise(batch):
 
 
 def test_an_abandoned_profile_never_recovers(batch):
-    """The mechanism behind F20: a profile that stops being routed to stops being
+    """The mechanism behind F23: a profile that stops being routed to stops being
     observed, so its measured reliability freezes and it can never be re-earned."""
     registry, truth = _setup(0.93)
     records = run(batch.as_list(), registry, SimulatedExecutor(truth, seed=1),
@@ -138,7 +138,7 @@ def test_an_abandoned_profile_never_recovers(batch):
         "an unused profile's estimate should be frozen — no observations arrive")
 
 
-# --- F21: the differentiator ----------------------------------------------------
+# --- F24: the differentiator ----------------------------------------------------
 
 def test_static_fails_its_floor_without_noticing_and_adaptive_does_not(batch):
     """The project's central claim, pinned.
@@ -182,7 +182,7 @@ def test_static_fails_its_floor_without_noticing_and_adaptive_does_not(batch):
     assert adaptive_delivered > static_delivered + 0.2
 
 
-# --- F22: optimistic eligibility -------------------------------------------------
+# --- F25: optimistic eligibility -------------------------------------------------
 
 def _healthy_run(floor, rounds, optimistic, seed):
     strict = {t: TaskTypeSpec(SPECS[t].load, floor, 200.0) for t in SPECS}
@@ -195,7 +195,7 @@ def _healthy_run(floor, rounds, optimistic, seed):
 
 
 def test_point_estimate_overpays_on_healthy_profiles():
-    """F22. With no drift and true reliability comfortably above the floor, filtering on
+    """F25. With no drift and true reliability comfortably above the floor, filtering on
     the point estimate still abandons good profiles and settles at a permanently higher
     cost. 400 is the optimum; anything above it is money spent reacting to noise."""
     tail = [_healthy_run(0.95, 40, optimistic=False, seed=s)[-1].cost for s in range(6)]

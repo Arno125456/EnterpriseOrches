@@ -17,7 +17,7 @@ import pytest
 from poc.formulation import invariants
 from poc.instances.fixtures import adversarial_3t2p as fx
 from poc.instances.generator import generate
-from poc.tracks import exact_milp, track_b_lagr, track_c_lp
+from poc.tracks import exact_milp, track_b_c3, track_b_lagr, track_c_lp
 
 
 @pytest.mark.parametrize("seed", range(6))
@@ -177,6 +177,32 @@ def test_the_warm_start_is_inert(seed):
         assert cold.total_cost == pytest.approx(warm.total_cost)
     assert cold.lower_bound == pytest.approx(warm.lower_bound)
 
+
+# --- (C3) arm, from `mickie` (F21 there) ------------------------------------------
+
+def test_b_c3_bound_is_valid_on_the_fixture():
+    """B-C3 relaxes the GPU budget (C3). Verify lower_bound <= optimum on adversarial_3t2p."""
+    tasks, pools, profiles, budget = fx.build()
+    result = track_b_c3.allocate(tasks, pools, profiles, budget)
+
+    assert result.feasible
+    assert result.lower_bound is not None
+    assert result.lower_bound <= fx.OPTIMUM["total_cost"] + 1e-6
+    assert invariants.check(result, tasks, pools, profiles, budget) == []
+
+
+@pytest.mark.parametrize("seed", range(4))
+def test_b_c3_bound_never_exceeds_optimum(seed):
+    """B-C3 bound must be <= exact MILP optimum on all generated instances."""
+    inst = generate(n_tasks=6, n_profiles=3, budget_tightness=1.0, seed=seed)
+    tasks, pools, profiles, budget = inst.unpack()
+
+    optimal = exact_milp.allocate(tasks, pools, profiles, budget)
+    result = track_b_c3.allocate(tasks, pools, profiles, budget)
+
+    assert invariants.check(result, tasks, pools, profiles, budget) == []
+    if optimal.feasible and result.lower_bound is not None:
+        assert result.lower_bound <= optimal.total_cost + 1e-6
 
 # --- T1's other two arms (F25) ---------------------------------------------------
 

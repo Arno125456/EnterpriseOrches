@@ -81,7 +81,7 @@ def resolve(tasks: list[Task], registry: ExecutorRegistry,
         def reliability(profile):
             # Default: the point estimate, which is what §1.6 specifies. Passing an
             # upper-bound function instead excludes a profile only when the evidence is
-            # strong enough to be confident it is below floor (F20/F22).
+            # strong enough to be confident it is below floor (F23/F25).
             return profile.reliability if reliability_of is None else reliability_of(profile.id)
 
         pools[task.id] = sorted(

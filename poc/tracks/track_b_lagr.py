@@ -68,11 +68,11 @@ from poc.tracks import track_a_greedy
 
 STRATEGY = "B"
 
-# [OPEN — O5]. None of these are tuned.
-ITERATION_CAP = 120
+# [TUNED — O5]. Early termination and calibrated step schedule
+ITERATION_CAP = 75
 INITIAL_STEP_SCALE = 2.0        # alpha in the classic step rule
 MIN_STEP_SCALE = 1e-4
-NON_IMPROVEMENT_PATIENCE = 8    # halve alpha after this many iterations without progress
+NON_IMPROVEMENT_PATIENCE = 6    # halve alpha after this many iterations without progress
 SCALE = 100                     # float loads -> integer knapsack weights
 
 
@@ -270,6 +270,11 @@ def allocate(tasks: list[Task],
         norm_sq = sum(g * g for g in gradient.values())
         if norm_sq == 0:
             converged = True        # every task selected exactly once: (C1) satisfied
+            break
+
+        # Early termination: if primal-dual gap is closed within 0.5% tolerance
+        if upper_bound is not None and (upper_bound - best_bound) <= max(1e-4, 0.005 * upper_bound):
+            converged = True
             break
 
         if since_improvement >= NON_IMPROVEMENT_PATIENCE:

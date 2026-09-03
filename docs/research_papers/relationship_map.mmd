@@ -12,6 +12,7 @@ graph LR
     P9(["Update Opacity (Hatherley)"])
     P10("Palimpzest")
     P11(["DocETL"])
+    P12("DSPy")
   end
   %% ===== Concepts (middle) =====
   subgraph Concepts[" Concepts / Mechanisms "]
@@ -112,6 +113,11 @@ graph LR
   P11 ===> C_DOC_DECOMPOSE_PATTERN
   P11 -.-> C_SAFE_REWRITE_RULES
   P11 --> C_EVAL_METRICS
+  P12 ===> C_DAG
+  P12 ===> C_LOGICAL_PHYSICAL_SPLIT
+  P12 ===> C_PGO
+  P12 --> C_FORMAL_OBJ
+  P12 --> C_EVAL_METRICS
   %% ===== Concept -> Scope links =====
   C_DAG --> S1
   C_PGO --> S2
@@ -166,6 +172,7 @@ graph LR
   class P9 supporting;
   class P10 foundation;
   class P11 supporting;
+  class P12 foundation;
   class C_DAG concept;
   class C_PGO concept;
   class C_MILP concept;

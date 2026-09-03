@@ -154,7 +154,7 @@ hidden true parameters and the executor samples from them. This tests the loop's
 any executor's behaviour.
 
 **Statistics were audited, and three claims did not survive.** Every headline was
-re-measured as a paired per-instance difference with 95% intervals (F26, F27):
+re-measured as a paired per-instance difference with 95% intervals (F29, F30):
 
 | claim | outcome |
 |---|---|
