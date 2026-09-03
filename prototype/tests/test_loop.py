@@ -180,3 +180,48 @@ def test_static_fails_its_floor_without_noticing_and_adaptive_does_not(batch):
     assert adaptive_delivered > 0.90, (
         f"adaptive delivered {adaptive_delivered:.3f} - expected recovery toward the floor")
     assert adaptive_delivered > static_delivered + 0.2
+
+
+# --- F22: optimistic eligibility -------------------------------------------------
+
+def _healthy_run(floor, rounds, optimistic, seed):
+    strict = {t: TaskTypeSpec(SPECS[t].load, floor, 200.0) for t in SPECS}
+    registry, truth = _setup(0.99)
+    for key in truth:
+        truth[key] = TrueBehaviour(0.99, truth[key].latency_mean)
+    return run(ingest(MANIFEST, strict).as_list(), registry,
+               SimulatedExecutor(truth, seed=seed), exact_milp.allocate,
+               budget=8, rounds=rounds, optimistic_eligibility=optimistic)
+
+
+def test_point_estimate_overpays_on_healthy_profiles():
+    """F22. With no drift and true reliability comfortably above the floor, filtering on
+    the point estimate still abandons good profiles and settles at a permanently higher
+    cost. 400 is the optimum; anything above it is money spent reacting to noise."""
+    tail = [_healthy_run(0.95, 40, optimistic=False, seed=s)[-1].cost for s in range(6)]
+    assert sum(tail) / len(tail) > 420, "expected the documented overpayment"
+
+
+def test_optimistic_eligibility_removes_the_overpayment():
+    """Excluding a profile only when confident it is below floor recovers the optimum."""
+    tail = [_healthy_run(0.95, 40, optimistic=True, seed=s)[-1].cost for s in range(6)]
+    assert sum(tail) / len(tail) == pytest.approx(400.0, abs=1.0)
+
+
+def test_optimism_does_not_blind_the_system_to_real_failure():
+    """The obvious risk: keep trying a profile because evidence is thin, and miss a genuine
+    collapse. It does not happen — the bound converges down once evidence accumulates."""
+    strict = {t: TaskTypeSpec(SPECS[t].load, 0.95, 200.0) for t in SPECS}
+    strict_batch = ingest(MANIFEST, strict)
+    registry, truth = _setup(0.99)
+    for key in truth:
+        truth[key] = TrueBehaviour(0.99, truth[key].latency_mean)
+    sim = SimulatedExecutor(truth, seed=0)
+    for task_type in SPECS:
+        sim.schedule_degradation(6, f"{task_type}-cheap", reliability=0.55)
+
+    records = run(strict_batch.as_list(), registry, sim, exact_milp.allocate,
+                  budget=8, rounds=26, optimistic_eligibility=True)
+    after = records[10:]
+    delivered = sum(r.successes for r in after) / sum(r.successes + r.failures for r in after)
+    assert delivered > 0.90, f"optimism missed a genuine collapse: delivered {delivered:.3f}"

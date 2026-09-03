@@ -80,6 +80,7 @@ faster for under 5% cost** (17.75 s → 0.162 s, 4.58% gap). That is the result 
 | 11 | Scoped re-optimisation is well-defined but **vacuous**: a drifted profile is used by 84-100% of workflows, so the affected set is almost the whole batch. Scoped narrower than reality it costs a mean 22%. Either way, do not build it | **Medium-high** | F18, corrected; 60 instances, workflow counts 2-12 | Global re-optimisation becoming expensive at scale |
 | 13 | The closed loop runs without thrashing and catches real degradation, but abandons within-floor profiles on noise and can never re-test them - measurement drives eligibility, eligibility drives routing, routing drives measurement | **Medium-high** | F20, 10 seeded end-to-end runs on the real batch | An exploration or confidence-bound policy, which does not exist |
 | 14 | A static allocator silently violates its reliability floors under drift - 0.542 delivered against a 0.95 floor, reporting no change - while the adaptive loop holds 0.938. This is the project's differentiator | **Medium-high** | F21, 8 seeds, both systems starting correct, identical drift schedule | Real execution behaving unlike the simulation; a subtler drift |
+| 15 | Filtering eligibility on a point estimate costs up to 25% permanently even with no drift. Filtering on an UPPER confidence bound recovers the optimum exactly and loses no drift sensitivity | **Medium-high** | F22, 8 seeds, 80 rounds, three floor levels | A workload where thin-evidence optimism is dangerous |
 | 12 | Section 4.5's EMA is wrong for reliability: a binary signal under an EMA reports 0.70 after 99 successes and one failure, and that value filters C(t) | **High** | F19, arithmetic, reproduced in tests | Nothing - the mechanism is arithmetic |
 
 ---
@@ -95,6 +96,7 @@ faster for under 5% cost** (17.75 s → 0.162 s, 4.58% gap). That is the result 
 | "Track C is the **weakest** of the three tracks" | F11, and an amendment I made to §5.9 | **Withdrawn.** True at 8 tasks, false at scale, where it is the only heuristic that works |
 | "**Track B dominates**" | F10 | True on quality at 8 tasks; false in practice — it is ~100× slower than exact (F13) |
 | "Rounding the routing is **nearly free**" | F6 | Mechanically true, but the integral routing can still be badly wrong (F17) |
+| "Filter C(t) on a **lower** confidence bound" | F20, and component_reference | **Backwards.** It must be the UPPER bound — a lower bound is low when evidence is thin and excludes faster (F22) |
 | "Scoped re-optimisation is **worse ~50% of the time**" | F18, first version | Measured an arbitrary affected workflow rather than the drifted profile's. Correctly scoped it is **identical to global**, because the affected set is 84-100% of workflows |
 
 ---

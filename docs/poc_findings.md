@@ -1175,9 +1175,12 @@ what it already chose will converge to whatever it happened to try first.
 
 Three directions, none of them implemented here:
 
-  * **Confidence-aware floors** - filter `C(t)` on a lower confidence bound rather than a
-    point estimate, so a profile with few observations is not excluded on thin evidence.
-    Fits the existing formulation with no new machinery.
+  * **Confidence-aware floors** - filter `C(t)` on a confidence bound rather than a point
+    estimate, so a profile with few observations is not excluded on thin evidence. Fits the
+    existing formulation with no new machinery. **Corrected in F22: it must be the UPPER
+    bound, not the lower one as originally written here.** A lower bound is low when
+    evidence is thin and would make abandonment worse. Implemented and measured in F22 - it
+    removes the whole cost penalty.
   * **Occasional exploration** - route a small fraction of tasks to unused profiles.
     Standard, but it deliberately spends money and needs a budget argument.
   * **Estimate decay toward the prior** - let an unobserved profile's estimate drift back
@@ -1275,6 +1278,85 @@ Two things around it do:
   over 0.999 and saves 200.
 - **Section 4.7** - the evaluation must report **delivered reliability against baseline**,
   not cost alone. On the current metric set, STATIC wins this experiment.
+
+
+---
+
+## F22 - The overpayment is real, bounded, and fixed. And my prescription was backwards.
+
+Follow-up to F21's observation that the adaptive loop's cost creeps from 400 to 460 *before
+any drift*. Three questions: is it a ratchet, how bad is it, and does the proposed fix work.
+
+### It is not a ratchet - it plateaus, permanently degraded
+
+No drift at all, true reliability 0.99 throughout, 8 seeds, 80 rounds. Optimal cost is 400:
+
+| floor | margin above true | r0 | r10 | r20 | r40 | r79 |
+|---|---|---|---|---|---|---|
+| 0.95 | 0.04 | 400 | 480 | 500 | 500 | **500** |
+| 0.90 | 0.09 | 400 | 440 | 440 | 440 | **440** |
+| 0.80 | 0.19 | 400 | 400 | 400 | 400 | **400** |
+
+It stops climbing, which is much better than feared - but it settles **25% above optimum** at
+a tight margin. The damage is front-loaded: it happens while estimates are thin, then stops,
+because the profiles still in use have accumulated enough observations to be stable and the
+abandoned ones can no longer get worse.
+
+**Severity is governed entirely by the margin between true reliability and the floor.** A
+generous floor costs nothing; a tight one costs a quarter of the bill. That is a bad property
+to have undiscovered, because the natural instinct when setting floors is to set them close
+to what the profile promises.
+
+### My prescription in F20 was backwards
+
+F20 and the first version of `component_reference.md` both said the fix is to *"filter C(t)
+on a **lower** confidence bound rather than a point estimate"*. That is wrong, and it would
+have made things worse. With few observations a lower bound is *low*, so it excludes a
+profile faster than the point estimate does.
+
+The requirement is the opposite: **exclude a profile only when confident it is genuinely
+below the floor.** That is the upper bound.
+
+A profile at true reliability 0.99, after one failure in five effective observations, with a
+0.95 floor:
+
+| rule | value | verdict |
+|---|---|---|
+| point estimate (today) | 0.750 | exclude - **wrong** |
+| lower bound (my stated fix) | 0.370 | exclude - **more wrong** |
+| **upper bound** | **1.000** | **keep - correct** |
+
+And it still excludes genuinely bad profiles once the evidence is there: at 900 successes in
+1000 trials the upper bound is 0.918 and the profile is correctly dropped.
+
+    include m in C(t)  iff  upper_bound(rel(m)) >= R_min(t)
+
+Few observations means a wide interval means a high upper bound, so keep trying. Many
+observations on a bad profile means the bound converges down, so drop it. This is optimism
+under uncertainty, the standard explore/exploit rule.
+
+### Measured: it removes all of the waste and none of the sensitivity
+
+| | floor 0.95, no drift | floor 0.90, no drift | with real drift at round 6 |
+|---|---|---|---|
+| point estimate | 500 | 440 | 0.991 delivered, cost 1040 |
+| **upper bound** | **400** | **400** | **0.991 delivered, cost 1040** |
+
+**The overpayment goes to zero - the optimum is recovered exactly - and behaviour under
+genuine drift is identical.** The obvious risk of optimism, that it keeps trusting a
+collapsing profile because the evidence is thin, does not materialise: the bound converges
+down as observations accumulate.
+
+### Status
+
+Implemented as an **option** (`optimistic_eligibility=True`), not as the default, because
+changing how `C(t)` is built is 077's decision and it deviates from Section 1.6 as written.
+Three tests pin the behaviour: that the point estimate overpays, that the upper bound
+recovers the optimum, and that optimism does not blind the system to real failure.
+
+**Recommendation:** adopt it, and amend Section 1.6 to filter on a confidence bound rather
+than a point estimate once profiles are measured rather than declared. The change is one
+comparison, it removes a 25% cost penalty, and it costs nothing in detection.
 
 
 ---

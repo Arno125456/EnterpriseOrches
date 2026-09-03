@@ -296,8 +296,9 @@ floors remain achievable.
 
 **Becomes.** Three things: reconcile the **[PROPOSED]** compatibility score against Hatherley
 (2025); make drift detection cheap (it currently runs the allocator, so it is not the
-lightweight signal §4.5 implies); and add a **confidence bound**, which is the cheapest fix
-for F20.
+lightweight signal §4.5 implies); and add a **confidence bound** - specifically an UPPER bound, exclude only when
+confident the profile is below floor. F22 corrects an earlier statement here that said
+lower bound, which was backwards, and measures the fix recovering the full 25% penalty.
 
 **Expected improvement.** The confidence bound is the highest-value single change in the
 whole project — it directly addresses F20's abandonment, needs no new machinery, and sits in
@@ -332,7 +333,7 @@ over time? Nothing in the PoC answers that, and this is the harness that would.
 
 | Change | Where | Why it matters |
 |---|---|---|
-| Confidence-bound eligibility | `profiling.py` + `registry.resolve` | Fixes F20's permanent abandonment; cheapest high-value change in the project |
+| Confidence-bound eligibility — **built, measured, off by default** | `profiling.py` + `registry.resolve` | Fixes F20's abandonment and recovers a 25% cost penalty with no loss of drift sensitivity (F22). Needs 077's sign-off to become the default |
 | Budget-aware ranking | `core/decision_rule.py` | Upstream of every track's feasibility (F3) |
 | Subset-move neighbourhood | `core/consolidation.py` | Closes both F1 and F17 with one mechanism |
 | Warm-started re-optimisation | `track_c_lp.py` | The loop re-solves from scratch every round |

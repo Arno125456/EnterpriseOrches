@@ -84,7 +84,8 @@ def run(batch_tasks: list[Task],
         rounds: int = 20,
         drift_threshold: float = 0.9,
         min_observations: int = 5,
-        adaptive: bool = True) -> list[RoundRecord]:
+        adaptive: bool = True,
+        optimistic_eligibility: bool = False) -> list[RoundRecord]:
     """Run the loop for `rounds` execution rounds. Returns one record per round.
 
     `adaptive=False` is the STATIC comparison, and it is what Murakkab does: allocate once
@@ -110,7 +111,8 @@ def run(batch_tasks: list[Task],
         measured_registry = ExecutorRegistry()
         for spec in profiles.values():
             measured_registry.register(spec)
-        return resolve(batch_tasks, measured_registry)
+        bound = store.reliability_upper_bound if optimistic_eligibility else None
+        return resolve(batch_tasks, measured_registry, reliability_of=bound)
 
     # --- J2, J3, J4 for the first round -----------------------------------------
     profiles = store.snapshot()

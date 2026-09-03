@@ -64,7 +64,8 @@ class ExecutorRegistry:
         return {p.id: p for group in self._by_type.values() for p in group}
 
 
-def resolve(tasks: list[Task], registry: ExecutorRegistry) -> dict[TaskId, list[str]]:
+def resolve(tasks: list[Task], registry: ExecutorRegistry,
+            reliability_of=None) -> dict[TaskId, list[str]]:
     """Build C(t) for every task: exact type match, then floor filtering (§1.6).
 
         C(t) = { m : declared_type(m) == taskType(t)
@@ -77,9 +78,15 @@ def resolve(tasks: list[Task], registry: ExecutorRegistry) -> dict[TaskId, list[
     pools: dict[TaskId, list[str]] = {}
     for task in tasks:
         candidates = registry.profiles_for(task.task_type)      # may raise
+        def reliability(profile):
+            # Default: the point estimate, which is what §1.6 specifies. Passing an
+            # upper-bound function instead excludes a profile only when the evidence is
+            # strong enough to be confident it is below floor (F20/F22).
+            return profile.reliability if reliability_of is None else reliability_of(profile.id)
+
         pools[task.id] = sorted(
             p.id for p in candidates
-            if p.reliability >= task.rel_floor and p.latency <= task.lat_ceil)
+            if reliability(p) >= task.rel_floor and p.latency <= task.lat_ceil)
     return pools
 
 

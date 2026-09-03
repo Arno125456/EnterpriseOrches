@@ -37,6 +37,7 @@ Two consequences worth knowing before trusting a number from this:
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, replace
 
 from poc.formulation.types import Observation, ProfileSpec
@@ -89,6 +90,30 @@ class ProfileStore:
         if profile_id not in self._profiles:
             raise NotProfiled(f"no profile {profile_id!r}")
         return self._profiles[profile_id]
+
+    def reliability_upper_bound(self, profile_id: str, z: float = 1.96) -> float:
+        """Optimistic bound on reliability, for eligibility filtering.
+
+        WHY AN UPPER BOUND AND NOT A LOWER ONE. Findings F20 and the first version of the
+        component reference both said "filter on a lower confidence bound". That is
+        backwards: with few observations a lower bound is *low*, so it would exclude a
+        profile faster than the point estimate does, making premature abandonment worse.
+
+        The requirement is to exclude a profile only when we are CONFIDENT it is genuinely
+        below the floor. That is the upper bound:
+
+            include m in C(t)  iff  upper_bound(rel(m)) >= R_min(t)
+
+        Few observations -> wide interval -> high upper bound -> keep trying it. Many
+        observations on a genuinely bad profile -> the bound converges down -> exclude.
+        This is optimism under uncertainty, the standard explore/exploit rule.
+        """
+        successes, trials = self._counters.get(profile_id, (0.0, 0.0))
+        if trials <= 0:
+            return 1.0
+        point = (successes + self._prior) / (trials + 2 * self._prior)
+        margin = z * math.sqrt(max(point * (1.0 - point) / trials, 0.0))
+        return min(1.0, point + margin)
 
     def record(self, observation: Observation) -> ProfileSpec:
         """Fold one observation into the profile. Returns the updated spec.
