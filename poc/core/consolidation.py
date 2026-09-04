@@ -65,6 +65,103 @@ def evaluate(routing: dict[TaskId, str],
     return cost, gpus, provisioning
 
 
+class ConsolidationState:
+    """Maintains active profile loads, instance counts, spare headroom, and aggregate costs.
+
+    Provides O(1) evaluation of candidate relocation moves using memoized instance headroom,
+    reducing move evaluation from O(|T|) full-fleet recomputations to O(1) scalar arithmetic.
+    """
+
+    def __init__(self,
+                 routing: dict[TaskId, str],
+                 tasks: list[Task],
+                 profiles: dict[str, ProfileSpec],
+                 budget: int):
+        self.profiles = profiles
+        self.budget = budget
+        self.by_id = {t.id: t for t in tasks}
+        self.routing = dict(routing)
+        self.load: dict[str, float] = {m: 0.0 for m in profiles}
+        for tid, m in self.routing.items():
+            self.load[m] += self.by_id[tid].load
+
+        self.provisioning: dict[str, int] = {}
+        self.headroom: dict[str, float] = {}
+        self.total_gpus: int = 0
+        self.total_cost: float = 0.0
+
+        for m, v in self.load.items():
+            if v > 1e-9:
+                n = math.ceil(round(v / profiles[m].throughput, _ROUND_DP))
+                self.provisioning[m] = n
+                self.total_gpus += n * profiles[m].gpus
+                self.total_cost += n * profiles[m].price
+                self.headroom[m] = n * profiles[m].throughput - v
+            else:
+                self.provisioning[m] = 0
+                self.headroom[m] = 0.0
+
+    @property
+    def is_feasible(self) -> bool:
+        return self.total_gpus <= self.budget
+
+    def evaluate_move(self, movers: tuple[TaskId, ...] | list[TaskId], destination: str) -> tuple[float, int] | None:
+        """Evaluates moving `movers` from their source profile to `destination` in O(1).
+
+        Returns (new_total_cost, new_total_gpus) if feasible (<= budget), else None.
+        """
+        source = self.routing[movers[0]]
+        if destination == source:
+            return self.total_cost, self.total_gpus
+
+        delta_load = sum(self.by_id[tid].load for tid in movers)
+        new_ls = self.load[source] - delta_load
+        new_ns = math.ceil(round(new_ls / self.profiles[source].throughput, _ROUND_DP)) if new_ls > 1e-9 else 0
+        new_ld = self.load[destination] + delta_load
+        new_nd = math.ceil(round(new_ld / self.profiles[destination].throughput, _ROUND_DP))
+
+        delta_gpus = ((new_ns - self.provisioning.get(source, 0)) * self.profiles[source].gpus +
+                      (new_nd - self.provisioning.get(destination, 0)) * self.profiles[destination].gpus)
+
+        new_gpus = self.total_gpus + delta_gpus
+        if new_gpus > self.budget:
+            return None
+
+        delta_cost = ((new_ns - self.provisioning.get(source, 0)) * self.profiles[source].price +
+                      (new_nd - self.provisioning.get(destination, 0)) * self.profiles[destination].price)
+
+        return self.total_cost + delta_cost, new_gpus
+
+    def apply_move(self, movers: tuple[TaskId, ...] | list[TaskId], destination: str) -> None:
+        """Applies the move, updating routing, loads, provisioning, headroom, cost, and gpus."""
+        source = self.routing[movers[0]]
+        delta_load = sum(self.by_id[tid].load for tid in movers)
+
+        for tid in movers:
+            self.routing[tid] = destination
+
+        # Update source
+        new_ls = max(0.0, self.load[source] - delta_load)
+        self.load[source] = new_ls
+        old_ns = self.provisioning.get(source, 0)
+        new_ns = math.ceil(round(new_ls / self.profiles[source].throughput, _ROUND_DP)) if new_ls > 1e-9 else 0
+        self.provisioning[source] = new_ns
+        self.headroom[source] = (new_ns * self.profiles[source].throughput - new_ls) if new_ns > 0 else 0.0
+
+        # Update destination
+        new_ld = self.load[destination] + delta_load
+        self.load[destination] = new_ld
+        old_nd = self.provisioning.get(destination, 0)
+        new_nd = math.ceil(round(new_ld / self.profiles[destination].throughput, _ROUND_DP))
+        self.provisioning[destination] = new_nd
+        self.headroom[destination] = new_nd * self.profiles[destination].throughput - new_ld
+
+        self.total_gpus += ((new_ns - old_ns) * self.profiles[source].gpus +
+                            (new_nd - old_nd) * self.profiles[destination].gpus)
+        self.total_cost += ((new_ns - old_ns) * self.profiles[source].price +
+                            (new_nd - old_nd) * self.profiles[destination].price)
+
+
 def consolidate(routing: dict[TaskId, str],
                 tasks: list[Task],
                 pools: dict[TaskId, list[str]],
@@ -76,21 +173,19 @@ def consolidate(routing: dict[TaskId, str],
     Deterministic: profiles and destinations are tried in sorted order, and only strict
     improvements are accepted, so no cycling and no dependence on dict ordering (P10).
 
-    Complexity: O(passes · |M|² · |T|). Trivial next to an LP solve.
+    Complexity: O(passes · |M|² · |T|) worst-case, with O(1) candidate checks via headroom cache.
     """
-    routing = dict(routing)
-    current = evaluate(routing, tasks, profiles, budget)
-    if current is None:
+    state = ConsolidationState(routing, tasks, profiles, budget)
+    if not state.is_feasible:
         return routing
-    best_cost = current[0]
 
-    by_id = {t.id: t for t in tasks}
+    by_id = state.by_id
 
     for _ in range(max_passes):
         improved = False
 
-        for source in sorted({m for m in routing.values()}):
-            movers = sorted((tid for tid, m in routing.items() if m == source),
+        for source in sorted({m for m in state.routing.values()}):
+            movers = sorted((tid for tid, m in state.routing.items() if m == source),
                             key=lambda tid: (by_id[tid].id.workflow_id,
                                              by_id[tid].id.task_name))
             if not movers:
@@ -101,13 +196,10 @@ def consolidate(routing: dict[TaskId, str],
                 *(set(pools[tid]) for tid in movers)) - {source})
 
             for destination in eligible:
-                trial = dict(routing)
-                for tid in movers:
-                    trial[tid] = destination
-
-                outcome = evaluate(trial, tasks, profiles, budget)
-                if outcome is not None and outcome[0] < best_cost - 1e-9:
-                    routing, best_cost, improved = trial, outcome[0], True
+                outcome = state.evaluate_move(movers, destination)
+                if outcome is not None and outcome[0] < state.total_cost - 1e-9:
+                    state.apply_move(movers, destination)
+                    improved = True
                     break
 
             if improved:
@@ -116,7 +208,7 @@ def consolidate(routing: dict[TaskId, str],
         if not improved:
             break
 
-    return routing
+    return state.routing
 
 
 def consolidate_subsets(routing: dict[TaskId, str],
@@ -138,29 +230,26 @@ def consolidate_subsets(routing: dict[TaskId, str],
     """
     import itertools
 
-    routing = dict(routing)
-    current = evaluate(routing, tasks, profiles, budget)
-    if current is None:
+    state = ConsolidationState(routing, tasks, profiles, budget)
+    if not state.is_feasible:
         return routing
-    best_cost = current[0]
 
-    by_id = {t.id: t for t in tasks}
+    by_id = state.by_id
 
     for _ in range(max_passes):
         improved = False
 
         # First, run the full-profile consolidation pass
-        routing_after_all = consolidate(routing, tasks, pools, profiles, budget, max_passes=1)
-        if routing_after_all != routing:
-            current_after = evaluate(routing_after_all, tasks, profiles, budget)
-            if current_after is not None and current_after[0] < best_cost - 1e-9:
-                routing, best_cost, improved = routing_after_all, current_after[0], True
-                continue
+        routing_after_all = consolidate(state.routing, tasks, pools, profiles, budget, max_passes=1)
+        if routing_after_all != state.routing:
+            state = ConsolidationState(routing_after_all, tasks, profiles, budget)
+            improved = True
+            continue
 
         # Next, search for subset moves of size k in [max_k, ..., 2, 1]
         for k in range(max_k, 0, -1):
-            for source in sorted({m for m in routing.values()}):
-                movers = sorted((tid for tid, m in routing.items() if m == source),
+            for source in sorted({m for m in state.routing.values()}):
+                movers = sorted((tid for tid, m in state.routing.items() if m == source),
                                 key=lambda tid: (by_id[tid].id.workflow_id,
                                                  by_id[tid].id.task_name))
                 if len(movers) < k:
@@ -173,13 +262,10 @@ def consolidate_subsets(routing: dict[TaskId, str],
                         continue
 
                     for destination in eligible:
-                        trial = dict(routing)
-                        for tid in subset:
-                            trial[tid] = destination
-
-                        outcome = evaluate(trial, tasks, profiles, budget)
-                        if outcome is not None and outcome[0] < best_cost - 1e-9:
-                            routing, best_cost, improved = trial, outcome[0], True
+                        outcome = state.evaluate_move(subset, destination)
+                        if outcome is not None and outcome[0] < state.total_cost - 1e-9:
+                            state.apply_move(subset, destination)
+                            improved = True
                             break
 
                     if improved:
@@ -192,5 +278,5 @@ def consolidate_subsets(routing: dict[TaskId, str],
         if not improved:
             break
 
-    return routing
+    return state.routing
 
