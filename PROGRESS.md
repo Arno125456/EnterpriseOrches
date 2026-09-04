@@ -196,6 +196,8 @@ Published in [`docs/chapter3_benchmark_results.md`](docs/chapter3_benchmark_resu
 | **M1 Presentation Slides** | [`docs/M1_Proposal_Presentation_Slides.md`](docs/M1_Proposal_Presentation_Slides.md) | 16-slide presentation outline, visuals, speaker script, and committee Q&A prep |
 | **Interactive HTML Slide Deck** | [`docs/presentation/index.html`](docs/presentation/index.html) | Zero-dependency browser slide presentation with keyboard navigation & speaker notes |
 | **Heterogeneous Fleet Generator** | [`poc/instances/heterogeneous_generator.py`](poc/instances/heterogeneous_generator.py) | Decorrelates price from GPU count (F32), activating the (C3) budget trade-off |
+| **Heterogeneous 20-Seed Runner** | [`scripts/run_heterogeneous_20seed_benchmark.py`](scripts/run_heterogeneous_20seed_benchmark.py) | CLI tool running 20-seed statistical evaluation on heterogeneous tiers with 95% CIs |
+| **Heterogeneous 20-Seed Results** | [`docs/heterogeneous_20seed_results.md`](docs/heterogeneous_20seed_results.md) | 20-seed statistical report: Track B 1.34% gap, budget savings $180.16 [52.57, 307.74] |
 | **Chapter 3 Benchmarks** | [`docs/chapter3_benchmark_results.md`](docs/chapter3_benchmark_results.md) | Publication-grade Markdown and LaTeX benchmark tables across 3 generators (8 to 64 tasks) |
 | **Closed-Loop Benchmark Runner** | [`scripts/run_closed_loop_benchmark.py`](scripts/run_closed_loop_benchmark.py) | Standalone CLI tool running 20-seed drift simulation with ASCII timeline and 95% CIs |
 | **Closed-Loop Benchmark Results** | [`docs/closed_loop_benchmark_results.md`](docs/closed_loop_benchmark_results.md) | 20-seed statistical evaluation of F24/F25 drift protection (+0.434 [0.410, 0.458]) |
