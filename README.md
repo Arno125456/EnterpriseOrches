@@ -2,7 +2,12 @@
 
 Senior capstone project — team of 5, advised by Prof. Tossaphol.
 
-**Start here:** [`CLAUDE.md`](CLAUDE.md) is the working summary and the guardrails.
+> ### New here? Read [`docs/ORIENTATION.md`](docs/ORIENTATION.md).
+> One file, from zero: the problem, the design, what is built, what we found, and where to
+> look for more. It assumes nothing. Everything below assumes you have read it or already
+> know the project.
+
+**Then:** [`CLAUDE.md`](CLAUDE.md) is the working summary and the guardrails.
 [`docs/System_Architecture_v2.md`](docs/System_Architecture_v2.md) is the full design
 reference; [`docs/PoC_and_Validation_Plan.md`](docs/PoC_and_Validation_Plan.md) is what
 September is for; [`docs/pipeline.md`](docs/pipeline.md) is the end-to-end ASCII diagram

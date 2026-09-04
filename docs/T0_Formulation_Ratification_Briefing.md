@@ -1,5 +1,11 @@
 # T0 / D1: Mathematical Formulation Ratification & Advisor Briefing Note
 
+> **Two T0 documents exist and they do different jobs.** This one is the **formal statement of
+> the model being ratified** — the mathematics, the problem classification, and the reasoning
+> behind the floor-versus-objective choice. [`T0_briefing.md`](T0_briefing.md) is the **agenda
+> for running the 8 September session**: confirm-or-object, a default for every item, and the
+> sign-off template. Read this for *what* is being ratified; read that to *run the meeting*.
+
 **Project:** Profile-Guided Multi-Workflow Resource Orchestration Platform  
 **Target Milestone:** $T_0 / D_1$ (Formulation Ratification) — **8 September 2026**  
 **Stakeholders:** 5 Senior Capstone Engineers (Roles: 035, 075, 077, 083, 089), Advisor (Prof. Tossaphol)  
@@ -12,7 +18,13 @@
 
 This briefing document establishes the formal mathematical programming model for the capstone project. In accordance with the Project Validation Plan (`docs/PoC_and_Validation_Plan.md`), milestone $T_0 / D_1$ requires all team members and the advisor to ratify Section 1 of the architecture before proceeding into Semester 2 implementation.
 
-The Proof-of-Concept (PoC) phase has rigorously verified this formulation across 562 unit tests, hand-calculated adversarial fixtures, and multi-scale benchmarks (8 to 64 tasks). This briefing outlines the exact mathematical model, presents the theoretical problem classification, and addresses the critical architectural decision: **whether reliability should be enforced as a hard SLA floor constraint or treated as an objective optimization term.**
+The Proof-of-Concept (PoC) phase has rigorously verified this formulation across **647 unit tests**, hand-calculated adversarial fixtures, and multi-scale benchmarks (8 to 64 tasks) on three instance generators. This briefing outlines the exact mathematical model, presents the theoretical problem classification, and addresses the critical architectural decision: **whether reliability should be enforced as a hard SLA floor constraint or treated as an objective optimization term.**
+
+> **ANSWERED 3 September 2026 — the advisor confirmed reliability is a FLOOR, not an
+> objective (open question O10).** That is **Option A** below, which is what this document
+> already recommended. §1.9 stands, the objective remains single-term provisioning cost, and
+> the session does not need to re-litigate it. The comparison is kept because the reasoning is
+> what a reader should be able to reconstruct if asked why.
 
 ---
 
