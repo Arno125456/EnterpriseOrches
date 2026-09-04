@@ -97,14 +97,18 @@ graph TD
 - **Visuals:** Diagram showing joint subset relocation: tasks $t_1$ and $t_2$ moving together to profile $m_2$ while $t_3$ stays on $m_1$. Benchmark chart showing mean gap dropping from 32.37% to 1.57% on structured instances. **Plot the two means; do not label the chart with a fold-change.**
 - **Key Message:** Exploring a 2-subset relocation neighborhood breaks the aggregate-coupling trap, achieving the exact global optimum of 280 on the adversarial fixture and slashing heuristic error by 20×.
 - **Speaker Script (035):**
-  > "Lookahead solved feasibility, but not aggregate coupling. Why? Because improving the fixture requires moving two tasks together. Single-task moves worsen cost locally, and moving all tasks is blocked because task t3 is ineligible for m2. We designed a multi-move subset consolidation neighborhood, evaluate moves of subsets of size $k \le 2$. On our adversarial fixture, subset consolidation immediately discovers the joint move of t1 and t2 to m2, achieving the exact global optimum of 280. When evaluated across our structured benchmark, the mean cost gap falls from 32.37% to 1.57%."
+  > "Lookahead solved feasibility, but not aggregate coupling. Why? Because improving the fixture requires moving two tasks together. Single-task moves worsen cost locally, and moving all tasks is blocked because task t3 is ineligible for m2. We designed a multi-move subset consolidation neighborhood, evaluate moves of subsets of size $k \le 2$. On our adversarial fixture, subset consolidation immediately discovers the joint move of t1 and t2 to m2, achieving the exact global optimum of 280. When we evaluated it across both generators on 72 matched instances, subset consolidation was never worse than plain greedy - not on a single instance. It was strictly better on 54 of them, and identical on the rest. The paired improvement is 11.5 percentage points of optimality gap, with a 95% confidence interval of 6.7 to 17.2."
   >
-  > **Audit note — do not say "a twenty-fold improvement".** That figure is 32.37 / 1.57, one
-  > mean divided by another: the exact defect F30 found systemic and that retracted our 110x
-  > speedup and the "3-5x tighter" bound claim. **F20 predates the F30 audit and has not been
-  > re-measured**, so no paired per-instance difference or interval exists for it yet. Until it
-  > is computed, state the two means and stop. Note also n is small - 16 structured instances,
-  > 5 solvable - so any interval will be wide.
+  > **Audit note (F32) — do not say "a twenty-fold improvement".** That figure is 32.37 / 1.57,
+  > one mean divided by another: the defect F30 found systemic. Audited properly, the median
+  > per-instance ratio is **1.53×**. Worse, the ratio of means *itself* moved from 20.6× to
+  > 2.41× when the instance set changed — it is unstable, not merely inflated.
+  >
+  > **"Never worse on 72 paired instances" is the stronger claim anyway**, and it survives any
+  > question about which average was picked. Use it.
+  >
+  > If asked about scale, do not claim "<2% at all scales" — that is withdrawn (F32). The gap
+  > **grows** with scale: 2.35% at 8 tasks to 14.30% at 64 on structured. Volunteer this.
 
 ---
 

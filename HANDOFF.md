@@ -15,7 +15,7 @@ document is the detail behind those steps.
 The proof-of-concept is complete: all four tests answered against the plan's *methods*, not
 just its deliverables. 593 tests pass, reproducible from a clean clone. The optimizer works
 and Track C is the result. Beyond the PoC, the closed loop was built and run end to end, and
-it produced the project's strongest claim. Thirty-one findings are recorded, of which several
+it produced the project's strongest claim. Thirty-two findings are recorded, of which several
 correct earlier ones — **the corrections are as important as the results, and three headline
 numbers were retracted after a statistical audit.**
 
@@ -126,12 +126,20 @@ a tail.** A **fourth** was found on 4 Sep, in `mickie`-origin documents the audi
 | "~110× faster than the exact solver" | median speedup is **5×**; argue **bounded latency** — 0.106 ±0.020 s vs 12.3 ±10.3 s |
 | "the bound is 3–6× tighter than the LP" | paired difference **12.6 pp [9.5, 15.6]**; median ratio ~2–2.5× |
 | "consolidation halves Track C's gap" | **median improvement is 0.00%** — it fixes a rare, severe failure |
-| "subset consolidation is a **twenty-fold** improvement" (F20, slides) | the two means: **32.37% → 1.57%**, and stop. 32.37/1.57 is the same ratio-of-means defect. **F20 predates the audit and has not been re-measured** — no paired difference or interval exists for it yet, and n is small (16 structured, 5 solvable) |
+| "subset consolidation is a **twenty-fold** improvement" (F20, slides) | **it was never worse — 0 of 72 paired instances**, better on 54. Paired difference **11.46 pp [6.68, 17.24]** structured, **9.30 pp [6.69, 12.42]** uniform; median per-instance ratio **1.53×** / **1.95×** (F32) |
+| "A+subset holds the gap **<2% at all scales**" (chapter3) | **withdrawn.** The gap *grows* with scale — 2.35% at 8t to 14.30% at 64t structured. `chapter3_benchmark_results.md`'s own tables already said so; six of its eight cells are above 2% (F32) |
 
-**The fourth is the one to watch**, because it is the only one still *unaudited* rather than
-corrected. F29/F30 audited `main`'s findings; F20 came from `mickie` in the step-1 merge and
-was never put through the same test. Computing its paired difference is the obvious next
-statistical task, and until it is done the slide claim rests on 5 solvable instances.
+**The fourth was audited on 4 Sep (F32) and it behaved differently from the other three.**
+They shrank by a roughly fixed factor. This one *moved by an order of magnitude* when the
+instance set changed — 20.6× originally, 2.41× on a set with twice the seeds. A ratio of means
+is not just inflated, it is unstable. What replaces it is stronger than a fold-change anyway:
+**A+subset is never worse than plain greedy**, on any of 72 paired instances across two
+generators with deliberately opposite structure.
+
+**The lesson worth carrying:** F20 came from `mickie` in the step-1 merge and therefore
+*predates nothing* — the F29/F30 audit ran before it existed here. Anything merged from a
+branch is unaudited regardless of its finding number. Both of these sat in slide and chapter
+material for a week.
 
 Full list in `docs/poc_findings_summary.md` under *"numbers that were corrected"*. **The rule:
 never divide two means.** Report the paired difference and its interval.

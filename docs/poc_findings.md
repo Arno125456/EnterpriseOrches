@@ -1924,6 +1924,83 @@ paper open. Flagging it rather than guessing.
 
 ---
 
+## F32 - The fourth ratio of means, and a summary that contradicts its own tables
+
+F29 and F30 audited `main`'s headline numbers and found the ratio-of-means defect systemic.
+They could not have caught F20: it arrived from `mickie` in the step-1 merge, *after* the
+audit. Swept for it on 4 Sep during PLAN step 3 and found it carrying the identical defect.
+
+**The claim.** "Subset consolidation slashed the average cost gap from 32.37% down to 1.57%
+- a twenty-fold improvement in solution quality" (M1 slides, speaker script for slide 8;
+also PROGRESS.md as "a 20x error reduction"). That factor is 32.37 / 1.57. One mean divided
+by another.
+
+### The paired audit
+
+Re-measured with the statistic F30 established: same instance, both conditions, paired
+per-instance difference with a percentile bootstrap interval. `scripts/audit_f20_subset.py`,
+scales (8,4) (16,6) (32,8) (64,10), seeds 0-9, budget x1.25 - the design
+`scripts/generate_chapter3_tables.py` already used, with the seeds doubled from 5 to 10.
+
+| | structured | uniform |
+|---|---|---|
+| paired instances (both feasible, MILP proved) | 32 of 40 | 40 of 40 |
+| A mean gap | 19.56% | 13.81% |
+| A+subset mean gap | 8.10% | 4.50% |
+| **ratio of means** *(do not quote)* | **2.41x** | **3.06x** |
+| **paired difference** | **11.46 pp [6.68, 17.24]** | **9.30 pp [6.69, 12.42]** |
+| median difference | 7.13 pp [0.48, 12.18] | 7.07 pp [4.77, 10.67] |
+| **median per-instance ratio** | **1.53x** | **1.95x** |
+| better / same / worse | 21 / 11 / **0** | 33 / 7 / **0** |
+
+**"Twenty-fold" becomes 1.53x.** And note the ratio of means on *this* instance set is 2.41x,
+not 20.6x. So the ratio was not merely inflated, it was **unstable**: it moved by an order of
+magnitude when the instance set changed, which is the property that makes a ratio of means
+worthless as a headline. The three earlier retractions all shrank by a roughly fixed factor;
+this one did not.
+
+### What survives, and it is better than the number it replaces
+
+**A+subset was never worse. Not on one of 72 paired instances.** Better on 54, identical on
+18, worse on 0, across two generators with deliberately opposite structure. That is a
+stronger statement than any fold-change, it needs no averaging argument, and it is the
+statement to put on the slide.
+
+### A second claim, refuted by the document that makes it
+
+`docs/chapter3_benchmark_results.md` opens: "reducing mean optimality gap to **<2%** at all
+scales". **Its own tables, printed below it in the same file, say otherwise** - structured
+32t is 13.03% and 64t is 13.92%; uniform runs 4.51 / 3.27 / 2.20 / 4.78%. Six of its eight
+cells are above 2%. Only structured 8t (0.20%) and 16t (0.22%) are below, and the claim
+appears to generalise from those two.
+
+The independent run agrees, and shows the shape the claim hides - **the gap grows with
+scale**:
+
+| scale | A+subset mean gap, structured | uniform |
+|---|---|---|
+| 8t | 2.35% | 4.77% |
+| 16t | 4.75% | 3.02% |
+| 32t | 10.89% | 4.49% |
+| 64t | 14.30% | 5.74% |
+
+Structured medians are 0.00%, 0.67%, 9.53%, 12.29%, so at small scale the mean is tail-carried
+and at large scale it is not - the degradation is real, not an outlier artefact.
+
+**This does not weaken T2's result.** A+subset still dismantles the aggregate-coupling trap,
+still recovers 280 on the fixture, and is still never worse than plain greedy. What is
+withdrawn is "<2% at all scales", which was never true of the measurements it was written
+above.
+
+### Rule, restated
+
+The rule from F30 was "never divide two means". F20 shows it needs a second half: **the audit
+is not a one-time pass.** Anything merged from a branch that predates it has not been
+audited, whatever the finding numbers suggest. Both claims here sat in slide and chapter
+material for a week after the audit that would have caught them.
+
+---
+
 ## Still open
 
 | # | Item | Owner |

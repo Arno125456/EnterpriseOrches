@@ -38,7 +38,7 @@ All planned PoC build steps (Steps 1–10) and prototype modules are **100% impl
 ### $T_2$ — Can greedy construction survive aggregate coupling?
 - **Status:** **FULLY RESOLVED (Findings F8, F17, F20)**
 - **Outcome:** Plain greedy fails on `adversarial_3t2p` (cost 300 vs optimum 280) due to myopic per-task pricing. Multi-start and single-move relocate provably fail.
-- **Resolution:** Implemented `consolidate_subsets()` (`A+subset` in `track_a_subset.py`). Evaluating $k$-subset relocations ($k \le 2$) moves $\{t_1, t_2\} \to m_2$ together while keeping $t_3 \to m_1$, **achieving the proven optimum of 280**. On structured benchmarks, cuts mean cost gap from **32.37% down to 1.57%**. (**The "20× error reduction" is withdrawn** — it is one mean divided by another, the defect F30 found systemic. F20 predates that audit and has **not** been re-measured with a paired statistic; n is small, 16 instances / 5 solvable.)
+- **Resolution:** Implemented `consolidate_subsets()` (`A+subset` in `track_a_subset.py`). Evaluating $k$-subset relocations ($k \le 2$) moves $\{t_1, t_2\} \to m_2$ together while keeping $t_3 \to m_1$, **achieving the proven optimum of 280**. On structured benchmarks, cuts mean cost gap from **32.37% down to 1.57%**. (**The "20× error reduction" is withdrawn** — one mean divided by another, the defect F30 found systemic. Audited in **F32**: median per-instance ratio **1.53×**, and the ratio of means moved 20.6× → 2.41× on a larger instance set, so it was *unstable*, not just inflated. What holds, and is stronger: **never worse on any of 72 paired instances**, better on 54, paired difference **11.46 pp [6.68, 17.24]**.)
 
 ### $T_3$ — Over what budget range does the problem have interesting structure?
 - **Status:** **FULLY RESOLVED (Findings F11, F15, F22)**
@@ -137,7 +137,7 @@ Published in [`docs/chapter3_benchmark_results.md`](docs/chapter3_benchmark_resu
 - **F17:** Diagnosis of Track C worst-case (2× cost) resolved by multi-move profile consolidation pass.
 - **F18:** Scoped re-optimization is vacuous in shared-instance cloud settings due to 84–100% profile overlap.
 - **F19:** Exponential Moving Average (EMA) fails for binary reliability; replaced with decayed counting estimator with Jeffreys prior.
-- **F20:** Subset-move consolidation (`A+subset`) breaks aggregate coupling, achieving true optimum 280 on fixture and 1.57% mean gap.
+- **F20:** Subset-move consolidation (`A+subset`) breaks aggregate coupling, achieving true optimum 280 on fixture. (Its "twenty-fold"/1.57% headline is corrected by **F32** — never worse on 72 paired instances, paired difference 11.46 pp [6.68, 17.24]; the gap grows with scale.)
 - **F21:** (C3) Lagrangian relaxation confirms LP duality equivalence (15.00% bound gap in $<1\text{ms}$); (C1) relaxation proved strictly tighter on 30/30, paired **12.57 pp [9.49, 15.64]** (**not** "3–5×" — ratio of means, withdrawn by F30; median per-instance ratio 2.53× uniform, 2.00× structured).
 - **F22:** Extended tightness sweeps above $1.0\times B_{\text{ref}}$ eliminate cliff artifacts and confirm asymptotic convergence.
 
