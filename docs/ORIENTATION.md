@@ -7,6 +7,24 @@ it.
 
 Written 4 September 2026. Milestone **M1 is 30 September 2026**.
 
+> ### How much of this ages, and how fast
+>
+> A file that says "read this and nothing else" is in tension with a project whose answers are
+> still moving. So be explicit about which is which.
+>
+> | | ages? | |
+> |---|---|---|
+> | §2 the problem, §5 the formal model, §6 the fixture, §4 the design | **No** | Settled. If these change, the project has changed |
+> | §3 positioning, §4.3 requirements, §10 the team, §12 Semester 2 | **Slowly** | Changes when a decision is taken, and decisions are dated where they appear |
+> | **§8 the four answers, §11 what exists** | **Yes, fast** | These are live measurements. Each carries the finding and date it was last verified |
+>
+> **T1's answer changed twice on 4 September alone.** That is normal here and not a sign
+> anything is wrong — it is what an active audit looks like. But it means §8 is a snapshot.
+>
+> **Before quoting any number from this file**, check the *"numbers that were corrected"*
+> table in [`poc_findings_summary.md`](poc_findings_summary.md). That table is maintained; this
+> file is a summary of it. Where they disagree, **the summary wins** — and please fix this file.
+
 ---
 
 ## 1. In five sentences
@@ -284,12 +302,16 @@ I3  Σ n[m]·gpu(m) ≤ B
 The PoC exists to answer these. **A negative answer is a success** — "Track B gives no
 advantage" would save a semester.
 
-| | question | current answer |
-|---|---|---|
-| **T1** | Which constraint should Track B relax, does its bound beat the LP? | **(C1).** Tighter than the LP on **53/53** instances across all three generators *wherever Track B has a feasible incumbent*. The (C2) arm is worst everywhere. (C3) collapses to the LP bound by theory |
-| **T2** | Can greedy be defeated by aggregate coupling? | **Yes** — proven on the fixture and confirmed at scale. `A+subset` fixes it: **never worse** than plain greedy on 72 paired instances |
-| **T3** | Over what budget range is there interesting structure? | **Wherever price per GPU is not constant.** The budget changes the optimal cost in **24/25** heterogeneous instances against **0–4/25** where price tracks GPU count |
-| **T4** | Is Track A worth its complexity vs Track C? | **Plain greedy, no. `A+subset`, yes** — it is competitive. Track C's real virtue is *bounded* runtime, not average speed |
+**These four rows are the fastest-moving content in this file.** Each carries the finding it
+rests on, the date it was last verified, and — where one exists — the script that regenerates
+it from scratch. If the date is old, re-run the script rather than trusting the row.
+
+| | question | current answer | last verified |
+|---|---|---|---|
+| **T1** | Which constraint should Track B relax, does its bound beat the LP? | **(C1).** Tighter than the LP on **53/53** instances across all three generators *wherever Track B has a feasible incumbent*. The (C2) arm is worst everywhere. (C3) collapses to the LP bound by theory | **F35, 4 Sep** — `scripts/audit_t1_arms.py`. **Changed twice that day**; F34 got it wrong first |
+| **T2** | Can greedy be defeated by aggregate coupling? | **Yes** — proven on the fixture and confirmed at scale. `A+subset` fixes it: **never worse** than plain greedy on 72 paired instances | **F32, 4 Sep** — `scripts/audit_f20_subset.py`. The fixture half is permanent; it is checked by tests |
+| **T3** | Over what budget range is there interesting structure? | **Wherever price per GPU is not constant.** The budget changes the optimal cost in **24/25** heterogeneous instances against **0–4/25** where price tracks GPU count | **F33, 4 Sep** — `scripts/audit_budget_binding.py` |
+| **T4** | Is Track A worth its complexity vs Track C? | **Plain greedy, no. `A+subset`, yes** — it is competitive. Track C's real virtue is *bounded* runtime, not average speed | **F29/F30/F32.** The weakest of the four — T4's decision criteria ask an A-vs-C question the data has moved past, and rewriting them is an open item for 089 |
 
 Two of those answers only exist because of work done in the last two days, and both came from
 noticing that a measurement was shaped by an assumption:
@@ -356,10 +378,15 @@ is `D11_poc_report.md`.
 
 ## 11. What actually exists right now
 
-```
-647 tests pass, 4 skip          35 findings recorded, including superseded ones
-15 runnable conditions           3 instance generators
-```
+**As of 4 September 2026** — and every one of these is a command, not a claim. If a number
+here looks wrong, the command is the arbiter:
+
+| | | check it |
+|---|---|---|
+| **647** tests pass, 4 skip | | `python -m pytest -q` |
+| **35** findings recorded | including superseded ones | `grep -c "^## F" docs/poc_findings.md` |
+| **15** runnable conditions | | `python -c "from poc.harness.runner import STRATEGIES; print(len(STRATEGIES))"` |
+| **3** instance generators | uniform, structured, heterogeneous | `ls poc/instances/*generator*.py` |
 
 **Built and measured:** the formulation, an exact MILP validated against a hand-computed
 optimum, three families of heuristic with valid bounds, the provisioning state, the invariant
