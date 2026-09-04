@@ -151,7 +151,7 @@ contribution.
 | | Owner |
 |---|---|
 | T0 — ratify §1. Everything above assumes it | All, **8 Sep** |
-| The advisor's answer on O10 — reliability as floor, or as objective | Advisor |
+| ~~The advisor's answer on O10~~ — **answered 3 Sep: a floor**, not an objective. §1.9 stands | — |
 | ~~The advisor's answer on O12~~ — **answered 3 Sep: yes, the loop is sufficient** | — |
 | Reconcile the compatibility score with Hatherley (2025) | 077 |
 | More seeds on the scale results before they are quoted | 089 |

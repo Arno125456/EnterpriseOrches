@@ -222,7 +222,7 @@ rather than picking silently.
 | O4 | Can greedy be defeated by aggregate coupling? **Yes** — fixture confirmed, and it fails on feasibility far more often than on cost |
 | O5 | Step-size schedule, tolerance, iteration cap for Track B — still open, values in `track_b_lagr.py` are untuned defaults |
 | O6 | ~~LP rounding policy~~ → **the repair pass**. The LP returns integral routings 96% of the time |
-| O7 | Where does the budget bind? Primary axis of the generator — anchor amended, see findings F2 |
+| O7 | Where does the budget bind? **Answered (F33): wherever price per GPU is not constant.** (C3) changes the optimum in 24/25 heterogeneous instances vs 0–4/25 on the two per-GPU-price generators. Anchor amended, see findings F2 |
 | O8 | Is Track A worth its complexity? |
 
 **O1 is closed (2 September 2026): no per-invocation term.** The objective is provisioning

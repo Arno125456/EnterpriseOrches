@@ -148,7 +148,12 @@ precisely because price per GPU differs by hardware type. Our generators assume 
 fleet, which contradicts this project's own premise of routing across *heterogeneous*
 profiles. So **T3's region and T1's arm comparison were both measured where (C3) barely binds
 — the weakest possible test of them — and remain provisional.** The generator that would
-settle it, with price decorrelated from GPU count, is **not built**; it is Semester 2 work.
+settle it, with price decorrelated from GPU count, **is now built** —
+`heterogeneous_generator.py`, corr(price, gpus) **+0.024** against +0.959 and +0.999. On it,
+**(C3) changes the optimal cost in 24 of 25 instances** rather than 0 of 25, at a median 15.4%
+cost penalty (**F33**). So the budget is not nearly inert in the problem; it was nearly inert
+in our instances, and changing the price structure alone reverses the result. T3's operating
+region is now measurable; **T1's arm comparison still needs re-running on it.**
 
 **Nothing about real workloads.** Two synthetic generators, deliberately different in
 structure, both written by the same author as the tracks and the metrics. Real profile

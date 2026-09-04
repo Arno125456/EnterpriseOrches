@@ -134,6 +134,8 @@ loop at all; one that always takes 0.1 s can.**
 | 16 | Murakkab prices a **heterogeneous** fleet: cost per GPU moves 0.65–0.76× between configurations of one workload, so price is not a multiple of GPU count. Our generators assume the opposite, so every budget result is measured where (C3) barely binds | **Medium-high** | F31, arithmetic on Murakkab's reported GPU/energy/cost triples | The figures being misrecorded in our reference database — check the PDF |
 | 12 | Section 4.5's EMA is wrong for reliability: a binary signal under an EMA reports 0.70 after 99 successes and one failure, and that value filters C(t) | **High** | F19, arithmetic, reproduced in tests | Nothing - the mechanism is arithmetic |
 | 17 | Subset consolidation (`A+subset`) is **never worse** than plain greedy — 0 of 72 paired instances across both generators, better on 54 — for a paired gain of 11.46 pp [6.68, 17.24] structured | **High** | F32, 72 paired instances, scales 8–64, seeds 0–9, bootstrap CIs | An instance class where the k≤2 neighbourhood misleads; none seen |
+| 19 | The GPU budget (C3) **binds wherever price per GPU is not constant** — it changes the optimal cost in 24 of 25 heterogeneous instances (median penalty 15.4%, max 52%) against 0–4 of 25 where price is a fixed multiple of GPU count | **High** | F33, one input varied in isolation — same tasks, same profiles, only B moves | A pricing regime where cost per GPU really is flat; hourly rental is the plausible one |
+| 20 | Our first two generators model a **homogeneous rented fleet**, which contradicts the project's own premise of routing across heterogeneous profiles. Every result measured only on them inherits that | **High** | F31, F33; corr(price, gpus) +0.959 and +0.999 against +0.024 | Nothing — it is a property of the code that draws them |
 | 18 | `A+subset`'s optimality gap **grows with scale** — 2.35% at 8 tasks to 14.30% at 64 on structured. It dismantles aggregate coupling; it does not hold a small gap at size | **Medium-high** | F32, and `chapter3_benchmark_results.md`'s own tables, which the file's summary contradicted | A larger k, or a scale run past 64 tasks showing it flatten |
 
 ---
@@ -152,7 +154,7 @@ loop at all; one that always takes 0.1 s can.**
 | "Track B's bound is **3–6× tighter**" | F7, F12 | **Ratio of means.** Median per-instance ratio is 2.0–2.5×. The paired difference — 12.6 pp [9.5, 15.6] — is what holds (F30) |
 | "Consolidation **halves** Track C's gap" | F17 | **Median improvement is 0.00%.** Real but tail-carried; it fixes a rare severe failure (F30) |
 | "Track C is **~110x faster** than exact for <5%" | F16, and D11's first draft | **Mean over mean, and outlier-driven.** The MEDIAN speedup is 5x on uniform and 2x on structured. What survives is predictability: 0.106 +-0.020 s against 12.3 +-10.3 s (F29) |
-| "The GPU budget is **nearly inert**" | F26 | True **of our generators**, which tie price to GPU count. **Not a property of the problem** — Murakkab's own numbers show price and GPU count are separate axes (F31) |
+| "The GPU budget is **nearly inert**" | F26 | **Now demonstrated, not just suspected.** True of the two per-GPU-price generators; **false in general.** Built a third generator with price decorrelated from GPU count and changed nothing else: (C3) goes from 0–4 of 25 instances binding to **24 of 25**, median cost penalty 15.4% (F33). Quote F26 as a fact about those instances only |
 | "Subset consolidation is a **twenty-fold** improvement" | F20 (`mickie`), the M1 slides, PROGRESS | **Ratio of means — and an unstable one.** Audited in F32: the median per-instance ratio is **1.53×** structured, **1.95×** uniform, and the ratio of means itself moved from 20.6× to 2.41× when the instance set changed. Say instead: **A+subset was never worse on any of 72 paired instances** (better on 54, identical on 18), paired difference **11.46 pp [6.68, 17.24]** structured |
 | "A+subset holds the gap **<2% at all scales**" | `chapter3_benchmark_results.md` §1 | **Withdrawn — the file's own tables refute it.** Six of its eight cells exceed 2% (structured 32t 13.03%, 64t 13.92%). The gap **grows with scale**: 2.35% at 8t to 14.30% at 64t (F32) |
 | "Filter C(t) on a **lower** confidence bound" | F23, and component_reference | **Backwards.** It must be the UPPER bound — a lower bound is low when evidence is thin and excludes faster (F25) |
@@ -210,7 +212,7 @@ loop at all; one that always takes 0.1 s can.**
 ## How to reproduce anything here
 
 ```bash
-pytest poc/tests prototype/tests   # 593 pass, 4 skip (post-merge)
+pytest poc/tests prototype/tests   # 643 pass, 4 skip (third generator added)
 python -m poc.harness.runner       # the tightness sweep, 15 conditions
 ```
 

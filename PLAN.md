@@ -57,8 +57,9 @@ alternative is reproducible rather than merely asserted.
 - **O13 — answered without asking.** The advisor's guidance was to take Murakkab as the base;
   Murakkab's own GPU/energy/cost triples move by three different factors on one workload, so
   `price(m)` is **not** a multiple of `gpu(m)` (**F31**). Our generators assume it is, so every
-  budget result is measured where (C3) barely binds. A decorrelated generator is **not built**
-  — it is parked for Semester 2, and the qualifier is now load-bearing in step 3.
+  budget result was measured where (C3) barely binds. **The decorrelated generator is now
+  built** (`heterogeneous_generator.py`, F33) rather than parked: on it (C3) changes the
+  optimum in 24 of 25 instances instead of 0 of 25.
 
 **Done.** Nothing is waiting on a reply.
 

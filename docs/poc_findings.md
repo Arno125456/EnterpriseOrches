@@ -2001,6 +2001,89 @@ material for a week after the audit that would have caught them.
 
 ---
 
+## F33 - The budget was never inert. Our instances were homogeneous.
+
+F26 measured that the GPU budget does not change the optimal cost in 40 of 41 instances and
+concluded (C3) constrains feasibility, not choice. F31 then argued from Murakkab's published
+numbers that this was an artefact: both generators set `price = gpus x constant`, so
+minimising cost and minimising GPUs were nearly the same objective and the budget had almost
+nothing left to decide.
+
+F31 could only identify the problem. This builds the instrument and measures it.
+
+### The instrument
+
+`poc/instances/heterogeneous_generator.py`, a third generator modelling a **local, owned,
+heterogeneous fleet** - the deployment target decided 4 Sep. Price is amortised capital plus
+energy over the horizon, not an hourly rental rate. That distinction matters: rental is the one
+regime where price genuinely is close to GPU-hours, and where the existing generators would
+have been defensible.
+
+Two mechanisms decorrelate price from GPU count, and both are things a real machine room does:
+
+1. **Price per GPU is a property of the hardware class**, not the node size. Cost per GPU
+   spans ~6x across `legacy` / `mainstream` / `frontier`.
+2. **Node size is anti-correlated with class** - a few small frontier boxes, a pile of larger
+   older ones. This is what actually drives the correlation to zero; without it, price still
+   rises with count inside each class and the correlation survives at ~0.5-0.6.
+
+Throughput per GPU rises with class but *not* in proportion to price, so value per GPU is
+non-monotone: `legacy` is the best value and the worst choice for a latency-floored task.
+Neither "prefer the cheapest" nor "prefer the biggest" is a winning rule.
+
+| | corr(price, gpus) |
+|---|---|
+| `generator.py` (uniform) | **+0.959** |
+| `structured_generator.py` | **+0.999** |
+| `heterogeneous_generator.py` | **+0.024** |
+
+### The measurement
+
+`scripts/audit_budget_binding.py`. Hold tasks and profiles fixed, vary **only** B, solve to
+optimality at each level. If the optimum cost moves, (C3) is changing the decision rather than
+merely admitting or rejecting it. 16 tasks, 8 profiles, 25 seeds, budget multipliers 1.5 down
+to 0.5 of the reference allocation.
+
+| generator | (C3) changes the optimum | cost inflation at the tightest feasible budget |
+|---|---|---|
+| uniform | **4/25 (16%)** | mean 2.01%, max 2.85% |
+| structured | **0/25 (0%)** | - |
+| **heterogeneous** | **24/25 (96%)** | **mean 19.19%, median 15.36%, max 52.15%** |
+
+**F26 was a finding about our generators, exactly as F31 predicted.** Change the price
+structure and nothing else, and the budget goes from inert to binding in 96% of instances,
+with a median 15% cost penalty for respecting it. On the old instances the budget was very
+nearly a restatement of the objective; here it is a genuine second axis.
+
+### What this closes, and what it does not
+
+**Closes O7 - where does the budget bind?** It binds wherever price per GPU is not constant,
+which on this project's own premise - routing across *heterogeneous* profiles - is the normal
+case. The 40-of-41 result stands as a description of the old instances and should be quoted
+that way.
+
+**T3 now has an operating region to measure.** It could not have one before: a sweep over a
+budget that does not change the answer measures nothing. That work is not done here, it is
+newly *possible*.
+
+**T1's arm comparison is still provisional.** The (C1) and (C3) relaxation arms were compared
+where (C3) barely binds, and this generator is now the place to re-run that. **Not yet done** -
+the instrument exists, the comparison has not been repeated on it.
+
+**No result on the two existing generators is retracted.** They remain valid models of a
+rented homogeneous fleet, and keeping all three is the point: a finding that holds on all three
+is about the problem. F31's warning applies unchanged to anything measured only on the first
+two.
+
+### A note on the uniform generator's 16%
+
+F26 reported 1 of 41; this reports 4 of 25 on the same generator. Different sizes, different
+budget grid, so these are not the same experiment and the small difference is not meaningful.
+The qualitative picture - the budget rarely changes anything under a per-GPU price - is
+identical, and that is what the comparison rests on.
+
+---
+
 ## Still open
 
 | # | Item | Owner |

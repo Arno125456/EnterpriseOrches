@@ -15,7 +15,7 @@ document is the detail behind those steps.
 The proof-of-concept is complete: all four tests answered against the plan's *methods*, not
 just its deliverables. 593 tests pass, reproducible from a clean clone. The optimizer works
 and Track C is the result. Beyond the PoC, the closed loop was built and run end to end, and
-it produced the project's strongest claim. Thirty-two findings are recorded, of which several
+it produced the project's strongest claim. Thirty-three findings are recorded, of which several
 correct earlier ones — **the corrections are as important as the results, and three headline
 numbers were retracted after a statistical audit.**
 
@@ -153,7 +153,7 @@ the audit** and may carry the same defect.
 
 | # | question | owner | blocks |
 |---|---|---|---|
-| ~~**O13**~~ | ~~Is `price(m)` independent of `gpu(m)`?~~ | **Answered 3 Sep** — yes, on Murakkab's basis (F31). What remains is a *team* decision: local, GCP, or both | T3's region and T1's arm comparison stay provisional until a decorrelated generator exists |
+| ~~**O13**~~ | ~~Is `price(m)` independent of `gpu(m)`?~~ | **Fully closed 4 Sep.** Yes, on Murakkab's basis (F31); deployment target decided **local first**, so price is amortised hardware plus energy over an owned heterogeneous fleet | T3's region and T1's arm comparison were provisional pending a decorrelated generator. **It is being built** rather than parked for Semester 2 |
 | ~~**O12**~~ | ~~Is the closed loop a sufficient novelty claim?~~ | **Answered 3 Sep** — yes, the loop is sufficient for M1. Novelty is **not** claimed in the optimisation | Unblocks Chapter 2 and the framing of everything |
 | **D1** | Formulation ratification, due 8 Sep | Team | Nominally everything, though §1 has not needed to change |
 | — | ~~Which duplicate implementation ships~~ | 035 / 075 | **Closed 3 Sep** — `mickie`'s ship; `main`'s stay registered as `B-C3-alt`, `A+rel` |
@@ -187,7 +187,7 @@ and the Hatherley reconciliation.
 ```bash
 python -m venv venv && venv/Scripts/activate
 pip install -r requirements.txt
-pytest poc/tests prototype/tests      # 593 pass, 4 skip
+pytest poc/tests prototype/tests      # 643 pass, 4 skip
 python -m poc.harness.runner          # the comparison table
 ```
 
