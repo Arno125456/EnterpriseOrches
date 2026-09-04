@@ -194,6 +194,8 @@ Published in [`docs/chapter3_benchmark_results.md`](docs/chapter3_benchmark_resu
 | **M1 Presentation Slides** | [`docs/M1_Proposal_Presentation_Slides.md`](docs/M1_Proposal_Presentation_Slides.md) | 16-slide presentation outline, visuals, speaker script, and committee Q&A prep |
 | **Heterogeneous Fleet Generator** | [`poc/instances/heterogeneous_generator.py`](poc/instances/heterogeneous_generator.py) | Decorrelates price from GPU count (F32), activating the (C3) budget trade-off |
 | **Chapter 3 Benchmarks** | [`docs/chapter3_benchmark_results.md`](docs/chapter3_benchmark_results.md) | Publication-grade Markdown and LaTeX benchmark tables across 3 generators (8 to 64 tasks) |
+| **Closed-Loop Benchmark Runner** | [`scripts/run_closed_loop_benchmark.py`](scripts/run_closed_loop_benchmark.py) | Standalone CLI tool running 20-seed drift simulation with ASCII timeline and 95% CIs |
+| **Closed-Loop Benchmark Results** | [`docs/closed_loop_benchmark_results.md`](docs/closed_loop_benchmark_results.md) | 20-seed statistical evaluation of F24/F25 drift protection (+0.434 [0.410, 0.458]) |
 | **Literature Report** | [`docs/research_papers/relationship_report.md`](docs/research_papers/relationship_report.md) | Synthesis of 12 foundational papers across scopes $S_1, S_2, S_3$ (12,260 words) |
 | **Pipeline Diagram** | [`docs/pipeline.md`](docs/pipeline.md) | End-to-end ASCII trace of the resource allocation and provisioning pipeline |
 
