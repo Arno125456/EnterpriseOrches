@@ -60,6 +60,8 @@ from __future__ import annotations
 import math
 import time
 
+import numpy as np
+
 from poc.core.decision_rule import select_profile
 from poc.core.provisioning import ProvisioningState
 from poc.formulation import invariants
@@ -77,19 +79,16 @@ SCALE = 100                     # float loads -> integer knapsack weights
 
 
 def _knapsack_best_values(values, weights, capacity):
-    """Max total value for every capacity 0..capacity. Classic 0/1 knapsack DP.
+    """Max total value for every capacity 0..capacity. Vectorized 0/1 knapsack DP.
 
-    Returns a list indexed by capacity so one DP answers every n[m] = k at once, rather
-    than re-running it per k.
+    Returns an array indexed by capacity so one DP answers every n[m] = k at once.
+    Vectorized with numpy for massive speedup over pure Python nested loops (F33).
     """
-    best = [0.0] * (capacity + 1)
+    best = np.zeros(capacity + 1, dtype=np.float64)
     for value, weight in zip(values, weights):
-        if value <= 0:
-            continue        # a negative multiplier is never worth taking
-        for c in range(capacity, weight - 1, -1):
-            candidate = best[c - weight] + value
-            if candidate > best[c]:
-                best[c] = candidate
+        if value <= 0 or weight > capacity:
+            continue
+        best[weight:] = np.maximum(best[weight:], best[:-weight] + value)
     return best
 
 
@@ -132,22 +131,19 @@ def _solve_profile_subproblem(profile, eligible, lam, budget):
 
 
 def _knapsack_traceback(values, weights, capacity, items):
-    """Which items the optimal knapsack takes. Full table, so O(n·capacity) memory."""
+    """Which items the optimal knapsack takes. Vectorized table, O(n·capacity)."""
     n = len(items)
-    table = [[0.0] * (capacity + 1) for _ in range(n + 1)]
+    table = np.zeros((n + 1, capacity + 1), dtype=np.float64)
     for i in range(1, n + 1):
         value, weight = values[i - 1], weights[i - 1]
-        row, previous = table[i], table[i - 1]
-        for c in range(capacity + 1):
-            row[c] = previous[c]
-            if value > 0 and weight <= c:
-                candidate = previous[c - weight] + value
-                if candidate > row[c]:
-                    row[c] = candidate
+        prev = table[i - 1]
+        table[i] = prev
+        if weight <= capacity and value > 0:
+            table[i, weight:] = np.maximum(prev[weight:], prev[:-weight] + value)
 
     chosen, c = [], capacity
     for i in range(n, 0, -1):
-        if table[i][c] != table[i - 1][c]:
+        if table[i, c] > table[i - 1, c] + 1e-9:
             chosen.append(items[i - 1])
             c -= weights[i - 1]
     return chosen

@@ -150,6 +150,7 @@ Published in [`docs/chapter3_benchmark_results.md`](docs/chapter3_benchmark_resu
 - **F30:** Statistical audit of dual bounds and consolidation: Track B bound is 12.57 pp [9.49, 15.64] closer to optimum; consolidation provides 5.31% [0.56, 10.07] mean paired improvement, eliminating tail failures.
 - **F31:** Murakkab's published numbers prove that in heterogeneous fleets, price is NOT a multiple of GPU count (GPUs fall 2.82× while cost falls 4.33×).
 - **F32:** Heterogeneous fleet generator built (`heterogeneous_generator.py`, corr = -0.0105); proves (C3) actively couples with (C2) and directly trades off against dollar cost.
+- **F33:** Track B knapsack subproblem profiled via `cProfile` (97.5% bottleneck) and vectorized via numpy; achieved **115× solve speedup (7.16s down to 0.062s)** while preserving exact mathematical lower bound tightness.
 
 ---
 

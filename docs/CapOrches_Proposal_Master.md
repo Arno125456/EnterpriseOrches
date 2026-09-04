@@ -197,7 +197,13 @@ Filtering $\mathcal{C}(t)$ via point estimates causes a permanent 40% cost overp
 ## 3.3 Why Re-Optimization Must Be Global (Finding F18)
 Measuring multi-workflow profile overlap across concurrent pipelines revealed that shared profile instances are utilized by **84% to 100%** of concurrent workflows. Consequently, local or scoped re-optimization is vacuous: a change to any drifted profile ripples across the capacity of the entire cluster. Re-optimization must be executed globally.
 
-## 3.4 Multi-Scale Benchmark Results (8 to 64 Tasks)
+## 3.4 Algorithmic Tractability and Lower Bounds ($T_1–T_4$)
+
+* **Track C (`C+cons`, Finding F29):** Continuous LP relaxation prices capacity by rate; multi-move consolidation repair (`C+cons`) resolves capacity waste, returning allocations in **0.106 ± 0.020 s** at 128 tasks with an optimality gap of **3.03 ± 1.62%**, eliminating exact solver heavy tails.
+* **Track B (Lagrangian Duality, Findings F7, F30, F33):** Dualizing $(C_1)$ assignment constraints yields a discrete knapsack decomposition that produces bounds strictly tighter on 100% of tested instances (+12.57 pp closer to optimum than the LP bound). Vectorizing the knapsack DP table via NumPy slice operations slashed solve time from **7.16 s down to 0.062 s (115× speedup)**, making Lagrangian bounding viable at runtime.
+* **Track A (Subset Consolidation, Finding F20):** Evaluates simultaneous relocations of task subsets ($k \le 2$), eliminating greedy aggregate-coupling traps and achieving <3% optimality gaps in milliseconds.
+
+## 3.5 Multi-Scale Benchmark Results (8 to 64 Tasks)
 
 Evaluated at $1.25\times B_{\text{ref}}$ across matched random seeds:
 

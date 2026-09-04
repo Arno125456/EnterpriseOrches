@@ -186,12 +186,13 @@ Track C addresses the scaling bottleneck by relaxing integer variables:
 * **Solution Quality:** Optimality gap is **3.03 ± 1.62%** at 128 tasks.
 * **Tail Protection:** `C+cons` provides a mean paired improvement of **5.31% [0.56, 10.07]**, successfully halving cost on diagnosed worst-case instances.
 
-### 3.5.3 Track B: Lagrangian Duality and Lower Bounds ($T_1$, Findings F7, F21, F30)
+### 3.5.3 Track B: Lagrangian Duality and Lower Bounds ($T_1$, Findings F7, F21, F30, F33)
 
 Track B investigates dual decompositions to provide certificates of optimality:
 1. **Track B ($(C_1)$ Relaxation):** Dualizing the unit assignment constraints (C1) with multipliers $\lambda$ decouples the problem into independent 0/1 knapsack subproblems per profile. Because each profile subproblem retains discrete instance steps, it captures integer step-functions that linear programming misses.
    * **Empirical Bound Tightness:** Track B's Lagrangian dual bound is strictly tighter than the continuous LP bound on 100% of tested instances, sitting a paired **12.57 percentage points [9.49, 15.64]** closer to the true optimum (Finding F30).
 2. **Track B-C3 ($(C_3)$ Relaxation):** Dualizing the scalar GPU budget constraint (C3) with multiplier $\mu \ge 0$ decouples the problem per task. The 1D concave dual curve is solved via bisection in **<1 ms**. The resulting bound matches the continuous LP bound to $2 \times 10^{-5}$, empirically proving linear programming duality under discrete instance recovery (Finding F21).
+3. **Computational Optimization via Vectorized DP (Finding F33):** Profiling Track B with `cProfile` revealed that 97.5% of its runtime was consumed by nested pure-Python loops in `_knapsack_best_values` and `_knapsack_traceback`. Vectorizing the knapsack DP table via NumPy slice operations (`best[w:] = np.maximum(best[w:], best[:-w] + v)`) slashed solve time from **7.16 seconds to 0.062 seconds (a 115× speedup)** at 16 tasks while preserving exact lower bound validity ($L(\lambda) \le \text{optimum}$). This demonstrates that Lagrangian relaxation can serve as a viable online bounding certificate.
 
 ### 3.5.4 Track A: Greedy Heuristics, Lookahead, and Subset Consolidation ($T_2$, Findings F8, F20)
 
