@@ -188,6 +188,8 @@ Published in [`docs/chapter3_benchmark_results.md`](docs/chapter3_benchmark_resu
 | **Proposal Chapter 4 Draft** | [`docs/proposal_chapter4_draft.md`](docs/proposal_chapter4_draft.md) | Publication-grade Chapter 4 (Architecture, S2 implementation, R7-R9, testbed) |
 | **Authoritative Architecture** | [`docs/System_Architecture_v2.md`](docs/System_Architecture_v2.md) | Formal problem formulation (§1), component architecture (§3-§5), invariants (§6) |
 | **T0 Ratification Briefing** | [`docs/T0_Formulation_Ratification_Briefing.md`](docs/T0_Formulation_Ratification_Briefing.md) | Official formulation sign-off document and advisor briefing on SLA floors vs. objectives |
+| **T0 Readiness Verifier** | [`scripts/verify_t0_readiness.py`](scripts/verify_t0_readiness.py) | Automated script testing all 5 T0 preconditions (invariants, C2 coupling, decorrelation) |
+| **T0 Sign-Off Record** | [`docs/T0_Ratification_Signoff_Record.md`](docs/T0_Ratification_Signoff_Record.md) | Verified formal sign-off record and role attestation sheet for 8 September session |
 | **Validation Plan** | [`docs/PoC_and_Validation_Plan.md`](docs/PoC_and_Validation_Plan.md) | September PoC roadmap, milestone definitions, research questions $T_1-T_4$ |
 | **Executive Summary** | [`docs/poc_findings_summary.md`](docs/poc_findings_summary.md) | Standing summary of beliefs, confidence levels, and core conclusions |
 | **Chronological Findings** | [`docs/poc_findings.md`](docs/poc_findings.md) | Detailed findings log from F1 to F32, including mathematical proofs and anomalies |
