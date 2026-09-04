@@ -185,11 +185,13 @@ We deployed a Decayed Counting Estimator with Jeffreys Prior ($\text{Beta}(0.5, 
 $$S_{k} = \gamma S_{k-1} + y_k, \quad F_{k} = \gamma F_{k-1} + (1 - y_k), \quad \hat{r} = \frac{S_k + 0.5}{S_k + F_k + 1.0}$$
 Setting $\gamma = 0.995$ yields an effective sample size of $N_{\text{eff}} \approx 200$, providing an achievable ceiling of $0.9975$ while smoothing out transient observation noise.
 
-### 3.2.2 The Core Differentiator: Static Failure vs. Adaptive Protection (Finding F24)
+#### 3.2.2 The Core Differentiator: Static Failure vs. Adaptive Protection (Finding F24)
 Under controlled synthetic drift across 20 random seeds:
 * **Static Baseline:** Delivered empirical reliability of **0.542 ± 0.018**, severely breaching the 0.95 SLA floor.
 * **CapOrches Adaptive Loop:** Maintained **0.938 ± 0.012** reliability.
 * **Paired Benefit:** **+0.424 [0.405, 0.442]** (95% CI, $n=20$).
+
+![Fig 1: Closed-Loop Floor Protection under Sudden Profile Drift](figures/fig1_drift_timeline.png)
 
 ### 3.2.3 Candidate Filtering via Upper Confidence Bound (Finding F25)
 Filtering $\mathcal{C}(t)$ via point estimates causes a permanent 40% cost overpayment (median cost 560 vs. optimum 400). UCB filtering ($\hat{r} + z \sigma_r$) recovered the exact optimum of **400.0 with zero variance** across all 20 seeds.
@@ -199,9 +201,11 @@ Measuring multi-workflow profile overlap across concurrent pipelines revealed th
 
 ## 3.4 Algorithmic Tractability and Lower Bounds ($T_1–T_4$)
 
-* **Track C (`C+cons`, Finding F29):** Continuous LP relaxation prices capacity by rate; multi-move consolidation repair (`C+cons`) resolves capacity waste, returning allocations in **0.106 ± 0.020 s** at 128 tasks with an optimality gap of **3.03 ± 1.62%**, eliminating exact solver heavy tails.
+* **Track C (`C+cons`, Finding F29):** Continuous LP relaxation prices capacity by rate; multi-move consolidation repair (`C+cons`) with memoized headroom vector caching resolves capacity waste, returning allocations in **0.106 ± 0.020 s** at 128 tasks with an optimality gap of **3.03 ± 1.62%**, eliminating exact solver heavy tails.
 * **Track B (Lagrangian Duality, Findings F7, F30, F33):** Dualizing $(C_1)$ assignment constraints yields a discrete knapsack decomposition that produces bounds strictly tighter on 100% of tested instances (+12.57 pp closer to optimum than the LP bound). Vectorizing the knapsack DP table via NumPy slice operations slashed solve time from **7.16 s down to 0.062 s (115× speedup)**, making Lagrangian bounding viable at runtime.
 * **Track A (Subset Consolidation, Finding F20):** Evaluates simultaneous relocations of task subsets ($k \le 2$), eliminating greedy aggregate-coupling traps and achieving <3% optimality gaps in milliseconds.
+
+![Fig 2: Algorithmic Scaling and Optimality Gap vs Scale](figures/fig2_scale_runtime_gap.png)
 
 ## 3.5 Multi-Scale Benchmark Results (8 to 64 Tasks)
 
@@ -245,6 +249,8 @@ Evaluated at $1.25\times B_{\text{ref}}$ across matched random seeds:
 ### 3.5 Heterogeneous Fleet Dynamics (Findings F31 & F32)
 In real enterprise clouds, price is not proportional to GPU count. On our heterogeneous generator (`corr = -0.0105`), relaxing the GPU budget from 4 to 6 GPUs allows the solver to shift load from expensive Premium instances to Commodity instances, saving **$50.93 (5.0%) in operating expense**. The GPU budget constraint $(C_3)$ actively shapes optimal cost.
 
+![Fig 3: Heterogeneous Hardware Pareto Frontier & Budget Trade-off](figures/fig3_budget_tradeoff.png)
+
 ---
 
 # Chapter 4: System Architecture, Semester 2 Implementation Plan, and Evaluation Methodology
@@ -260,11 +266,11 @@ The CapOrches production architecture comprises:
 
 ## 4.2 Semester 2 Planned Scope ($R_7, R_8, R_9$)
 
-| Requirement | Module | Functionality |
-|---|---|---|
-| **$R_7$ Distributed Telemetry** | OpenTelemetry streaming pipeline | Asynchronously collects TTFT, TPOT, and error codes into Redis buffer every 500ms. |
-| **$R_8$ Runtime Reliability** | Circuit breakers & local fallback | Intercepts pod timeouts; executes immediate local retry on secondary compliant profile before global re-solve. |
-| **$R_9$ Framework Proxy** | OpenAI-compatible HTTP proxy | Intercepts LangGraph, AutoGen, and CrewAI API calls via header metadata without application code changes. |
+| Requirement | Module | Functionality | Status / Prototype |
+|---|---|---|---|
+| **$R_7$ Distributed Telemetry** | OpenTelemetry streaming pipeline | Asynchronously collects TTFT, TPOT, and error codes into Redis buffer every 500ms. | Planned |
+| **$R_8$ Production Orchestration** | Ray Serve / Kubernetes dynamic scaling | Horizontally provisions and de-provisions physical worker pods matching optimal $n[m]$. | Planned |
+| **$R_9$ Framework Proxy** | OpenAI-compatible HTTP proxy | Intercepts LangGraph, AutoGen, and CrewAI API calls via header metadata without application code changes. | **Validated Prototype** in [`prototype/proxy.py`](file:///D:/intern/EnterpriseOrches/prototype/proxy.py) |
 
 ## 4.3 Evaluation Testbed and Workload Methodology
 
