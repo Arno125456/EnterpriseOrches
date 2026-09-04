@@ -42,11 +42,12 @@ the loop — see `docs/proposal_narrative.md` §1.
 capacitated facility location, which gives a citable literature beyond the two LLM-serving
 papers. §9 is the reference map. The `mickie` branch adds P12 (DSPy).
 
-**Missing, and it is the big one.** **O12 — the novelty argument — is unresolved.** §1.8
-concedes the allocation problem is textbook, so novelty cannot be claimed there.
-`docs/proposal_narrative.md` §4 sets out the defensible position: neither Murakkab nor Cheng
-& Nguyen closes the loop. **That framing needs the advisor's agreement before it is written
-up.**
+**Settled 3 Sep. O12 — the novelty argument — is answered: the closed loop is
+sufficient.** The advisor confirmed it (relayed by the team, not in writing here). §1.8
+concedes the allocation problem is textbook, so novelty is **not** claimed there;
+`docs/proposal_narrative.md` §4 is now the ratified position rather than a proposal, and
+Chapter 2 can be written against it. What is still weak is the chapter itself — the position
+is agreed, the literature review supporting it is not written.
 
 ### Chapter 3 — design and methodology
 
@@ -139,23 +140,26 @@ the audit** and may carry the same defect.
 | # | question | owner | blocks |
 |---|---|---|---|
 | ~~**O13**~~ | ~~Is `price(m)` independent of `gpu(m)`?~~ | **Answered 3 Sep** — yes, on Murakkab's basis (F31). What remains is a *team* decision: local, GCP, or both | T3's region and T1's arm comparison stay provisional until a decorrelated generator exists |
-| **O12** | Is the closed loop a sufficient novelty claim? | **Advisor** | Chapter 2, and the framing of everything |
+| ~~**O12**~~ | ~~Is the closed loop a sufficient novelty claim?~~ | **Answered 3 Sep** — yes, the loop is sufficient for M1. Novelty is **not** claimed in the optimisation | Unblocks Chapter 2 and the framing of everything |
 | **D1** | Formulation ratification, due 8 Sep | Team | Nominally everything, though §1 has not needed to change |
 | — | ~~Which duplicate implementation ships~~ | 035 / 075 | **Closed 3 Sep** — `mickie`'s ship; `main`'s stay registered as `B-C3-alt`, `A+rel` |
 | — | ~~Finding renumbering~~ | Team | **Closed 3 Sep** — `main`'s F20–F27 → F23–F30 |
 | — | Reconcile the `[PROPOSED]` compatibility score with Hatherley (2025) | 077 | Any drift-detection number |
 
-**O12 is the remaining advisor question and it is cheap to ask.** O13 turned out not to need
-asking: the advisor's guidance was to take Murakkab as the base, and Murakkab's published
-GPU/energy/cost triples answer it directly (F31). O10 was answered in one sentence and it
-materially improved the project; O12 would too.
+**No advisor question is outstanding.** O12 is answered — the loop is sufficient. O13 turned
+out not to need asking: the advisor's guidance was to take Murakkab as the base, and
+Murakkab's published GPU/energy/cost triples answer it directly (F31). The pattern held —
+O10, O12 and O13 were each answered in about a sentence and each materially changed what gets
+written. What remains open is **team**-owned, not advisor-owned: the deployment target, D1,
+and the Hatherley reconciliation.
 
 ---
 
 ## 7. Suggested order for the next session
 
-1. **Ask the advisor O12 and O13.** One message, and both shape what gets written.
-2. **Reconcile the branches** using `BRANCHES.md`. Both are being worked on; they drift daily.
+1. ~~**Ask the advisor O12 and O13.**~~ **Done — both answered 3 Sep**, O12 by the advisor,
+   O13 from Murakkab's own numbers (F31). Nothing is waiting on a reply.
+2. ~~**Reconcile the branches**~~ **Done 3 Sep** — one branch, 15 conditions, 593 pass.
 3. **Draft Chapter 3 from `D11_poc_report.md`**, restructured per `proposal_narrative.md` §6 so
    the loop leads and the optimizer serves it.
 4. **Audit `mickie`'s slides and benchmark tables** against §5 above.

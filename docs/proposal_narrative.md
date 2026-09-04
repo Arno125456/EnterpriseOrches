@@ -72,8 +72,11 @@ superseded), **F8** (M1 lookahead — a Track A improvement, and Track A is bein
 
 ## 4. The novelty position (O12)
 
-O12 — novelty versus Cheng & Nguyen — is flagged High and unanswered. The framing above is
-what makes it answerable.
+O12 — novelty versus Cheng & Nguyen — is **answered (3 Sep): the closed loop is sufficient
+as the M1 contribution.** The framing above is what made it answerable, and it is now the
+ratified position rather than a proposal. Note what it does not license: novelty is claimed
+in the **loop**, not in the optimisation, which §1.8 concedes is textbook and which this
+document presents as adopted.
 
 | | allocation | profiles | re-optimisation |
 |---|---|---|---|
@@ -140,7 +143,7 @@ contribution.
 |---|---|
 | T0 — ratify §1. Everything above assumes it | All, **8 Sep** |
 | The advisor's answer on O10 — reliability as floor, or as objective | Advisor |
-| The advisor's answer on O12 — is the loop a sufficient novelty claim? | Advisor |
+| ~~The advisor's answer on O12~~ — **answered 3 Sep: yes, the loop is sufficient** | — |
 | Reconcile the compatibility score with Hatherley (2025) | 077 |
 | More seeds on the scale results before they are quoted | 089 |
 | A team member who can defend each finding — currently none have reviewed them | All |

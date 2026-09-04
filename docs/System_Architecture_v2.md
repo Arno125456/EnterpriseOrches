@@ -867,7 +867,7 @@ catches that class of bug regardless of source.
 | O9 | Is scoped re-optimisation well-defined under (C2)? **Closed: yes, but vacuous** — the affected set is 84–100% of workflows, so J9 re-optimises globally (F18) | Closed | — |
 | O10 | Fallback/retry — the reliability pillar | Advisor | High |
 | O11 | Framework integration or standalone | Advisor | High |
-| O12 | Novelty positioning vs Cheng & Nguyen | Advisor | High |
+| ~~O12~~ | **ANSWERED 3 Sep (advisor, relayed by the team).** The **closed loop is a sufficient novelty claim** for M1 - measured profiles, drift detection, re-optimisation, which neither Murakkab nor Cheng & Nguyen does. This does **not** license claiming novelty in the optimisation: §1.8's concession stands, the allocation problem is textbook modular capacitated facility location and is to be presented as such. Chapter 2 leads with the loop and positions the formulation as adopted, not invented | Closed | - |
 | ~~O13~~ | **ANSWERED 3 Sep (F31).** `price(m)` is **not** a multiple of `gpu(m)`. Murakkab's own results move GPU count 2.82x, energy 3.72x and cost 4.33x on one matched workload, and their gains come from trading A100s for H100s - price and energy per GPU differ by hardware type. Our generators assume the opposite (corr(price, gpus) ~ 0.95-1.0), so (C3) is nearly inert **in our instances only**. T3's binding region and T1's arm comparison remain provisional, not because O13 is open but because no generator reflects its answer yet. Remaining decision is the deployment target - local, GCP, or both - which is a team call | **Team (deployment target)** | High |
 
 ---

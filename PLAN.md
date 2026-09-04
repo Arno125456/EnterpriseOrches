@@ -20,7 +20,7 @@ repo.** Everything below exists to get there.
 
 ---
 
-## 1 · Merge the two branches — by 4 Sep
+## 1 · Merge the two branches — by 4 Sep — **DONE 3 Sep**
 
 **Why first:** there are currently two versions of the truth. Nothing after this is reliable
 until there is one.
@@ -32,9 +32,13 @@ until there is one.
 
 **Done when:** one branch, tests pass, `python -m poc.harness.runner` runs.
 
+**Done.** One branch at `e87208e`, 15 conditions in the registry, 593 pass / 4 skip. `mickie`'s
+implementations ship; `main`'s equivalents stay registered as `B-C3-alt` and `A+rel` so the
+alternative is reproducible rather than merely asserted.
+
 ---
 
-## 2 · Send the advisor two questions — same day, 30 minutes
+## 2 · Send the advisor two questions — same day, 30 minutes — **DONE 3 Sep**
 
 **Why now:** both shape what you write, and writing before the answers means rewriting.
 
@@ -44,7 +48,19 @@ until there is one.
 > 2. Is `price(m)` independent of `gpu(m)`, or is price essentially GPU-hours? It determines
 >    whether the GPU budget constraint does anything. *(O13)*
 
-**Done when:** sent. Continue to step 3 while waiting.
+**Both answered 3 Sep, and neither needed a second exchange.**
+
+- **O12 — yes, the closed loop is sufficient** as the M1 contribution (advisor). Novelty is
+  claimed in the loop, **not** in the optimisation: §1.8's concession stands and Chapter 2
+  presents the formulation as adopted. `docs/proposal_narrative.md` §4 is now ratified rather
+  than proposed.
+- **O13 — answered without asking.** The advisor's guidance was to take Murakkab as the base;
+  Murakkab's own GPU/energy/cost triples move by three different factors on one workload, so
+  `price(m)` is **not** a multiple of `gpu(m)` (**F31**). Our generators assume it is, so every
+  budget result is measured where (C3) barely binds. A decorrelated generator is **not built**
+  — it is parked for Semester 2, and the qualifier is now load-bearing in step 3.
+
+**Done.** Nothing is waiting on a reply.
 
 ---
 
