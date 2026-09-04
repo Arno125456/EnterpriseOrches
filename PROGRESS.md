@@ -141,7 +141,7 @@ Published in [`docs/chapter3_benchmark_results.md`](docs/chapter3_benchmark_resu
 - **F21:** (C3) Lagrangian relaxation confirms LP duality equivalence (15.00% bound gap in $<1\text{ms}$); (C1) relaxation proved 3–5× tighter.
 - **F22:** Extended tightness sweeps above $1.0\times B_{\text{ref}}$ eliminate cliff artifacts and confirm asymptotic convergence.
 - **F23:** Closed-loop execution runs end-to-end; reveals that measurement noise can cause premature abandonment of good profiles.
-- **F24 (Core Differentiator):** A static allocator silently violates reliability floors under drift (0.542 against 0.95 floor); adaptive loop maintains 0.938 (+0.424 [0.405, 0.442]).
+- **F24 (Core Differentiator):** A static allocator silently violates reliability floors under drift (0.560 post-drift vs. 0.95 floor); adaptive loop maintains 0.995 (+0.434 [0.410, 0.458] steady state; cumulative 12-round 0.938, +0.424 [0.405, 0.442]).
 - **F25:** Upper confidence bound filtering on reliability recovers true optimum (400.0) with zero variance; point-estimate filtering overpays by 40%.
 - **F26:** GPU budget (C3) was nearly inert in homogeneous generators where price ≈ 100 * GPUs.
 - **F27:** Operating budget region mapped to 0.8× to 1.25× reference; looser budgets worsen heuristic gaps by expanding search space.
@@ -206,6 +206,6 @@ Published in [`docs/chapter3_benchmark_results.md`](docs/chapter3_benchmark_resu
 
 ---
 
-*Last Updated: 3 September 2026 | Verified against test suite (646 tests: 642 passed, 4 skipped) | Branch: `mickie`*
+*Last Updated: 4 September 2026 | Verified against test suite (654 tests: 650 passed, 4 skipped) | Branch: `mickie`*
 
 

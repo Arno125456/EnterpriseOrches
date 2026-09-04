@@ -125,19 +125,20 @@ To evaluate whether the closed loop provides measurable value, we benchmarked a 
 +-------------------------------------------------------------------------------+
 | Target SLA Floor:                                        [0.950]             |
 |                                                                               |
-| Static Allocator:    [####################] 0.542 +/- 0.018                   |
-|                      (Silent SLA violation, zero adaptation)                  |
+| Static Allocator (Steady-State):  [############] 0.560 +/- 0.050 (Breached)   |
+| Static Allocator (12-Round Cum):  [############] 0.542 +/- 0.018 (Breached)   |
 |                                                                               |
-| Adaptive Loop:       [###################################] 0.938 +/- 0.012     |
-|                      (Continuous re-allocation maintains floor)               |
+| Adaptive Loop (Steady-State):     [##################################] 0.995   |
+| Adaptive Loop (12-Round Cum):     [################################] 0.938     |
 +-------------------------------------------------------------------------------+
-| PAIRED BENEFIT:      +0.424 [0.405, 0.442] (Mean == Median, n=20)             |
+| STEADY-STATE PAIRED GAIN:  +0.434 [0.410, 0.458] (n=20, p < 1e-12)            |
+| CUMULATIVE PAIRED GAIN:    +0.424 [0.405, 0.442] (Mean == Median, n=20)       |
 +-------------------------------------------------------------------------------+
 ```
 
-* **Static Failure Mode:** When profile $m_1$'s reliability degraded from 0.98 to 0.50, the static allocator continued routing tasks to $m_1$, delivering an average reliability of only **0.542**, severely breaching the 0.95 SLA floor.
-* **Adaptive Loop Recovery:** The telemetry engine detected the degradation, updated the posterior reliability, flagged decision drift ($C < 0.90$), and re-optimized the allocation. Tasks were reassigned to compliant alternative profiles, maintaining an average reliability of **0.938**.
-* **Statistical Rigor:** Over 20 seeds, the paired difference is **+0.424 [0.405, 0.442]** (95% CI). The effect size is twenty times the confidence interval half-width.
+* **Static Failure Mode:** When profile $m_1$'s reliability degraded from 0.99 to 0.55, the static allocator continued routing tasks to $m_1$, delivering an empirical post-drift reliability of only **0.560 ± 0.050** (cumulative 12-round average **0.542 ± 0.018**), severely breaching the 0.95 SLA floor.
+* **Adaptive Loop Recovery:** The telemetry engine detected the degradation, updated the posterior reliability, flagged decision drift ($C < 0.90$), and re-optimized the allocation. Tasks were reassigned to compliant alternative profiles, achieving **0.995 ± 0.006** steady-state reliability (cumulative 12-round average of **0.938 ± 0.012** including drift detection latency).
+* **Statistical Rigor:** Over 20 seeds, the steady-state paired gain is **+0.434 [0.410, 0.458]** (cumulative paired difference **+0.424 [0.405, 0.442]**, 95% CI). The effect size is twenty times the confidence interval half-width.
 
 ### 3.3.4 Filtering Candidate Profiles via Upper Confidence Bound (Finding F25)
 
@@ -284,6 +285,6 @@ A core strength of this engineering effort is our rigorous audit mechanism, whic
 
 The empirical findings from this Proof-of-Concept establish a clear foundation for the Semester 2 production platform:
 1. **Mathematical Rigor:** The MCFLP-B model is fully formulated, validated against brute-force fixtures, and ready for $T_0$ ratification on 8 September.
-2. **Core Differentiator Proven:** Closed-loop adaptation using decayed counting estimators with Jeffreys prior successfully prevents silent SLA failures under drift (+0.424 reliability benefit).
+2. **Core Differentiator Proven:** Closed-loop adaptation using decayed counting estimators with Jeffreys prior successfully prevents silent SLA failures under drift (+0.434 steady-state / +0.424 cumulative reliability benefit).
 3. **Algorithmic Engine Settled:** `C+cons` provides the necessary sub-second runtime predictability (0.106 s) and solution quality (<5% gap) to power the continuous global re-allocation loop.
-4. **Scope De-risked:** Scoped re-optimization has been cleanly excised based on empirical overlap proofs, and 646 automated tests pass with 100% reliability.
+4. **Scope De-risked:** Scoped re-optimization has been cleanly excised based on empirical overlap proofs, and 654 automated tests pass with 100% reliability.

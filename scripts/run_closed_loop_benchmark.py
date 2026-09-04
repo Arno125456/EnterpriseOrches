@@ -227,9 +227,9 @@ def main():
 
 | Strategy | Post-Drift Reliability | Delivered vs Floor | Mean Cost ($) | Paired Gain vs Static [95% CI] |
 |---|---|---|---|---|
-| **Static (Open-Loop)** | {mean_static:.3f} ± {math.sqrt(sum((x-mean_static)**2 for x in static_rels)/(args.seeds-1)):.3f} | **Breached (-0.408)** | ${mean_static_cost:.1f} | Reference Baseline |
-| **CapOrches Adaptive** | {mean_adapt:.3f} ± {math.sqrt(sum((x-mean_adapt)**2 for x in adapt_rels)/(args.seeds-1)):.3f} | **Preserved (0.938)** | ${mean_adapt_cost:.1f} | **+{diff_mean:.3f} [{diff_lower:.3f}, {diff_upper:.3f}]** |
-| **CapOrches + UCB (F25)** | {mean_ucb:.3f} ± {math.sqrt(sum((x-mean_ucb)**2 for x in ucb_rels)/(args.seeds-1)):.3f} | **Preserved (0.938)** | ${mean_ucb_cost:.1f} | **+{ucb_diff_mean:.3f} [{ucb_diff_lower:.3f}, {ucb_diff_upper:.3f}]** |
+| **Static (Open-Loop)** | {mean_static:.3f} ± {math.sqrt(sum((x-mean_static)**2 for x in static_rels)/(args.seeds-1)):.3f} | **Breached ({mean_static - 0.95:+.3f})** | ${mean_static_cost:.1f} | Reference Baseline |
+| **CapOrches Adaptive** | {mean_adapt:.3f} ± {math.sqrt(sum((x-mean_adapt)**2 for x in adapt_rels)/(args.seeds-1)):.3f} | **Preserved ({mean_adapt:.3f})** | ${mean_adapt_cost:.1f} | **+{diff_mean:.3f} [{diff_lower:.3f}, {diff_upper:.3f}]** |
+| **CapOrches + UCB (F25)** | {mean_ucb:.3f} ± {math.sqrt(sum((x-mean_ucb)**2 for x in ucb_rels)/(args.seeds-1)):.3f} | **Preserved ({mean_ucb:.3f})** | ${mean_ucb_cost:.1f} | **+{ucb_diff_mean:.3f} [{ucb_diff_lower:.3f}, {ucb_diff_upper:.3f}]** |
 
 ## 2. LaTeX Table
 

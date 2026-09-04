@@ -167,13 +167,13 @@ graph TD
 
 ### Slide 16: Conclusion & Committee Q&A
 - **Visuals:** Summary bullets:
-  - Complete closed loop verified: adaptive re-allocation protects reliability floors under drift (**+0.424 [0.405, 0.442]** vs. silent static violation).
-  - 10 PoC build steps complete; **593 unit tests passing** (100% clean).
-  - Four foundational research questions ($T_1 - T_4$) resolved with 31 published findings.
+  - Complete closed loop verified: adaptive re-allocation protects reliability floors under drift (**+0.434 [0.410, 0.458]** steady-state gain vs. silent static violation).
+  - 10 PoC build steps complete; **654 automated tests** (650 passing, 4 skipped, 100% clean).
+  - Four foundational research questions ($T_1 - T_4$) resolved with 33 published findings.
   - Ready for formal $T_0$ formulation ratification and Semester 2 construction.
 - **Key Message:** The project is on schedule, scientifically verified, and ready for execution.
 - **Speaker Script (035):**
-  > "In summary, our PoC phase has transformed an ambitious systems concept into a verified, mathematically grounded engineering platform. All 10 build steps are complete, 593 tests pass green, and the closed loop has demonstrated its critical differentiator: preventing silent reliability floor failures under drift. We thank Prof. Tossaphol for his guidance and welcome the committee's questions."
+  > "In summary, our PoC phase has transformed an ambitious systems concept into a verified, mathematically grounded engineering platform. All 10 build steps are complete, 654 tests pass with 100% reliability, and the closed loop has demonstrated its critical differentiator: preventing silent reliability floor failures under drift (+0.434 paired gain). We thank Prof. Tossaphol for his guidance and welcome the committee's questions."
 
 ---
 

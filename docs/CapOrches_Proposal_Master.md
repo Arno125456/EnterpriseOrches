@@ -20,7 +20,7 @@
 
 Enterprise cloud software is undergoing a generational shift: monolithic single-model Large Language Model (LLM) queries are rapidly being replaced by multi-stage, collaborative agentic workflows structured as Directed Acyclic Graphs (DAGs). These workflows combine specialized models, retrieval engines, and verification loops. In private enterprise clouds, High-Bandwidth Memory (HBM) GPU accelerators (e.g., NVIDIA A100, H100) are strictly limited and expensive. Today, existing workflow frameworks treat model selection and hardware provisioning as uncoordinated local choices, resulting in severe GPU fragmentation, premature quota exhaustion, and budget collapse.
 
-State-of-the-art systems such as *Murakkab* (OSDI '26) formulate joint model selection and hardware provisioning as an offline Mixed-Integer Linear Program (MILP), but assume that serving parameters (latency, throughput, and reliability) are static, declared constants. In production, serving parameters drift continuously due to dynamic multi-tenant contention, variable prompt contexts, and network timeouts. Under empirical drift, **a static allocator silently breaches enterprise SLA floors (delivering 0.542 reliability against a 0.95 floor), completely blind to ongoing failures.**
+State-of-the-art systems such as *Murakkab* (OSDI '26) formulate joint model selection and hardware provisioning as an offline Mixed-Integer Linear Program (MILP), but assume that serving parameters (latency, throughput, and reliability) are static, declared constants. In production, serving parameters drift continuously due to dynamic multi-tenant contention, variable prompt contexts, and network timeouts. Under empirical drift, **a static allocator silently breaches enterprise SLA floors (delivering 0.560 post-drift reliability against a 0.95 floor), completely blind to ongoing failures.**
 
 This project designs, implements, and evaluates **CapOrches**, an adaptive, profile-guided orchestration platform. CapOrches operates as a robust closed loop:
 1. Continuously measures execution telemetry, updating profile parameters using a **Decayed Counting Estimator with Jeffreys Prior** ($\text{Beta}(0.5, 0.5)$) that eliminates artificial reliability ceilings.
@@ -28,7 +28,7 @@ This project designs, implements, and evaluates **CapOrches**, an adaptive, prof
 3. Detects decision-relevant drift via **Update Compatibility** $C(A_{\text{new}}, A_{\text{old}})$, triggering cluster-wide re-allocation only when $>10\%$ of routing decisions flip.
 4. Solves the underlying Modular Capacitated Facility Location Problem with Budget Constraints (MCFLP-B) using **Track C (`C+cons`)**, a continuous LP relaxation with multi-move capacity consolidation repair that executes in a predictable **0.106 ± 0.020 seconds** with a **3.03 ± 1.62% optimality gap** at 128 tasks, eliminating exact solver heavy tails.
 
-Empirical validation across 646 automated tests proves that while static allocation fails under drift, CapOrches preserves reliability floors (**0.938 delivered, yielding a paired benefit of +0.424 [0.405, 0.442]**, $n=20$).
+Empirical validation across 654 automated tests proves that while static allocation fails under drift, CapOrches preserves reliability floors (**0.995 delivered in steady state, yielding a paired benefit of +0.434 [0.410, 0.458]**, $n=20$; cumulative transition-window reliability of 0.938, +0.424 [0.405, 0.442]).
 
 ---
 
@@ -60,7 +60,7 @@ State-of-the-art cloud orchestration platforms, such as *Murakkab* (Chaudhry et 
 In real-world serving environments, empirical parameters **drift continuously**:
 1. **Non-Stationary Reliability:** Upstream prompt variability, non-deterministic token lengths, context-window overflow, and backend connection timeouts cause empirical task success rates to deviate significantly from vendor benchmarks.
 2. **Dynamic Latency Fluctuations:** Multi-tenant memory bus contention, noisy neighbors, and KV-cache thrashing introduce unpredictable latency spikes.
-3. **The Static Allocation Breakdown:** Under empirical drift, a static allocator that solves the provisioning problem once at admission operates open-loop. As proven in our empirical findings (Finding **F24**), **a static allocator silently breaches enterprise SLA floors (delivering an empirical reliability of 0.542 against a declared 0.95 floor), completely blind to ongoing failure.**
+3. **The Static Allocation Breakdown:** Under empirical drift, a static allocator that solves the provisioning problem once at admission operates open-loop. As proven in our empirical findings (Finding **F24**), **a static allocator silently breaches enterprise SLA floors (delivering an empirical post-drift reliability of 0.560 against a declared 0.95 floor), completely blind to ongoing failure.**
 
 Simply re-solving the allocation via an exact solver upon every telemetry event is computationally intractable. Exact mixed-integer solvers scale poorly: at 128 tasks, exact MILP exhibits heavy-tailed runtimes averaging **12.3 ± 10.3 seconds**, with adversarial instances running for minutes or hanging without timeouts (Finding **F13**, **F29**). A high-frequency telemetry loop cannot tolerate an optimizer that periodically stalls.
 
@@ -79,11 +79,11 @@ To resolve this dilemma, this project designs, implements, and evaluates the **P
 
 The primary contributions of this capstone research project are:
 1. **The Closed-Loop Orchestration Paradigm:** We establish an adaptive feedback architecture that measures empirical execution telemetry, updates profile parameters using a decayed counting estimator with Jeffreys prior, and triggers re-optimization when decision-space compatibility drops below threshold.
-2. **Empirical Verification of Floor Protection (Finding F24):** We demonstrate on matched-seed drift simulations that while static allocators suffer catastrophic SLA violations (0.542 delivered vs. 0.95 floor), our closed loop actively detects drift and preserves SLA floors (**0.938 delivered, yielding a paired benefit of +0.424 [0.405, 0.442]**, $n=20$).
+2. **Empirical Verification of Floor Protection (Finding F24):** We demonstrate on matched-seed drift simulations that while static allocators suffer catastrophic SLA violations (0.560 delivered vs. 0.95 floor), our closed loop actively detects drift and preserves SLA floors (**0.995 delivered in steady state, yielding a paired benefit of +0.434 [0.410, 0.458]**, $n=20$; cumulative transition-window reliability of 0.938, **+0.424 [0.405, 0.442]**).
 3. **Upper Confidence Bound (UCB) Filtering (Finding F25):** We prove that filtering candidate profiles on point estimates causes a permanent 40% cost overpayment due to transient noise. We design a UCB filtering mechanism that recovers the global optimum with zero variance.
 4. **Predictable Sub-Second Solving (`C+cons`):** We design a continuous LP relaxation pipeline coupled with a multi-move capacity consolidation repair pass (`C+cons`). At 128 tasks, `C+cons` delivers bounded, predictable execution in **0.106 ± 0.020 seconds** with an optimality gap of **3.03 ± 1.62%**, eliminating solver heavy tails.
 5. **Heterogeneous Fleet Trade-Off Validation (Finding F31 & F32):** We implement a heterogeneous fleet generator reflecting empirical cloud pricing tiers (Commodity T4, Standard A100, Premium H100), proving that price is decorrelated from GPU count ($\text{corr} = -0.0105$) and that the GPU budget $(C_3)$ actively trades off physical hardware against financial cost.
-6. **Production-Grade Implementation & Verification:** A complete, warning-free codebase with **646 automated tests (642 passing, 4 skipped)** validating mathematical invariants, algorithmic correctness, and closed-loop behavior.
+6. **Production-Grade Implementation & Verification:** A complete, warning-free codebase with **654 automated tests (650 passing, 4 skipped)** validating mathematical invariants, algorithmic correctness, and closed-loop behavior.
 
 ---
 
@@ -187,9 +187,9 @@ Setting $\gamma = 0.995$ yields an effective sample size of $N_{\text{eff}} \app
 
 #### 3.2.2 The Core Differentiator: Static Failure vs. Adaptive Protection (Finding F24)
 Under controlled synthetic drift across 20 random seeds:
-* **Static Baseline:** Delivered empirical reliability of **0.542 ± 0.018**, severely breaching the 0.95 SLA floor.
-* **CapOrches Adaptive Loop:** Maintained **0.938 ± 0.012** reliability.
-* **Paired Benefit:** **+0.424 [0.405, 0.442]** (95% CI, $n=20$).
+* **Static Baseline:** Delivered empirical post-drift reliability of **0.560 ± 0.050** (cumulative 12-round **0.542 ± 0.018**), severely breaching the 0.95 SLA floor.
+* **CapOrches Adaptive Loop:** Maintained **0.995 ± 0.006** steady-state reliability (cumulative 12-round **0.938 ± 0.012** including drift detection latency).
+* **Paired Benefit:** **+0.434 [0.410, 0.458]** steady-state gain (cumulative **+0.424 [0.405, 0.442]**, 95% CI, $n=20$, $p < 10^{-12}$).
 
 ![Fig 1: Closed-Loop Floor Protection under Sudden Profile Drift](figures/fig1_drift_timeline.png)
 
