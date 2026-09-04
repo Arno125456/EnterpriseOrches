@@ -11,7 +11,7 @@
 Across all scales and structural distributions, the experimental findings demonstrate:
 1. **Algorithmic Dominance of Subset Consolidation (`A+subset`):** Plain greedy (`A`) degrades significantly as task count grows (up to 20-30% gap on structured instances). The subset-move neighborhood eliminates the aggregate-coupling trap, reducing mean optimality gap to **<2%** at all scales while executing in under 90 ms.
 2. **LP Relaxation vs. Heuristic Repair (`C` vs `C+cons`):** Track C's continuous LP prices profiles by rate but wastes capacity on fractional step-functions. The consolidation repair pass (`C+cons`) recovers near-optimal solutions (mean gap <5%), outperforming plain greedy.
-3. **Dual Bound Hierarchy ($T_1$):** Track B's discrete $(C_1)$ relaxation produces bounds **3× to 5× tighter** than the continuous LP / $(C_3)$ dual bound (5% bound gap vs 25% for LP), at the expense of dynamic programming runtime.
+3. **Dual Bound Hierarchy ($T_1$):** Track B's discrete $(C_1)$ relaxation produces bounds **strictly tighter than the continuous LP / $(C_3)$ dual bound on 30 of 30 instances**, by a paired **12.57 pp [9.49, 15.64]**, at the expense of dynamic programming runtime. (The **"3× to 5× tighter"** previously stated here was a **ratio of means** and is withdrawn — F30. The effect holds; the ratio was inflated. Median per-instance ratio: **2.53×** uniform, **2.00×** structured.)
 4. **Ultra-Fast Dual Bounder (`B-C3`):** The 1D $(C_3)$ budget relaxation evaluates in **<1 ms** and empirically matches the LP bound to the decimal place, proving linear programming duality under discrete instance recovery.
 
 ---

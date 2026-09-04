@@ -119,13 +119,19 @@ track makes the loop affordable. **The algorithm work exists because the loop de
 
 Three headline numbers were retracted after a statistical audit (F29, F30). **All three failed
 the same way — a ratio of two means, which is not a typical ratio when either distribution has
-a tail.**
+a tail.** A **fourth** was found on 4 Sep, in `mickie`-origin documents the audit never covered.
 
 | do not say | say instead |
 |---|---|
 | "~110× faster than the exact solver" | median speedup is **5×**; argue **bounded latency** — 0.106 ±0.020 s vs 12.3 ±10.3 s |
 | "the bound is 3–6× tighter than the LP" | paired difference **12.6 pp [9.5, 15.6]**; median ratio ~2–2.5× |
 | "consolidation halves Track C's gap" | **median improvement is 0.00%** — it fixes a rare, severe failure |
+| "subset consolidation is a **twenty-fold** improvement" (F20, slides) | the two means: **32.37% → 1.57%**, and stop. 32.37/1.57 is the same ratio-of-means defect. **F20 predates the audit and has not been re-measured** — no paired difference or interval exists for it yet, and n is small (16 structured, 5 solvable) |
+
+**The fourth is the one to watch**, because it is the only one still *unaudited* rather than
+corrected. F29/F30 audited `main`'s findings; F20 came from `mickie` in the step-1 merge and
+was never put through the same test. Computing its paired difference is the obvious next
+statistical task, and until it is done the slide claim rests on 5 solvable instances.
 
 Full list in `docs/poc_findings_summary.md` under *"numbers that were corrected"*. **The rule:
 never divide two means.** Report the paired difference and its interval.

@@ -197,7 +197,12 @@ The four that matter:
 - **Simulated execution.** No real executor. Tests the loop's logic only.
 - **Two synthetic generators, one author.** The strongest objection to everything.
 - **The GPU budget is nearly inert** in our instances because both generators set
-  `price = gpus × constant` — so it constrains feasibility, not choice. Open question O13.
+  `price = gpus × constant` — so it constrains feasibility, not choice. **Say "in our
+  instances", never "in the problem".** O13 is answered and it goes against us (F31):
+  Murakkab's own GPU/energy/cost triples move by three different factors on one workload, so
+  price is not a multiple of GPU count. Our generators assume a homogeneous fleet; this
+  project is about heterogeneous profiles. T3's region and T1's arm comparison were measured
+  where (C3) barely binds, and stay provisional until a decorrelated generator exists.
 - **Statistics.** Know the seed count of any number you quote.
 
 **You will be asked:** *"How do you know this generalises?"* The honest answer is that we

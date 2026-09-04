@@ -38,13 +38,20 @@ Finding **F13**: the MILP reaches **21 s** at 128 tasks on the harder instance f
 worst case of 55 s. A system that re-solves on every drift signal cannot pay that.
 
 **Step 4 — A fast track makes the loop viable.**
-Finding **F16**: Track C returns an allocation in **0.162 s** at 128 tasks, **~110× faster than
-exact for under 5% additional cost**, with runtime essentially flat across a 16× increase in
-tasks.
+Finding **F29**, which audited F16 and replaced its headline: at 128 tasks Track C returns an
+allocation in **0.106 ± 0.020 s** against the exact solver's **12.3 ± 10.3 s**, at
+**3.03 ± 1.62%** above optimum, with runtime essentially flat across a 16× increase in tasks.
+The **median** speedup is 5×; the "~110×" once quoted here was a ratio of means and is
+retracted.
 
-**Therefore:** the algorithmic work exists *because the loop demands it*. The 110× result is
-not a headline about heuristics — **it is the reason continuous re-optimisation is possible
-at all.** Without step 4, steps 1–3 describe a system that cannot run.
+**Therefore:** the algorithmic work exists *because the loop demands it*. What carries the
+chain is not a speed ratio but a **bounded** one — read the intervals, not the means: Track C's
+runtime is near-constant, while the solver's is carried by a heavy tail that ran unbounded
+until a time limit was imposed. **An allocator that usually takes 12 s and occasionally never
+returns cannot go in a control loop at all; one that always takes 0.1 s can.** That is the
+reason continuous re-optimisation is possible, and it is a *stronger* claim than the ratio it
+replaces, because it does not depend on which average you pick. Without step 4, steps 1–3
+describe a system that cannot run.
 
 That chain is the spine of Chapter 3.
 
@@ -101,7 +108,8 @@ narrative cannot lead with profiling and then ship only an optimizer.
 **Demonstrated, with code and tests:**
 - The allocation problem, formalised, with an exact reference validated against brute force
 - Three tracks with valid bounds and no invariant violation across ~700 measured allocations
-- Track C at ~110× the exact solver's speed for <5% cost at 128 tasks
+- Track C at **0.106 ± 0.020 s** against the exact solver's **12.3 ± 10.3 s** at 128 tasks, for
+  **3.03 ± 1.62%** extra cost — bounded runtime, median speedup 5× (**not** the retracted ~110×)
 - Profiles updating from observations; drift changing pools; re-optimisation moving a task
 
 **Claimed but not demonstrated:**
@@ -130,7 +138,8 @@ contribution.
 5. **The tracks** — as the response to that cost. T1/T2/T4 sit here, including the negative
    results: Track A does not earn its complexity, Track B is a bound generator not an
    allocator.
-6. **Result** — F16: 110× for <5%, which is what makes the loop affordable.
+6. **Result** — F29: **bounded** runtime, 0.106 ± 0.020 s against 12.3 ± 10.3 s for 3.03 ± 1.62%
+   extra, which is what makes the loop affordable. Quote the intervals, never the ratio.
 7. **The loop, end to end** — the prototype demonstration.
 8. **Threats to validity** — §5 above, in full. The four self-corrections are evidence of
    method, not embarrassment; say so explicitly.

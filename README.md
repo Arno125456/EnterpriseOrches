@@ -62,7 +62,7 @@ the row for your part.
 | **everyone** | [`docs/poc_findings_summary.md`](docs/poc_findings_summary.md) | What we currently believe, at what confidence. Includes a table of numbers **not** to quote |
 | **presenting** | [`docs/study_guide.md`](docs/study_guide.md) | Nine steps to being able to defend every choice. Things to run and predict, not to read |
 | 035 — Track A | `poc/tracks/track_a_greedy.py`, `track_a_m1.py`, findings F1, F8, F20 | Your track, and the M1 analogue that needs your sign-off |
-| 075 — Tracks B & C | `poc/tracks/track_b_lagr.py`, `track_c_lp.py`, findings F7, F13, F16, F17 | The bound result, and the 110× speedup that carries Objective 1.2.2 |
+| 075 — Tracks B & C | `poc/tracks/track_b_lagr.py`, `track_c_lp.py`, findings F7, F13, F16, F17, **F29–F30** | The bound result, and the **bounded-latency** result that carries Objective 1.2.2 — 0.106 ± 0.020 s against 12.3 ± 10.3 s. The 110× speedup it replaces is retracted; F29–F30 audited both |
 | 077 — Phase C | `prototype/profiling.py`, `loop.py`, findings F18, F19, F23 | The profiling loop, and the two design decisions awaiting your sign-off |
 | 083 — Infrastructure | `poc/instances/`, findings F2, F11, F12 | The generators and the budget anchor you need to accept or reject |
 | 089 — Evaluation | `poc/harness/`, findings F10, F14, F15, F16 | The harness, and four cases where the experimental design misled us |

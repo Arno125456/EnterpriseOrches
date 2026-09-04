@@ -100,9 +100,16 @@ of the problem, and this region was measured on instances where (C3) barely bind
 | ≤ 8 tasks | **No heuristic is justified at all.** The MILP is optimal in 32 ms |
 | 16–128 tasks | **Track C, decisively.** Greedy sits 8–15% off and degrades with scale |
 
-At 128 tasks on the instance family where the MILP is actually expensive, **Track C is ~110×
-faster for under 5% cost** (17.75 s → 0.162 s, 4.58% gap). That is the result Objective
-1.2.2 asks for, and it is the only clean instance of it in this work.
+At 128 tasks on the instance family where the MILP is actually expensive, **Track C's runtime
+is bounded and the exact solver's is not**: **0.106 ± 0.020 s** against **12.3 ± 10.3 s**, at
+**3.03 ± 1.62%** above optimum (F29, 10 seeds). The **median** speedup is 5× on uniform and 2×
+on structured — *not* the ~110× that dividing one mean by another once suggested, which is
+retracted and sits in the do-not-quote table below.
+
+What answers Objective 1.2.2 is the predictability, not the ratio. Look at the intervals: the
+solver's mean is carried by a heavy tail that, before a time limit was imposed, ran unbounded.
+**An allocator that usually takes 12 s and occasionally never returns cannot go in a control
+loop at all; one that always takes 0.1 s can.**
 
 ---
 
@@ -144,6 +151,7 @@ faster for under 5% cost** (17.75 s → 0.162 s, 4.58% gap). That is the result 
 | "Consolidation **halves** Track C's gap" | F17 | **Median improvement is 0.00%.** Real but tail-carried; it fixes a rare severe failure (F30) |
 | "Track C is **~110x faster** than exact for <5%" | F16, and D11's first draft | **Mean over mean, and outlier-driven.** The MEDIAN speedup is 5x on uniform and 2x on structured. What survives is predictability: 0.106 +-0.020 s against 12.3 +-10.3 s (F29) |
 | "The GPU budget is **nearly inert**" | F26 | True **of our generators**, which tie price to GPU count. **Not a property of the problem** — Murakkab's own numbers show price and GPU count are separate axes (F31) |
+| "Subset consolidation is a **twenty-fold** improvement" | F20 (`mickie`), the M1 slides, PROGRESS | **Ratio of means, and unaudited.** 32.37 / 1.57. Same defect as the three above, but F20 arrived in the step-1 merge *after* the F29/F30 audit, so unlike them it has **not** been re-measured. State the two means (32.37% → 1.57%) and note n is small — 16 structured instances, 5 solvable. The paired difference is **not computed** |
 | "Filter C(t) on a **lower** confidence bound" | F23, and component_reference | **Backwards.** It must be the UPPER bound — a lower bound is low when evidence is thin and excludes faster (F25) |
 | "Scoped re-optimisation is **worse ~50% of the time**" | F18, first version | Measured an arbitrary affected workflow rather than the drifted profile's. Correctly scoped it is **identical to global**, because the affected set is 84-100% of workflows |
 

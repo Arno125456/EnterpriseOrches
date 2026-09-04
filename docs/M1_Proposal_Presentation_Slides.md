@@ -94,18 +94,31 @@ graph TD
 ---
 
 ### Slide 8: $T_2$ Algorithmic Breakthrough — Subset Consolidation (`A+subset`)
-- **Visuals:** Diagram showing joint subset relocation: tasks $t_1$ and $t_2$ moving together to profile $m_2$ while $t_3$ stays on $m_1$. Benchmark chart showing mean gap dropping from 32.37% to 1.57% on structured instances.
+- **Visuals:** Diagram showing joint subset relocation: tasks $t_1$ and $t_2$ moving together to profile $m_2$ while $t_3$ stays on $m_1$. Benchmark chart showing mean gap dropping from 32.37% to 1.57% on structured instances. **Plot the two means; do not label the chart with a fold-change.**
 - **Key Message:** Exploring a 2-subset relocation neighborhood breaks the aggregate-coupling trap, achieving the exact global optimum of 280 on the adversarial fixture and slashing heuristic error by 20×.
 - **Speaker Script (035):**
-  > "Lookahead solved feasibility, but not aggregate coupling. Why? Because improving the fixture requires moving two tasks together. Single-task moves worsen cost locally, and moving all tasks is blocked because task t3 is ineligible for m2. We designed a multi-move subset consolidation neighborhood, evaluate moves of subsets of size $k \le 2$. On our adversarial fixture, subset consolidation immediately discovers the joint move of t1 and t2 to m2, achieving the exact global optimum of 280. When evaluated across our structured benchmark, subset consolidation slashed the average cost gap from 32.37% down to 1.57%—a twenty-fold improvement in solution quality."
+  > "Lookahead solved feasibility, but not aggregate coupling. Why? Because improving the fixture requires moving two tasks together. Single-task moves worsen cost locally, and moving all tasks is blocked because task t3 is ineligible for m2. We designed a multi-move subset consolidation neighborhood, evaluate moves of subsets of size $k \le 2$. On our adversarial fixture, subset consolidation immediately discovers the joint move of t1 and t2 to m2, achieving the exact global optimum of 280. When evaluated across our structured benchmark, the mean cost gap falls from 32.37% to 1.57%."
+  >
+  > **Audit note — do not say "a twenty-fold improvement".** That figure is 32.37 / 1.57, one
+  > mean divided by another: the exact defect F30 found systemic and that retracted our 110x
+  > speedup and the "3-5x tighter" bound claim. **F20 predates the F30 audit and has not been
+  > re-measured**, so no paired per-instance difference or interval exists for it yet. Until it
+  > is computed, state the two means and stop. Note also n is small - 16 structured instances,
+  > 5 solvable - so any interval will be wide.
 
 ---
 
 ### Slide 9: Track B — Lagrangian Duality & Bound Tightness ($T_1$)
 - **Visuals:** Mathematical decomposition of $(C_1)$ relaxation into independent 0/1 knapsack subproblems per profile. Bar chart showing Track B bound gap (5.02%) vs. LP bound gap (25.17%).
-- **Key Message:** Relaxing $(C_1)$ decouples per profile into integer knapsacks, yielding a dual lower bound 3× to 5× tighter than the LP relaxation.
+- **Key Message:** Relaxing $(C_1)$ decouples per profile into integer knapsacks, yielding a dual lower bound that is **strictly tighter than the LP relaxation on 30 of 30 instances**, by a paired **12.57 pp [9.49, 15.64]**. (**Do not say "3× to 5× tighter"** — that was a ratio of means; the median per-instance ratio is **2.53×** uniform, **2.00×** structured. F30.)
 - **Speaker Script (075):**
-  > "For question T1, we investigated Lagrangian duality. Track B dualizes the unit assignment constraints C1 with multipliers $\lambda$. This decouples the global problem into independent subproblems per profile. Because each profile subproblem is a discrete 0/1 knapsack with integer instance steps, it preserves the discrete step-function that linear programming relaxes. As our empirical results prove, Track B's Lagrangian bound is strictly tighter than the LP bound on 100% of tested instances—delivering a bound gap of 5.02% against 25.17% for the LP. Track B provides a high-fidelity certificate of optimality."
+  > "For question T1, we investigated Lagrangian duality. Track B dualizes the unit assignment constraints C1 with multipliers $\lambda$. This decouples the global problem into independent subproblems per profile. Because each profile subproblem is a discrete 0/1 knapsack with integer instance steps, it preserves the discrete step-function that linear programming relaxes. Empirically, Track B's Lagrangian bound is strictly tighter than the LP bound on 30 of 30 tested instances, and the paired per-instance difference is 12.57 percentage points, with a 95% confidence interval of 9.49 to 15.64. Track B provides a high-fidelity certificate of optimality."
+  >
+  > **Audit note (F30) — do not restore the earlier script.** It said "3× to 5× tighter" and
+  > compared a 5.02% mean against a 25.17% mean. Dividing one mean by another is the defect
+  > that retracted our 110× speedup claim. The effect itself holds — it is the *ratio* that was
+  > inflated. Quote the paired difference and its interval; if asked for a ratio, the median
+  > per-instance ratio is 2.53× on uniform and 2.00× on structured.
 
 ---
 

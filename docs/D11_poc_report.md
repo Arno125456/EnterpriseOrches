@@ -139,11 +139,16 @@ may be read.
 **The GPU budget is nearly inert in our instances.** Both instance generators set
 `price = gpus × constant`, so minimising cost is nearly the same objective as minimising
 GPUs. Consequently the budget does not change the optimal cost in **40 of 41** instances. It
-constrains *feasibility*, not *choice*. Whether this is realistic depends on an unresolved
-question (**O13**): is `price(m)` independent of `gpu(m)`? If GPUs are rented per hour it is
-realistic and the budget constraint is close to redundant with the objective — itself a
-finding. If price represents energy, amortised hardware or mixed providers, it is not, and
-**T3's region and T1's arm comparison both need re-running.**
+constrains *feasibility*, not *choice*. **This is a property of our generators, not of the
+problem, and O13 — is `price(m)` independent of `gpu(m)`? — is now answered against them
+(F31).** Murakkab reports GPU count, energy and dollar cost as three separate numbers on one
+matched workload, and they move by three different factors (÷2.82, ÷3.72, ÷4.33), so cost per
+GPU falls to 0.65×. Price is *not* a multiple of GPU count: they trade A100s for H100s
+precisely because price per GPU differs by hardware type. Our generators assume a homogeneous
+fleet, which contradicts this project's own premise of routing across *heterogeneous*
+profiles. So **T3's region and T1's arm comparison were both measured where (C3) barely binds
+— the weakest possible test of them — and remain provisional.** The generator that would
+settle it, with price decorrelated from GPU count, is **not built**; it is Semester 2 work.
 
 **Nothing about real workloads.** Two synthetic generators, deliberately different in
 structure, both written by the same author as the tracks and the metrics. Real profile

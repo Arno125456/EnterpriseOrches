@@ -87,7 +87,9 @@ lognormal loads, GPU tiers, clustered floors.
 
 **Behaves.** Inverts the value-per-GPU relationship, so large profiles are *bad* value —
 the opposite incentive to the first generator. Loads are 7× more heavy-tailed. Most findings
-survived the switch; F7's "6× tighter" did not, and became "3–6×" (F12).
+survived the switch; F7's "6× tighter" did not, and became "3–6×" (F12) — which F30 then
+retracted in turn, because every version of it was a ratio of means. The claim that survives
+is the paired difference: **12.57 pp [9.49, 15.64]**, tighter on 30 of 30.
 
 **Fits.** Yes, and it is the only answer to the strongest objection against every result —
 that one author wrote the distributions, the tracks and the metrics.
@@ -196,7 +198,9 @@ gap" rather than hanging.
 
 ### `tracks/track_c_lp.py` (+ `_consolidate`) — LP relaxation · **Keep — this is the result**
 
-**Behaves.** **~110× faster than exact at 128 tasks for under 5% cost** (F16). Runtime
+**Behaves.** **Bounded runtime where the exact solver's is not** — **0.106 ± 0.020 s** against
+**12.3 ± 10.3 s** at 128 tasks, for **3.03 ± 1.62%** above optimum (F29, superseding F16's
+headline; the median speedup is 5×, and the "~110× for under 5%" is retracted). Runtime
 essentially flat, 0.054 s → 0.162 s across a 16× increase in tasks. Its gap does not degrade
 with scale. Its known failure — pricing profiles by rate and wasting a large integer
 instance — is diagnosed (F17) and fixed by consolidation.

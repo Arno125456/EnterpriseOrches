@@ -32,13 +32,13 @@ All planned PoC build steps (Steps 1–10) and prototype modules are **100% impl
 ### $T_1$ — Does Lagrangian relaxation decompose, and along what axis?
 - **Status:** **FULLY RESOLVED (Findings F7, F12, F21)**
 - **Outcome:**
-  - **Relaxing $(C_1)$ (Track B, `track_b_lagr.py`):** Decomposes **per profile** into 0/1 knapsack subproblems. Delivers a strictly superior dual bound (3× to 5× tighter than the LP bound, e.g. 5.02% vs 25.17% bound gap on structured instances), but requires discrete dynamic programming runtime (~0.6–0.9s).
+  - **Relaxing $(C_1)$ (Track B, `track_b_lagr.py`):** Decomposes **per profile** into 0/1 knapsack subproblems. Delivers a strictly superior dual bound — tighter on **30 of 30** instances, paired difference **12.57 pp [9.49, 15.64]** — but requires discrete dynamic programming runtime (~0.6–0.9s). (**"3× to 5× tighter" was a ratio of means and is withdrawn (F30);** the effect holds, the ratio was inflated. Median per-instance ratio **2.53×** uniform, **2.00×** structured.)
   - **Relaxing $(C_3)$ (Track B-C3, `track_b_c3.py`):** Decomposes **per task** with a single scalar multiplier $\mu \ge 0$. Solves via 1D bisection in **$< 1\text{ms}$**. Empirically validates linear programming duality: its optimal continuous bound matches Track C's continuous LP bound to the decimal place (15.00% vs 15.00% uniform, 25.17% vs 25.17% structured).
 
 ### $T_2$ — Can greedy construction survive aggregate coupling?
 - **Status:** **FULLY RESOLVED (Findings F8, F17, F20)**
 - **Outcome:** Plain greedy fails on `adversarial_3t2p` (cost 300 vs optimum 280) due to myopic per-task pricing. Multi-start and single-move relocate provably fail.
-- **Resolution:** Implemented `consolidate_subsets()` (`A+subset` in `track_a_subset.py`). Evaluating $k$-subset relocations ($k \le 2$) moves $\{t_1, t_2\} \to m_2$ together while keeping $t_3 \to m_1$, **achieving the proven optimum of 280**. On structured benchmarks, cuts mean cost gap from **32.37% down to 1.57%** (a 20× error reduction).
+- **Resolution:** Implemented `consolidate_subsets()` (`A+subset` in `track_a_subset.py`). Evaluating $k$-subset relocations ($k \le 2$) moves $\{t_1, t_2\} \to m_2$ together while keeping $t_3 \to m_1$, **achieving the proven optimum of 280**. On structured benchmarks, cuts mean cost gap from **32.37% down to 1.57%**. (**The "20× error reduction" is withdrawn** — it is one mean divided by another, the defect F30 found systemic. F20 predates that audit and has **not** been re-measured with a paired statistic; n is small, 16 instances / 5 solvable.)
 
 ### $T_3$ — Over what budget range does the problem have interesting structure?
 - **Status:** **FULLY RESOLVED (Findings F11, F15, F22)**
@@ -138,7 +138,7 @@ Published in [`docs/chapter3_benchmark_results.md`](docs/chapter3_benchmark_resu
 - **F18:** Scoped re-optimization is vacuous in shared-instance cloud settings due to 84–100% profile overlap.
 - **F19:** Exponential Moving Average (EMA) fails for binary reliability; replaced with decayed counting estimator with Jeffreys prior.
 - **F20:** Subset-move consolidation (`A+subset`) breaks aggregate coupling, achieving true optimum 280 on fixture and 1.57% mean gap.
-- **F21:** (C3) Lagrangian relaxation confirms LP duality equivalence (15.00% bound gap in $<1\text{ms}$); (C1) relaxation proved 3–5× tighter.
+- **F21:** (C3) Lagrangian relaxation confirms LP duality equivalence (15.00% bound gap in $<1\text{ms}$); (C1) relaxation proved strictly tighter on 30/30, paired **12.57 pp [9.49, 15.64]** (**not** "3–5×" — ratio of means, withdrawn by F30; median per-instance ratio 2.53× uniform, 2.00× structured).
 - **F22:** Extended tightness sweeps above $1.0\times B_{\text{ref}}$ eliminate cliff artifacts and confirm asymptotic convergence.
 
 ---
