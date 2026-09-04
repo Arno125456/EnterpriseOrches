@@ -1,7 +1,7 @@
 """
 Harness — reproduces a known result end-to-end, under matched inputs.
 
-Spec: docs/System_Architecture_v2.md §4.7, §6.1.
+Spec: docs/design/System_Architecture_v2.md §4.7, §6.1.
 Covers build step 10. Owner: 089
 
 The end-to-end check is the fixture: whatever the harness does to the tracks, MILP must

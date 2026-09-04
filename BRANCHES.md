@@ -94,8 +94,8 @@ These will conflict textually and need manual resolution:
 
 ```
 README.md
-docs/poc_findings.md
-docs/poc_findings_summary.md
+docs/evidence/poc_findings.md
+docs/evidence/poc_findings_summary.md
 poc/harness/runner.py
 poc/tests/test_track_b.py
 ```
@@ -123,6 +123,36 @@ paired per-instance difference with a confidence interval before it is presented
 
 The rule adopted on `main`: **never divide two means.** Report the paired difference and its
 interval, or the median of per-instance ratios.
+
+---
+
+## docs/ was reorganised on `main`, 5 September
+
+Flat `docs/` became purpose folders. Nothing was renamed and nothing was deleted - only moved,
+with `git mv`, so history follows. Every cross-reference in every `.md`, `.py` and `.html` file
+was rewritten to match, and the link check passes.
+
+| was | is now |
+|---|---|
+| `docs/System_Architecture_v2.md` | `docs/design/System_Architecture_v2.md` |
+| `docs/component_reference.md` | `docs/design/component_reference.md` |
+| `docs/pipeline.md` | `docs/design/pipeline.md` |
+| `docs/poc_findings.md` | `docs/evidence/poc_findings.md` |
+| `docs/poc_findings_summary.md` | `docs/evidence/poc_findings_summary.md` |
+| `docs/chapter3_benchmark_results.md` | `docs/evidence/chapter3_benchmark_results.md` |
+| `docs/PoC_and_Validation_Plan.md` | `docs/proposal/PoC_and_Validation_Plan.md` |
+| `docs/proposal_narrative.md` | `docs/proposal/proposal_narrative.md` |
+| `docs/D11_poc_report.md` | `docs/proposal/D11_poc_report.md` |
+| `docs/M1_Proposal_Presentation_Slides.md` | `docs/proposal/M1_Proposal_Presentation_Slides.md` |
+| `docs/T0_briefing.md` | `docs/sessions/T0_briefing.md` |
+| `docs/T0_Formulation_Ratification_Briefing.md` | `docs/sessions/T0_Formulation_Ratification_Briefing.md` |
+| `docs/study_guide.md` | `docs/sessions/study_guide.md` |
+
+**If you are merging a branch that edits any of these**, git's rename detection should follow
+the move on its own. Five of them are edited on both sides - `poc_findings.md`,
+`poc_findings_summary.md`, `proposal_narrative.md`, `chapter3_benchmark_results.md` and
+`M1_Proposal_Presentation_Slides.md` - so expect rename/modify conflicts there and resolve
+against the new path. The rest are additions on one side only.
 
 ---
 

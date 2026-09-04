@@ -1,7 +1,7 @@
 """
 Track C — LP relaxation + rounding.
 
-Spec: docs/System_Architecture_v2.md §5.2.4.
+Spec: docs/design/System_Architecture_v2.md §5.2.4.
 Build step 7. Verified by: bound <= MILP optimum; result satisfies I1-I5.
 Owner: 075
 

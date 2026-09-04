@@ -1,7 +1,7 @@
 """
 select_profile — known pools with hand-computed answers; all-infeasible returns None.
 
-Spec: docs/System_Architecture_v2.md §6.6.
+Spec: docs/design/System_Architecture_v2.md §6.6.
 Covers build step 6. Owner: 075
 """
 

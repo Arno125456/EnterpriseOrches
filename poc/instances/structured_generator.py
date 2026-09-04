@@ -7,7 +7,7 @@ Owner: 083
 
 WHY THIS EXISTS
 
-Every finding in docs/poc_findings.md traces to one generator whose distributions, budget
+Every finding in docs/evidence/poc_findings.md traces to one generator whose distributions, budget
 anchor, tracks and metrics were all written by the same hand. That is the setup in which
 unconscious selection is hardest to see, and no amount of re-slicing the same data touches
 it. The only real check is instances with different structure.

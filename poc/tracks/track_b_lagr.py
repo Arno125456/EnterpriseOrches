@@ -1,7 +1,7 @@
 """
 Track B — Lagrangian relaxation with subgradient updates.
 
-Spec: docs/System_Architecture_v2.md §5.2.3.
+Spec: docs/design/System_Architecture_v2.md §5.2.3.
 Build step 8. Verified by: bound <= MILP optimum always; bound vs LP bound — that is T1.
 Owner: 075
 

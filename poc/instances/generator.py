@@ -1,7 +1,7 @@
 """
 Synthetic instance generator.
 
-Spec: docs/System_Architecture_v2.md §6.4.
+Spec: docs/design/System_Architecture_v2.md §6.4.
 Build step 3. Verified by: instances well-formed; every C(t) non-empty.
 Owner: 083 (deliverable D2, due 8 Sep)
 

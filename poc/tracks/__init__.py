@@ -1,7 +1,7 @@
 """
 The three tracks plus the exact reference.
 
-Spec: docs/System_Architecture_v2.md §5.2.
+Spec: docs/design/System_Architecture_v2.md §5.2.
 
 Every track exposes the same entry point (principle P5 — tracks are swappable):
 

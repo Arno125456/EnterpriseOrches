@@ -1,7 +1,7 @@
 """
 Exact reference — direct MILP encoding of §1.4-1.6 in PuLP with CBC.
 
-Spec: docs/System_Architecture_v2.md §5.2.5.
+Spec: docs/design/System_Architecture_v2.md §5.2.5.
 Build step 4 — BEFORE any heuristic.
 Verified by: returns 280 on instances/fixtures/adversarial_3t2p.
 Owner: 089

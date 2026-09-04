@@ -222,7 +222,7 @@ changes.
                                                 +------------------------------+
                                                                 |
                                                                 v
-                                                       docs/poc_findings.md
+                                                       docs/evidence/poc_findings.md
 ```
 
 ---
@@ -269,7 +269,7 @@ changes.
             +--> Track A  ----------------+--> AllocationResult --> metrics
             +--> Track A+M1 --------------+        |
             +--> Track B   --------------+        v
-            +--> Track B-cold -----------+   docs/poc_findings.md
+            +--> Track B-cold -----------+   docs/evidence/poc_findings.md
             +--> Track C   --------------+
             +--> Track C2  --------------+
 

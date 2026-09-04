@@ -1,7 +1,7 @@
 """
 Cost, runtime, bound, gap, feasibility.
 
-Spec: docs/System_Architecture_v2.md §6.1.
+Spec: docs/design/System_Architecture_v2.md §6.1.
 Build step 10. Owner: 089
 
 The gap that matters for T4 is cost-to-optimum, which needs the exact MILP result — so

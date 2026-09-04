@@ -1,7 +1,7 @@
 """
 Track A + M1 — greedy construction with feasibility lookahead.
 
-Spec: docs/System_Architecture_v2.md §5.2.2; Paper P3 (Cheng & Nguyen, 2026, arXiv:2604.07472).
+Spec: docs/design/System_Architecture_v2.md §5.2.2; Paper P3 (Cheng & Nguyen, 2026, arXiv:2604.07472).
 Owner: 035
 
 WHY THIS IS A SEPARATE MODULE AND NOT A CHANGE TO track_a_greedy.

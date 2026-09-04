@@ -1,7 +1,7 @@
 """
 T2 fixtures — hand-built cases where greedy ordering misleads.
 
-Spec: docs/System_Architecture_v2.md §6.6; CLAUDE.md ground-truth instance.
+Spec: docs/design/System_Architecture_v2.md §6.6; CLAUDE.md ground-truth instance.
 Covers build steps 4 and 9. Owner: 035
 
 Two checkpoints on adversarial_3t2p, belonging to two different build steps — keep them

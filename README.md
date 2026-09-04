@@ -4,13 +4,17 @@ Senior capstone project — team of 5, advised by Prof. Tossaphol.
 
 > ### New here? Read [`docs/ORIENTATION.md`](docs/ORIENTATION.md).
 > One file, from zero: the problem, the design, what is built, what we found, and where to
-> look for more. It assumes nothing. Everything below assumes you have read it or already
-> know the project.
+> look for more. It assumes nothing.
+>
+> Then [`docs/REPO_GUIDE.md`](docs/REPO_GUIDE.md) explains **every file in this repository**,
+> one by one, with reading paths and a where-to-make-a-change table.
+>
+> Everything below assumes you have read those, or already know the project.
 
 **Then:** [`CLAUDE.md`](CLAUDE.md) is the working summary and the guardrails.
-[`docs/System_Architecture_v2.md`](docs/System_Architecture_v2.md) is the full design
-reference; [`docs/PoC_and_Validation_Plan.md`](docs/PoC_and_Validation_Plan.md) is what
-September is for; [`docs/pipeline.md`](docs/pipeline.md) is the end-to-end ASCII diagram
+[`docs/design/System_Architecture_v2.md`](docs/design/System_Architecture_v2.md) is the full design
+reference; [`docs/proposal/PoC_and_Validation_Plan.md`](docs/proposal/PoC_and_Validation_Plan.md) is what
+September is for; [`docs/design/pipeline.md`](docs/design/pipeline.md) is the end-to-end ASCII diagram
 of the PoC pipeline. If code and a document disagree, the document is not automatically
 right — flag the mismatch and resolve it explicitly, don't silently follow either one.
 
@@ -19,7 +23,7 @@ right — flag the mismatch and resolve it explicitly, don't silently follow eit
 Multi-workflow resource orchestration in which the profiles that drive allocation are
 **measured and kept current**, and the system **re-allocates when they drift**. The optimizer
 is the engine that makes that loop affordable, not the contribution itself — see
-[`docs/proposal_narrative.md`](docs/proposal_narrative.md) for the argument and the evidence
+[`docs/proposal/proposal_narrative.md`](docs/proposal/proposal_narrative.md) for the argument and the evidence
 chain behind it.
 
 The allocation problem underneath: a batch of workflows, each a DAG, and — for the whole
@@ -63,9 +67,9 @@ the row for your part.
 
 | | read | why |
 |---|---|---|
-| **everyone** | [`docs/T0_briefing.md`](docs/T0_briefing.md) | The 8 Sep session. Short, and it is the only thing with a deadline |
-| **everyone** | [`docs/poc_findings_summary.md`](docs/poc_findings_summary.md) | What we currently believe, at what confidence. Includes a table of numbers **not** to quote |
-| **presenting** | [`docs/study_guide.md`](docs/study_guide.md) | Nine steps to being able to defend every choice. Things to run and predict, not to read |
+| **everyone** | [`docs/sessions/T0_briefing.md`](docs/sessions/T0_briefing.md) | The 8 Sep session. Short, and it is the only thing with a deadline |
+| **everyone** | [`docs/evidence/poc_findings_summary.md`](docs/evidence/poc_findings_summary.md) | What we currently believe, at what confidence. Includes a table of numbers **not** to quote |
+| **presenting** | [`docs/sessions/study_guide.md`](docs/sessions/study_guide.md) | Nine steps to being able to defend every choice. Things to run and predict, not to read |
 | 035 — Track A | `poc/tracks/track_a_greedy.py`, `track_a_m1.py`, findings F1, F8, F20 | Your track, and the M1 analogue that needs your sign-off |
 | 075 — Tracks B & C | `poc/tracks/track_b_lagr.py`, `track_c_lp.py`, findings F7, F13, F16, F17, **F29–F30** | The bound result, and the **bounded-latency** result that carries Objective 1.2.2 — 0.106 ± 0.020 s against 12.3 ± 10.3 s. The 110× speedup it replaces is retracted; F29–F30 audited both |
 | 077 — Phase C | `prototype/profiling.py`, `loop.py`, findings F18, F19, F23 | The profiling loop, and the two design decisions awaiting your sign-off |
@@ -73,9 +77,9 @@ the row for your part.
 | 089 — Evaluation | `poc/harness/`, findings F10, F14, F15, F16 | The harness, and four cases where the experimental design misled us |
 
 Then, when you need them:
-[`docs/proposal_narrative.md`](docs/proposal_narrative.md) for what the findings are *for*,
-[`docs/component_reference.md`](docs/component_reference.md) for what each part does and must
-become, and [`docs/poc_findings.md`](docs/poc_findings.md) for the full chronological record
+[`docs/proposal/proposal_narrative.md`](docs/proposal/proposal_narrative.md) for what the findings are *for*,
+[`docs/design/component_reference.md`](docs/design/component_reference.md) for what each part does and must
+become, and [`docs/evidence/poc_findings.md`](docs/evidence/poc_findings.md) for the full chronological record
 including superseded findings.
 
 
@@ -111,11 +115,11 @@ Nine of the ten build steps are done and tested. Only step 8, Track B, is unbuil
 constraint it relaxes is T1's question (O2), and picking one would prejudge the test the
 track exists to feed.
 
-Results: [`docs/proposal_narrative.md`](docs/proposal_narrative.md) explains what the
-findings are *for*, and [`docs/component_reference.md`](docs/component_reference.md) says
-what each part does and what it needs to become. [`docs/poc_findings_summary.md`](docs/poc_findings_summary.md) is the
+Results: [`docs/proposal/proposal_narrative.md`](docs/proposal/proposal_narrative.md) explains what the
+findings are *for*, and [`docs/design/component_reference.md`](docs/design/component_reference.md) says
+what each part does and what it needs to become. [`docs/evidence/poc_findings_summary.md`](docs/evidence/poc_findings_summary.md) is the
 standing summary — what is believed now, at what confidence, and what would overturn it.
-[`docs/poc_findings.md`](docs/poc_findings.md) is the full chronological log behind it.
+[`docs/evidence/poc_findings.md`](docs/evidence/poc_findings.md) is the full chronological log behind it.
 
 ## Build order
 
@@ -143,7 +147,7 @@ source venv/bin/activate        # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 python -c "import pulp; print(pulp.listSolvers(onlyAvailable=True))"   # expect PULP_CBC_CMD
 pytest poc/tests
-python -m poc.harness.runner   # regenerates the sweep in docs/poc_findings.md
+python -m poc.harness.runner   # regenerates the sweep in docs/evidence/poc_findings.md
 ```
 
 Verified from a clean clone on 3 September 2026: fresh virtualenv, install from

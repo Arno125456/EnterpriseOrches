@@ -2,7 +2,7 @@
 ProvisioningState — admit sequences, headroom arithmetic, budget rejection,
 snapshot/restore round-trip.
 
-Spec: docs/System_Architecture_v2.md §6.6.
+Spec: docs/design/System_Architecture_v2.md §6.6.
 Covers build step 5. Owner: 083
 
 cost_to_admit is the operation everything else leans on, so these tests are written

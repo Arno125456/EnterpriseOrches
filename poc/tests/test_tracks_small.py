@@ -1,7 +1,7 @@
 """
 Tracks vs the exact optimum by exhaustion, on instances small enough to enumerate.
 
-Spec: docs/System_Architecture_v2.md §6.6 (component + bound levels).
+Spec: docs/design/System_Architecture_v2.md §6.6 (component + bound levels).
 Covers build step 4 now; steps 7-9 as the tracks land. Owner: 089
 
 The brute-force optimum here is independent of PuLP, so this is a real check on the MILP

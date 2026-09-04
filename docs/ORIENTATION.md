@@ -22,7 +22,7 @@ Written 4 September 2026. Milestone **M1 is 30 September 2026**.
 > anything is wrong — it is what an active audit looks like. But it means §8 is a snapshot.
 >
 > **Before quoting any number from this file**, check the *"numbers that were corrected"*
-> table in [`poc_findings_summary.md`](poc_findings_summary.md). That table is maintained; this
+> table in [`poc_findings_summary.md`](evidence/poc_findings_summary.md). That table is maintained; this
 > file is a summary of it. Where they disagree, **the summary wins** — and please fix this file.
 
 ---
@@ -384,7 +384,7 @@ here looks wrong, the command is the arbiter:
 | | | check it |
 |---|---|---|
 | **647** tests pass, 4 skip | | `python -m pytest -q` |
-| **35** findings recorded | including superseded ones | `grep -c "^## F" docs/poc_findings.md` |
+| **35** findings recorded | including superseded ones | `grep -c "^## F" docs/evidence/poc_findings.md` |
 | **15** runnable conditions | | `python -c "from poc.harness.runner import STRATEGIES; print(len(STRATEGIES))"` |
 | **3** instance generators | uniform, structured, heterogeneous | `ls poc/instances/*generator*.py` |
 
@@ -435,20 +435,21 @@ merge) and the **price-decorrelated generator** (built, and it reversed T3's ans
 | # | document | what you get |
 |---|---|---|
 | 1 | this file | the whole thing at low resolution |
-| 2 | [`poc_findings_summary.md`](poc_findings_summary.md) | what we believe now, at what confidence, plus the corrections table |
-| 3 | [`proposal_narrative.md`](proposal_narrative.md) | why the findings form one argument |
-| 4 | [`System_Architecture_v2.md`](System_Architecture_v2.md) | the design of record. §1 is the formulation, §1.8 the problem class |
-| 5 | [`poc_findings.md`](poc_findings.md) | all 35 findings in order, including retracted ones |
+| 1b | [`REPO_GUIDE.md`](REPO_GUIDE.md) | **every file in the repository**, explained one by one, with reading paths |
+| 2 | [`poc_findings_summary.md`](evidence/poc_findings_summary.md) | what we believe now, at what confidence, plus the corrections table |
+| 3 | [`proposal_narrative.md`](proposal/proposal_narrative.md) | why the findings form one argument |
+| 4 | [`System_Architecture_v2.md`](design/System_Architecture_v2.md) | the design of record. §1 is the formulation, §1.8 the problem class |
+| 5 | [`poc_findings.md`](evidence/poc_findings.md) | all 35 findings in order, including retracted ones |
 
 **Read by what you are doing:**
 
 | you are… | read |
 |---|---|
-| going to the 8 Sep ratification | [`T0_briefing.md`](T0_briefing.md) — confirm-or-object, a default for every item |
-| about to be questioned on this | [`study_guide.md`](study_guide.md) — things to run and predict, not to read |
-| writing Chapter 3 | [`D11_poc_report.md`](D11_poc_report.md) then `proposal_narrative.md` §6 |
-| changing code | [`../CLAUDE.md`](../CLAUDE.md) for the guardrails, [`component_reference.md`](component_reference.md) for behaviour |
-| looking at a diagram | [`pipeline.md`](pipeline.md) |
+| going to the 8 Sep ratification | [`T0_briefing.md`](sessions/T0_briefing.md) — confirm-or-object, a default for every item |
+| about to be questioned on this | [`study_guide.md`](sessions/study_guide.md) — things to run and predict, not to read |
+| writing Chapter 3 | [`D11_poc_report.md`](proposal/D11_poc_report.md) then `proposal_narrative.md` §6 |
+| changing code | [`../CLAUDE.md`](../CLAUDE.md) for the guardrails, [`component_reference.md`](design/component_reference.md) for behaviour |
+| looking at a diagram | [`pipeline.md`](design/pipeline.md) |
 | planning | [`../PLAN.md`](../PLAN.md) — eight steps to M1 |
 
 **The code, in the order it was built** (each step was verifiable before the next):

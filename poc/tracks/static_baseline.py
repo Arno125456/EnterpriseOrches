@@ -1,7 +1,7 @@
 """
 STATIC — the no-optimisation baseline.
 
-Spec: docs/System_Architecture_v2.md §4.7 names a "static baseline" as one of five
+Spec: docs/design/System_Architecture_v2.md §4.7 names a "static baseline" as one of five
 evaluation conditions but never says what it allocates. This is that gap filled, and the
 definition below is a **[PROPOSED]** one, not a specified one.
 

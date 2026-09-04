@@ -1,7 +1,7 @@
 """
 select_profile — the one inner rule all three tracks call (principle P4).
 
-Spec: docs/System_Architecture_v2.md §5.2.1.
+Spec: docs/design/System_Architecture_v2.md §5.2.1.
 Build step 6. Verified by: known pools with hand-computed picks; all-infeasible returns None.
 Owner: 075
 

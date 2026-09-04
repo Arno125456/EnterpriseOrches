@@ -1,7 +1,7 @@
 """
 ProvisioningState — instances per profile, load per profile, GPUs consumed.
 
-Spec: docs/System_Architecture_v2.md §4.4, §6.3.
+Spec: docs/design/System_Architecture_v2.md §4.4, §6.3.
 Build step 5. Verified by: admit/release/snapshot/restore sequences; budget rejection.
 Owner: 083
 

@@ -3,12 +3,31 @@
 **If you are new, read [`ORIENTATION.md`](ORIENTATION.md) first** — the whole project in one
 file, assuming no prior knowledge, with pointers into everything below.
 
-Fifteen documents, each with a different job. Nobody needs all of them. Find your row.
+Sixteen documents, each with a different job. Nobody needs all of them. Find your row.
 
-> Files are **not** grouped into subfolders. The original reason — a second live branch that
-> a reorganisation would have made unmergeable — **expired when the branches merged on 3
-> September.** Reorganising is now safe but nobody has needed it; leaving the flat layout is a
-> choice, not a constraint.
+## The shape of this folder
+
+Grouped by **what you are trying to do**, not by document type:
+
+```
+docs/
+  ORIENTATION.md      <- start here if you are new. The whole project, one file
+  README.md           <- this index
+  REPO_GUIDE.md       <- every file in the repository, explained one by one
+
+  design/             how the system is built    architecture / components / diagrams
+  evidence/           what we measured           findings log / summary / benchmarks
+  proposal/           what we are writing        narrative / report / plan / slides
+  sessions/           what we run with people    T0 briefings / study guide
+  presentation/       the T0 deck (open in a browser)
+
+  research_papers/    literature tracking, feeds Chapter 2
+  v1_superseded/      the retired v1 design. Not current
+```
+
+**The rule of thumb:** `design/` says how it *should* work, `evidence/` says what it
+*actually* did. Where those two disagree, `evidence/` wins and `design/` gets amended -
+which has happened nine times, and each amendment is marked in place.
 
 ---
 
@@ -17,8 +36,8 @@ Fifteen documents, each with a different job. Nobody needs all of them. Find you
 | read | why |
 |---|---|
 | [`ORIENTATION.md`](ORIENTATION.md) | **Start here.** The whole project from zero — problem, design, findings, where to go deeper |
-| [`T0_briefing.md`](T0_briefing.md) | The 8 September session. The only thing with a deadline |
-| [`poc_findings_summary.md`](poc_findings_summary.md) | What we believe now, at what confidence, and a table of numbers **not** to quote |
+| [`T0_briefing.md`](sessions/T0_briefing.md) | The 8 September session. The only thing with a deadline |
+| [`poc_findings_summary.md`](evidence/poc_findings_summary.md) | What we believe now, at what confidence, and a table of numbers **not** to quote |
 
 That is enough to hold a conversation about the project.
 
@@ -31,41 +50,41 @@ That is enough to hold a conversation about the project.
 | document | use it when |
 |---|---|
 | [`ORIENTATION.md`](ORIENTATION.md) | You are new, or you want one file that covers problem, design, findings and next steps |
-| [`pipeline.md`](pipeline.md) | You want the ASCII diagrams — input construction, invariant gating, track execution, metrics |
+| [`pipeline.md`](design/pipeline.md) | You want the ASCII diagrams — input construction, invariant gating, track execution, metrics |
 
 ### Deciding something
 
 | document | use it when |
 |---|---|
-| [`T0_briefing.md`](T0_briefing.md) | **Running** the 8 Sep session. Confirm-or-object, a default for every item, sign-off template |
-| [`T0_Formulation_Ratification_Briefing.md`](T0_Formulation_Ratification_Briefing.md) | The **formal statement** of the model being ratified — the mathematics and the problem classification |
-| [`poc_findings_summary.md`](poc_findings_summary.md) | You need the current state of a claim, or need to check a number is still quotable |
+| [`T0_briefing.md`](sessions/T0_briefing.md) | **Running** the 8 Sep session. Confirm-or-object, a default for every item, sign-off template |
+| [`T0_Formulation_Ratification_Briefing.md`](sessions/T0_Formulation_Ratification_Briefing.md) | The **formal statement** of the model being ratified — the mathematics and the problem classification |
+| [`poc_findings_summary.md`](evidence/poc_findings_summary.md) | You need the current state of a claim, or need to check a number is still quotable |
 | [`../BRANCHES.md`](../BRANCHES.md) | Before merging anything |
 
 ### Presenting or writing
 
 | document | use it when |
 |---|---|
-| [`D11_poc_report.md`](D11_poc_report.md) | The PoC report for the advisor — four answers, the differentiator, limitations |
-| [`proposal_narrative.md`](proposal_narrative.md) | Writing Chapter 3. The argument chain that makes the findings one story |
-| [`study_guide.md`](study_guide.md) | Preparing to be questioned. Things to run and predict, not to read |
-| [`M1_Proposal_Presentation_Slides.md`](M1_Proposal_Presentation_Slides.md) | Building the M1 deck. Slide-by-slide with speaker scripts — **check every figure against the corrections table first** |
-| [`chapter3_benchmark_results.md`](chapter3_benchmark_results.md) | You need the scale benchmark tables or their LaTeX. Note its §1 summary was corrected by F32 |
+| [`D11_poc_report.md`](proposal/D11_poc_report.md) | The PoC report for the advisor — four answers, the differentiator, limitations |
+| [`proposal_narrative.md`](proposal/proposal_narrative.md) | Writing Chapter 3. The argument chain that makes the findings one story |
+| [`study_guide.md`](sessions/study_guide.md) | Preparing to be questioned. Things to run and predict, not to read |
+| [`M1_Proposal_Presentation_Slides.md`](proposal/M1_Proposal_Presentation_Slides.md) | Building the M1 deck. Slide-by-slide with speaker scripts — **check every figure against the corrections table first** |
+| [`chapter3_benchmark_results.md`](evidence/chapter3_benchmark_results.md) | You need the scale benchmark tables or their LaTeX. Note its §1 summary was corrected by F32 |
 
 ### Building
 
 | document | use it when |
 |---|---|
-| [`System_Architecture_v2.md`](System_Architecture_v2.md) | The design of record. Amended nine times by measurement — those amendments are marked |
-| [`component_reference.md`](component_reference.md) | You need to know how a component behaves and what it must become |
+| [`System_Architecture_v2.md`](design/System_Architecture_v2.md) | The design of record. Amended nine times by measurement — those amendments are marked |
+| [`component_reference.md`](design/component_reference.md) | You need to know how a component behaves and what it must become |
 | [`../CLAUDE.md`](../CLAUDE.md) | Working summary and guardrails, including the scope guard |
 
 ### Evidence
 
 | document | use it when |
 |---|---|
-| [`poc_findings.md`](poc_findings.md) | The full chronological log, 35 findings **including superseded ones**. Do not quote from it without checking the summary's corrections table |
-| [`PoC_and_Validation_Plan.md`](PoC_and_Validation_Plan.md) | The September plan — scope, deliverables, schedule, risks |
+| [`poc_findings.md`](evidence/poc_findings.md) | The full chronological log, 35 findings **including superseded ones**. Do not quote from it without checking the summary's corrections table |
+| [`PoC_and_Validation_Plan.md`](proposal/PoC_and_Validation_Plan.md) | The September plan — scope, deliverables, schedule, risks |
 
 ### Archive
 

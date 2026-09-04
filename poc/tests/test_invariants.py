@@ -1,7 +1,7 @@
 """
 invariants.check() — hand-built valid and violating results.
 
-Spec: docs/System_Architecture_v2.md §6.6.
+Spec: docs/design/System_Architecture_v2.md §6.6.
 Covers build step 2. Owner: 083
 
 One test per invariant, each built by taking the known-optimal allocation and breaking

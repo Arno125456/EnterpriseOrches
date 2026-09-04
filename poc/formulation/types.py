@@ -1,7 +1,7 @@
 """
 Data model — Task, ProfileSpec, AllocationResult, Infeasible, AdmitCost, Observation.
 
-Spec: docs/System_Architecture_v2.md §5.1.
+Spec: docs/design/System_Architecture_v2.md §5.1.
 Build step 1. Verified by: types instantiate; no logic to test.
 Owner: 083
 

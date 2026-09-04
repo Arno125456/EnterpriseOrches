@@ -1,7 +1,7 @@
 """
 Instance generator — well-formed, every C(t) non-empty, reproducible from the seed.
 
-Spec: docs/System_Architecture_v2.md §6.4.
+Spec: docs/design/System_Architecture_v2.md §6.4.
 Covers build step 3. Owner: 083
 """
 

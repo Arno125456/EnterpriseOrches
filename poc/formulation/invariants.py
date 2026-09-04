@@ -1,7 +1,7 @@
 """
 I1-I5 — asserted on every allocation result, in every test.
 
-Spec: docs/System_Architecture_v2.md §5.1, §6.3.
+Spec: docs/design/System_Architecture_v2.md §5.1, §6.3.
 Build step 2. Verified by: hand-built valid and violating results.
 Owner: 083
 

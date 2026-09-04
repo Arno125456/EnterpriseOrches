@@ -1,7 +1,7 @@
 """
 Track B — Lagrangian relaxation. The bound is the whole point, so the bound is the test.
 
-Spec: docs/System_Architecture_v2.md §6.6 (bound level).
+Spec: docs/design/System_Architecture_v2.md §6.6 (bound level).
 Covers build step 8. Owner: 075
 
 `bound <= true optimum` is the one property this track must never break. An invalid lower
@@ -9,7 +9,7 @@ bound is not a quality problem, it is a disqualifying correctness error: every T
 conclusion drawn from it would be wrong, and nothing else in the suite would notice.
 
 Instance counts here are deliberately small — Track B runs ~1.7s per instance against
-Track A's microseconds, and that runtime is itself a T4 input (see docs/poc_findings.md).
+Track A's microseconds, and that runtime is itself a T4 input (see docs/evidence/poc_findings.md).
 """
 
 import pytest

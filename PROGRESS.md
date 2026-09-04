@@ -101,7 +101,7 @@ C+cons             19            2            10       6.11%     21.87%       25
 
 ### 4.2 Multi-Scale Scaling Evaluation (8 to 64 Tasks, Budget 1.25× Reference)
 
-Published in [`docs/chapter3_benchmark_results.md`](docs/chapter3_benchmark_results.md) and generated via [`scripts/generate_chapter3_tables.py`](scripts/generate_chapter3_tables.py):
+Published in [`docs/evidence/chapter3_benchmark_results.md`](docs/evidence/chapter3_benchmark_results.md) and generated via [`scripts/generate_chapter3_tables.py`](scripts/generate_chapter3_tables.py):
 
 | Scale (Tasks, Prof) | Generator | MILP Time | A Gap% | A+subset Gap% | B-C3 Gap% | C+cons Gap% | C+cons Time |
 |---|---|---|---|---|---|---|---|
@@ -160,7 +160,7 @@ Published in [`docs/chapter3_benchmark_results.md`](docs/chapter3_benchmark_resu
 
 | # | Action Item | Owner | Target Date | Status |
 |---|---|---|---|---|
-| 1 | **T0 / D1 — Ratify the formulation:** Formal team sign-off on §1 mathematical programming model | All | **8 September 2026** | **Ready for sign-off** — model in [`T0_Formulation_Ratification_Briefing.md`](docs/T0_Formulation_Ratification_Briefing.md), agenda in [`T0_briefing.md`](docs/T0_briefing.md) |
+| 1 | **T0 / D1 — Ratify the formulation:** Formal team sign-off on §1 mathematical programming model | All | **8 September 2026** | **Ready for sign-off** — model in [`T0_Formulation_Ratification_Briefing.md`](docs/sessions/T0_Formulation_Ratification_Briefing.md), agenda in [`T0_briefing.md`](docs/sessions/T0_briefing.md) |
 | 2 | **Advisor Alignment:** Clarify whether reliability is strictly a floor ($R_{\min}$) or multi-objective trade-off | Team / Advisor | Before T0 | **Briefing prepared** (Option A recommended) |
 | 3 | **Proposal Chapter 3 Drafting:** Ingest benchmark tables from F20–F22 (`chapter3_benchmark_results.md`) | All | Mid-September | **Done** (Tables ready) |
 | 4 | **Semester 2 Scope Pruning:** Formally excise scoped re-optimization from implementation architecture (F18) | 077 | Milestone M1 | Decided |
@@ -171,17 +171,17 @@ Published in [`docs/chapter3_benchmark_results.md`](docs/chapter3_benchmark_resu
 
 | Deliverable | File Path | Purpose |
 |---|---|---|
-| **Authoritative Architecture** | [`docs/System_Architecture_v2.md`](docs/System_Architecture_v2.md) | Formal problem formulation (§1), component architecture (§3-§5), invariants (§6) |
-| **T0 Ratification Briefing** | [`docs/T0_Formulation_Ratification_Briefing.md`](docs/T0_Formulation_Ratification_Briefing.md) | The **formal model** being signed off. Its floors-vs-objectives question was **answered 3 Sep — a floor** (O10) |
-| **T0 session agenda** | [`docs/T0_briefing.md`](docs/T0_briefing.md) | How to **run** the 8 Sep session: confirm-or-object, defaults, sign-off template |
+| **Authoritative Architecture** | [`docs/design/System_Architecture_v2.md`](docs/design/System_Architecture_v2.md) | Formal problem formulation (§1), component architecture (§3-§5), invariants (§6) |
+| **T0 Ratification Briefing** | [`docs/sessions/T0_Formulation_Ratification_Briefing.md`](docs/sessions/T0_Formulation_Ratification_Briefing.md) | The **formal model** being signed off. Its floors-vs-objectives question was **answered 3 Sep — a floor** (O10) |
+| **T0 session agenda** | [`docs/sessions/T0_briefing.md`](docs/sessions/T0_briefing.md) | How to **run** the 8 Sep session: confirm-or-object, defaults, sign-off template |
 | **Orientation** | [`docs/ORIENTATION.md`](docs/ORIENTATION.md) | The whole project in one file, for anyone new |
-| **Validation Plan** | [`docs/PoC_and_Validation_Plan.md`](docs/PoC_and_Validation_Plan.md) | September PoC roadmap, milestone definitions, research questions $T_1-T_4$ |
-| **Executive Summary** | [`docs/poc_findings_summary.md`](docs/poc_findings_summary.md) | Standing summary of beliefs, confidence levels, and core conclusions |
-| **Chronological Findings** | [`docs/poc_findings.md`](docs/poc_findings.md) | Detailed findings log from F1 to F22, including mathematical proofs and anomalies |
-| **M1 Presentation Slides** | [`docs/M1_Proposal_Presentation_Slides.md`](docs/M1_Proposal_Presentation_Slides.md) | 16-slide presentation outline, visuals, speaker script, and committee Q&A prep |
-| **Chapter 3 Benchmarks** | [`docs/chapter3_benchmark_results.md`](docs/chapter3_benchmark_results.md) | Publication-grade Markdown and LaTeX benchmark tables (8 to 64 tasks) |
+| **Validation Plan** | [`docs/proposal/PoC_and_Validation_Plan.md`](docs/proposal/PoC_and_Validation_Plan.md) | September PoC roadmap, milestone definitions, research questions $T_1-T_4$ |
+| **Executive Summary** | [`docs/evidence/poc_findings_summary.md`](docs/evidence/poc_findings_summary.md) | Standing summary of beliefs, confidence levels, and core conclusions |
+| **Chronological Findings** | [`docs/evidence/poc_findings.md`](docs/evidence/poc_findings.md) | Detailed findings log from F1 to F22, including mathematical proofs and anomalies |
+| **M1 Presentation Slides** | [`docs/proposal/M1_Proposal_Presentation_Slides.md`](docs/proposal/M1_Proposal_Presentation_Slides.md) | 16-slide presentation outline, visuals, speaker script, and committee Q&A prep |
+| **Chapter 3 Benchmarks** | [`docs/evidence/chapter3_benchmark_results.md`](docs/evidence/chapter3_benchmark_results.md) | Publication-grade Markdown and LaTeX benchmark tables (8 to 64 tasks) |
 | **Literature Report** | [`docs/research_papers/relationship_report.md`](docs/research_papers/relationship_report.md) | Synthesis of 12 foundational papers across scopes $S_1, S_2, S_3$ (12,260 words) |
-| **Pipeline Diagram** | [`docs/pipeline.md`](docs/pipeline.md) | End-to-end ASCII trace of the resource allocation and provisioning pipeline |
+| **Pipeline Diagram** | [`docs/design/pipeline.md`](docs/design/pipeline.md) | End-to-end ASCII trace of the resource allocation and provisioning pipeline |
 
 ---
 

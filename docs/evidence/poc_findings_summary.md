@@ -15,7 +15,7 @@ originals — add 3.
 Every row carries what would overturn it, because most of these have been overturned at
 least once already.
 
-**For what these findings are *for*, read [`proposal_narrative.md`](proposal_narrative.md)
+**For what these findings are *for*, read [`proposal_narrative.md`](../proposal/proposal_narrative.md)
 first.** This page says what is true; that one says which links in the project's argument
 each finding supports, and which findings are negative results that should not be featured.
 

@@ -1,7 +1,7 @@
 """
 Track B-C3 — Lagrangian relaxation of the GPU budget constraint (C3).
 
-Spec: docs/System_Architecture_v2.md §1.8, §5.2.3.
+Spec: docs/design/System_Architecture_v2.md §1.8, §5.2.3.
 Owner: 075
 
 THE ALTERNATIVE RELAXATION FOR T1.

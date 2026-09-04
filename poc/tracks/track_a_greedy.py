@@ -1,7 +1,7 @@
 """
 Track A — plain greedy construction.
 
-Spec: docs/System_Architecture_v2.md §5.2.2.
+Spec: docs/design/System_Architecture_v2.md §5.2.2.
 Build step 9. Verified by: satisfies I1-I5; returns 300 on adversarial_3t2p.
 Owner: 035
 

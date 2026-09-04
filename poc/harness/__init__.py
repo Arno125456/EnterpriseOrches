@@ -1,7 +1,7 @@
 """
 Measurement harness — runs conditions under matched inputs.
 
-Spec: docs/System_Architecture_v2.md §4.7, §6.1.
+Spec: docs/design/System_Architecture_v2.md §4.7, §6.1.
 Build step 10. Verified by: reproduces a known result end-to-end.
 Owner: 089
 

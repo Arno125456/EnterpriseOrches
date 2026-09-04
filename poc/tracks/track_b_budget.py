@@ -1,7 +1,7 @@
 """
 B-C3 — Lagrangian relaxation of the BUDGET constraint, the other arm of T1.
 
-Spec: docs/System_Architecture_v2.md §5.2.3. Owner: 075.
+Spec: docs/design/System_Architecture_v2.md §5.2.3. Owner: 075.
 
 WHY THIS EXISTS
 

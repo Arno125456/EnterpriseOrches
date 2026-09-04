@@ -1,7 +1,7 @@
 """
 Synthetic instances and hand-built fixtures.
 
-Spec: docs/System_Architecture_v2.md §6.4.
+Spec: docs/design/System_Architecture_v2.md §6.4.
 
 All PoC instances are synthetic. Zookeeper/LogHub domain data is explicitly out of scope —
 synthetic instances give controlled budget tightness, which real data does not

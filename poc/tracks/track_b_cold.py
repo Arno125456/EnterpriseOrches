@@ -1,7 +1,7 @@
 """
 B-cold — Track B with no warm start, so the A-vs-B comparison is independent.
 
-Spec: docs/System_Architecture_v2.md §5.2.3. Owner: 075
+Spec: docs/design/System_Architecture_v2.md §5.2.3. Owner: 075
 
 Track B's subgradient step rule wants an incumbent upper bound, and plain greedy is the
 cheapest honest source of one. But seeding with greedy's answer means Track B can never be

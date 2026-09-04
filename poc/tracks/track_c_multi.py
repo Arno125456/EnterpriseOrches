@@ -1,7 +1,7 @@
 """
 C2 — Track C given every realisation order, reported as its own condition.
 
-Spec: docs/System_Architecture_v2.md §5.2.4; findings F6.
+Spec: docs/design/System_Architecture_v2.md §5.2.4; findings F6.
 Owner: 075
 
 This exists so that a fairness problem in T4 is a row in the table instead of a footnote.
