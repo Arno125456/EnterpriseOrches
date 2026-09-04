@@ -224,7 +224,9 @@ Write your own answers before reading the suggested ones.
 | Why is Track C better than greedy at scale but not at 8 tasks? | Rounding error amortises over more tasks (F16) |
 | Your adaptive system costs 2.5× more. Why is that good? | It isn't cheaper — the static system is failing its requirement silently. Not like-for-like |
 | What happens if a profile is briefly unlucky? | It gets abandoned and never re-tested (F23). Fixed by an upper confidence bound (F25) |
-| Why does the budget never seem to matter? | Because we tied price to GPU count. That is O13 and it is open |
+| Why does the budget never seem to matter? | **It does — we were measuring it wrong.** Both original generators tied price to GPU count, so cost and GPU count were nearly the same objective. A third generator with price decorrelated reversed it: the budget changes the optimal cost in 24 of 25 instances instead of 0 of 25 (F33). **This is a strong answer — volunteer it** |
+| Your Lagrangian bound is sometimes *worse* than the LP bound. Isn't that a broken relaxation? | No — theory forbids it at the dual optimum, so it proves our *multipliers* are unconverged, not the relaxation. It happens only where Track B finds no feasible incumbent and its step rule has nothing to aim at. Tighter on 53/53 where it does (F35) |
+| One author wrote the generators, the tracks and the metrics. How do you know any of it? | The strongest objection there is, and we have the best answer available short of real execution: **three** generators with deliberately opposing structure. The third one **overturned one of our own headline findings**, which is the evidence the check is real and not decorative |
 | What would you do differently? | Measure the methods, not just the deliverables — two gaps were found by re-reading the plan's method sections |
 
 ---
