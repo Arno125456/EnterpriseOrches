@@ -56,18 +56,26 @@ If everyone can say those three things, T0 is met.
 
 ---
 
-## Part 2 — Ask the advisor BEFORE the session
+## Part 2 — The advisor questions are answered (2 minutes, read it out)
 
-**One question, and it is the only thing that could invalidate the formulation.**
+**Nothing is blocking this session.** All three advisor questions came back on 3 September.
+This part used to say "do not run the session without this answer" — that no longer applies.
 
-> Does "improve reliability" in the project brief mean (a) never go below a reliability
-> floor, or (b) maximise reliability?
+> **O10 — does "improve reliability" mean a floor, or maximise it?**
+> **Answered: a floor**, anchored to baseline-delivered reliability. Not an objective.
 
-- If **(a) a floor** — everything above stands. This is what we assume.
-- If **(b) maximise** — the objective becomes multi-objective, `§1.9` is wrong, and T0 would
-  be ratifying a formulation we already know is out of date.
+That is the answer Part 1 assumes, so **the formulation above stands** and there is no
+multi-objective rewrite. This was the one thing that could have invalidated §1.9.
 
-Do not run the session without this answer.
+Two others, for context rather than decision:
+
+- **O12 — is the closed loop a sufficient novelty claim?** **Yes**, for M1. Novelty is claimed
+  in the *loop*, not the optimisation — §1.8 concedes the allocation problem is textbook and
+  Chapter 2 presents it as adopted.
+- **O13 — is `price(m)` independent of `gpu(m)`?** **Yes, they are separate axes**, answered
+  from Murakkab's own published numbers (F31). This does not change §1, but it does mean our
+  generators tie price to GPU count and so **every budget result was measured where (C3)
+  barely binds.** It is relevant to decision 2 below.
 
 ---
 
@@ -80,7 +88,7 @@ Measurement during the PoC contradicted the documents in five places. Each is wr
 |---|---|---|---|
 | 1 | **Is `§1` unchanged?** | **Unchanged.** Nothing measured contradicts C1/C2/C3 or the objective | Say exactly what changes — a change to C2 or the objective invalidates most results |
 | 2 | **Budget anchor.** `§6.4` set the budget from a "one instance per profile" solution. Measured, that made 0–16 of 25 instances solvable and the T3 sweep had no room. It now uses a reference allocation instead | **Accept the change.** `§6.4` already amended | T3 needs a different experimental axis |
-| 3 | **Track A.** Plain greedy sits 8–15% above optimum and gets worse with scale; Track C beats it at every size | **Cut Track A as a track**, but move its feasibility lookahead into the shared decision rule where every track benefits | Keep it, and T4's write-up must justify why |
+| 3 | **Track A — split the question, because `A+subset` shipped in the step-1 merge and changes the answer.** Plain greedy sits 8–15% above optimum and worsens with scale. But `A+subset` recovers the adversarial fixture's optimum of 280 and is **never worse than plain greedy on any of 72 paired instances** (F32) | **Cut *plain* A as a reported track; keep `A+subset` as a live contender.** Move the feasibility lookahead into the shared decision rule where every track benefits | Object to either half separately. Note `A+subset`'s gap **grows with scale** — 2.35% at 8 tasks to 14.30% at 64 (F32) — so "keep it" is not the same as "it wins at size" |
 | 4 | **Track B.** Best lower bound we have — paired, it sits 12.6 percentage points [9.5, 15.6] closer to the optimum than the LP bound — but ~100× slower than the exact solver as an allocator | **Keep it as a bound generator, not an allocator** | Someone must optimise its subproblem before any speed claim |
 | 5 | **Scoped re-optimisation.** `§3.3` proposed re-optimising "affected workflows only". Measured, a drifted profile is used by 84–100% of workflows, so the affected set is nearly everything | **Drop scoping. Re-optimise globally** | Define what "scoped" should mean instead |
 
@@ -97,7 +105,8 @@ This matters because at the viva, the person presenting has to defend it.
 | Decision | Owner | What was done |
 |---|---|---|
 | The M1 analogue | **035** | A feasibility lookahead — check every remaining task still has an option before committing. It is *not* Cheng & Nguyen's actual M1, which is not specified in our documents |
-| Consolidation neighbourhood | **035 / 075** | Move *all* tasks off one profile together. Fixes a rare, severe failure mode in Track C (median improvement is 0; the mean is tail-carried). Does not fix the adversarial fixture, which needs a *subset* move |
+| Consolidation neighbourhood | **035 / 075** | Move *all* tasks off one profile together. Fixes a rare, severe failure mode in Track C (median improvement is 0; the mean is tail-carried). It does **not** fix the adversarial fixture — that needs a *subset* move |
+| Subset neighbourhood (`A+subset`) | **035** | The k≤2 subset move, which **does** fix the fixture (recovers 280). Shipped in the step-1 merge. Audited in F32: never worse than plain greedy on 72 paired instances. **Its "twenty-fold improvement" headline is withdrawn** — that was a ratio of means, and an unstable one |
 | Reliability estimator | **077** | `§4.5` says "EMA per observation". For reliability that reports 0.70 after 99 successes and one failure, and that number filters `C(t)`. Replaced with a counting estimator |
 | Compatibility score | **077** | Invented, marked `[PROPOSED]`. Hatherley (2025) is not in the repo |
 | Budget anchor | **083** | See decision 2 above |
@@ -111,17 +120,20 @@ The only output needed. Five lines and five names.
 ```
 T0 session, __ September 2026.  Present: ______________________
 
-Advisor's answer on O10 (reliability):  floor / maximise / not yet asked
+Advisor's answer on O10 (reliability):  FLOOR — answered 3 Sep, read out, not re-litigated
 
 1. Section 1 formulation:      unchanged / changed as follows: ____________
 2. Budget anchor:              accepted / rejected
-3. Track A:                    cut / kept
+     (noting F31: our generators tie price to GPU count, so (C3) barely binds)
+3a. Plain Track A:             cut as a reported track / kept
+3b. A+subset:                  kept as a contender / cut
 4. Track B:                    bound only / also an allocator
 5. Scoped re-optimisation:     dropped / kept, defined as: ______________
 
 Ownership accepted:
   M1 analogue ............ 035  yes / change: ______________
   Consolidation .......... 035/075  yes / change: ______________
+  Subset neighbourhood ... 035  yes / change: ______________
   Reliability estimator .. 077  yes / change: ______________
   Compatibility score .... 077  yes / change: ______________
   Budget anchor .......... 083  yes / change: ______________
@@ -137,8 +149,8 @@ unresolved disagreement written down is a success; an unnoticed one is not.
 
 ## If the session runs short of time
 
-Do Part 1 and Part 2. Those are T0. Parts 3 and 4 are useful but can happen in the following
-week without putting 30 September at risk.
+Do Part 1. That is T0. Part 2 is now two minutes of reading answers out, not a blocker. Parts
+3 and 4 are useful but can happen in the following week without putting 30 September at risk.
 
 If Part 1 cannot be agreed in one session, the plan is explicit: **escalate to the advisor
 immediately, do not absorb it quietly.**

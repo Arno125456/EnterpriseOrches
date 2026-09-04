@@ -108,7 +108,7 @@ track makes the loop affordable. **The algorithm work exists because the loop de
 | O9 | Scoped re-optimisation is **vacuous** — a drifted profile touches 84–100% of workflows. J9 re-optimises globally | Closed by F18 |
 | §6.4 | Budget anchor replaced with a reference allocation | Accepted |
 | §4.5 | EMA for latency, **decayed counting estimator for reliability** | Changed by F19 |
-| Track A | Stays in the repo, **not reported in results** | Your call, this session |
+| Track A | **Split, and T0 decision 3 is written to match.** *Plain* A stays in the repo but is **not reported in results**; **`A+subset` is a live contender** — never worse than plain greedy on 72 paired instances (F32), and it recovers the fixture's 280. Its gap does grow with scale | Your call, T0 |
 | Track B | Keeps both roles — bound generator **and** allocator, with the 100× caveat attached | Your call, this session |
 | O13 | **Price is not a multiple of GPU count.** Murakkab's basis is the working default until the deployment target is fixed | Advisor + F31, 3 Sep |
 | STATIC | **Keep it as a live comparator, not a strawman.** If the adaptive method underperforms on a workload, report that static wins there | Your call, 3 Sep |
