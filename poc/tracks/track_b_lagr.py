@@ -292,11 +292,13 @@ def allocate(tasks: list[Task],
     elapsed = time.perf_counter() - started
 
     if best_result is None:
+        # The dual bound is valid even though no primal was recovered (F34).
         return AllocationResult.failure(
             strategy,
             Infeasible("no feasible allocation recovered from any subgradient iteration",
                        None, "C3"),
-            elapsed)
+            elapsed,
+            lower_bound=best_bound if best_bound > -math.inf else None)
 
     result = AllocationResult(
         routing=best_result.routing,

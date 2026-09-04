@@ -265,3 +265,63 @@ def test_the_assignment_arm_is_the_tightest():
         if c1.lower_bound is not None and c2.lower_bound is not None:
             wins += c1.lower_bound >= c2.lower_bound - 1e-6
     assert wins >= 5, "the (C1) arm should dominate the (C2) arm on bound quality"
+
+
+# --- bounds must survive a failed primal (F34) -----------------------------------
+
+def _first_infeasible(allocate, generate_fn, seeds=range(25)):
+    """Find an instance where this track fails to return an allocation.
+
+    Uses the heterogeneous generator, because that is where the tracks fail often enough
+    for this to be checkable — on the per-GPU-price generators repair almost always
+    succeeds, which is precisely why the discarded-bound defect went unnoticed.
+    """
+    for seed in seeds:
+        inst = generate_fn(n_tasks=16, n_profiles=8, budget_tightness=1.0, seed=seed)
+        optimal = exact_milp.allocate(*inst.unpack())
+        if not optimal.feasible or optimal.converged is False:
+            continue
+        result = allocate(*inst.unpack())
+        if not result.feasible:
+            return inst, result, optimal
+    return None, None, None
+
+
+@pytest.mark.parametrize("allocate", [
+    track_c_lp.allocate,
+    track_b_lagr.allocate,
+    track_b_c3.allocate,
+], ids=["C", "B", "B-C3"])
+def test_a_failed_primal_still_reports_its_bound(allocate):
+    """A dual bound is valid whenever its relaxation solved.
+
+    Discarding it on primal failure conflated T1 ("how tight is the relaxation") with T4
+    ("can the track return an answer"), and made T1 unmeasurable on exactly the instances
+    where the budget binds — every arm was dropped for infeasibility and the paired set came
+    out empty.
+    """
+    from poc.instances.heterogeneous_generator import generate as het
+
+    inst, result, optimal = _first_infeasible(allocate, het)
+    if inst is None:
+        pytest.skip("no infeasible case found in the seed range")
+
+    assert result.lower_bound is not None, (
+        "the relaxation solved but its bound was discarded when the primal failed")
+    assert result.lower_bound <= optimal.total_cost + 1e-6, (
+        f"INVALID BOUND on a failed primal: {result.lower_bound} > {optimal.total_cost}")
+
+
+def test_an_empty_pool_still_reports_no_bound():
+    """None must keep meaning "no bound exists", not "no bound survived".
+
+    An empty candidate pool fails before any relaxation is solved, so there is genuinely
+    nothing to report and the fix above must not manufacture one.
+    """
+    inst = generate(n_tasks=6, n_profiles=3, budget_tightness=1.0, seed=0)
+    tasks, pools, profiles, budget = inst.unpack()
+    starved = {t.id: [] for t in tasks}
+    for allocate in (track_c_lp.allocate, track_b_lagr.allocate, track_b_c3.allocate):
+        result = allocate(tasks, starved, profiles, budget)
+        assert not result.feasible
+        assert result.lower_bound is None

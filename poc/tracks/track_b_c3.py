@@ -165,11 +165,13 @@ def allocate(tasks: list[Task],
             best_result = candidate_result
 
     if best_result is None or not best_result.feasible:
+        # The dual bound is valid even though the repair failed (F34).
         return AllocationResult.failure(
             strategy,
             Infeasible("dual subproblem could not be repaired into budget feasibility",
                        None, "C3"),
-            time.perf_counter() - started)
+            time.perf_counter() - started,
+            lower_bound=best_bound if math.isfinite(best_bound) else None)
 
     best_result.strategy = strategy
     best_result.lower_bound = best_bound

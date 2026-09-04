@@ -198,11 +198,14 @@ def allocate(tasks: list[Task],
                 best_state, best_routing = state, outcome
 
     if best_state is None:
+        # The LP bound survives a failed repair: the relaxation solved, so `bound` is a
+        # valid lower bound on the integer optimum whatever the rounding did (F34).
         return AllocationResult.failure(
             strategy,
             Infeasible("every rounding policy failed repair — no profile admissible "
                        "within budget", blocking, "C3"),
-            time.perf_counter() - started)
+            time.perf_counter() - started,
+            lower_bound=bound)
 
     result = AllocationResult(
         routing=best_routing,

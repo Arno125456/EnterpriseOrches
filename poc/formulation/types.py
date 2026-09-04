@@ -110,11 +110,24 @@ class AllocationResult:
 
     @classmethod
     def failure(cls, strategy: str, detail: Infeasible,
-                compute_time: float = 0.0) -> AllocationResult:
-        """A complete-or-nothing failure. Partial assignments are never valid output (P9)."""
+                compute_time: float = 0.0,
+                lower_bound: float | None = None) -> AllocationResult:
+        """A complete-or-nothing failure. Partial assignments are never valid output (P9).
+
+        `lower_bound` is OPTIONAL AND SEPARATE FROM FEASIBILITY, which is not obvious and was
+        originally missed. A dual bound is valid whenever its relaxation solved, regardless of
+        whether the track's primal repair then found an allocation. Discarding it conflates
+        two different questions — "how tight is this relaxation" (T1) and "can this track
+        return an answer" (T4) — and the conflation only becomes visible on instances where
+        repair fails often, which is exactly where T1 most needs measuring (F34).
+
+        Pass it wherever a relaxation solved. Leave it None where none was computed, such as
+        an empty candidate pool, so that None keeps meaning "no bound exists" rather than
+        "no bound survived".
+        """
         return cls(routing={}, provisioning={}, total_cost=0.0, gpus_used=0,
                    strategy=strategy, compute_time=compute_time,
-                   feasible=False, infeasible=detail)
+                   feasible=False, infeasible=detail, lower_bound=lower_bound)
 
 
 @dataclass(frozen=True)

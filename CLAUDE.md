@@ -220,7 +220,7 @@ rather than picking silently.
 | O2 | Which constraint does Track B relax? **Built against (C1)** per §1.8. Still an assumption — relaxing (C3) is unmeasured |
 | O3 | Is Track B's bound strictly better than Track C's LP bound? **Preliminary: yes, 30/30** |
 | O4 | Can greedy be defeated by aggregate coupling? **Yes** — fixture confirmed, and it fails on feasibility far more often than on cost |
-| O5 | Step-size schedule, tolerance, iteration cap for Track B — still open, values in `track_b_lagr.py` are untuned defaults |
+| O5 | Step-size schedule, tolerance, iteration cap for Track B — still open, values in `track_b_lagr.py` are untuned defaults. **Promoted to blocking (F34):** on the heterogeneous generator the subgradient never converges and its bound drops below the LP's, which the dual optimum cannot do — so T1's answer there is currently unobtainable rather than negative |
 | O6 | ~~LP rounding policy~~ → **the repair pass**. The LP returns integral routings 96% of the time |
 | O7 | Where does the budget bind? **Answered (F33): wherever price per GPU is not constant.** (C3) changes the optimum in 24/25 heterogeneous instances vs 0–4/25 on the two per-GPU-price generators. Anchor amended, see findings F2 |
 | O8 | Is Track A worth its complexity? |

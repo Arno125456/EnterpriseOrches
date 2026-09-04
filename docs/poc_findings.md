@@ -2084,11 +2084,124 @@ identical, and that is what the comparison rests on.
 
 ---
 
+## F34 - T1 re-run where the budget binds: the bound advantage does not survive, and the fault is ours
+
+F33 built the instrument F31 called for. This runs T1 on it. Two things came out, and the
+first had to be fixed before the second could be measured at all.
+
+### 1. The bounds were being thrown away
+
+The first run returned **zero paired instances** on the heterogeneous generator. Not a weak
+result - no data at all. The cause: every track discarded its dual bound whenever its
+**primal** repair failed.
+
+```python
+return AllocationResult.failure(strategy, Infeasible(...), elapsed)   # bound dropped
+```
+
+A dual bound is valid whenever its relaxation solved. Whether the track's rounding or repair
+then recovered a feasible allocation is a *different* question. Discarding the bound conflates
+T1 ("how tight is this relaxation") with T4 ("can this track return an answer"), and the
+conflation is invisible on the two per-GPU-price generators because repair almost always
+succeeds there. On instances where the budget actually binds, every arm was dropped for
+infeasibility and the paired set came out empty.
+
+Fixed: `AllocationResult.failure` takes an optional `lower_bound`, passed at the four sites
+where a relaxation had solved. `None` still means "no bound exists" - an empty candidate pool
+fails before any relaxation runs - and there is a test for that, so `None` cannot quietly come
+to mean "no bound survived". Paired instances: **0 -> 17**.
+
+### 2. Track B's bound is not tighter than the LP's here
+
+| generator | B (C1) vs LP, paired | tighter on |
+|---|---|---|
+| uniform | **+5.20 pp [4.40, 5.98]** | **25/25** |
+| structured | **+13.44 pp [10.28, 16.70]** | **22/22** |
+| **heterogeneous** | **-2.17 pp [-6.99, 2.13]** | **10/17** |
+
+The interval spans zero and the point estimate is *negative*. On the two generators where
+price is a fixed multiple of GPU count, Track B's advantage is overwhelming and unanimous. Where
+price is decorrelated, **it is not established at all.**
+
+### The fault is our solver, not the relaxation - and that is provable
+
+This is not a case of "the relaxation is weaker on harder instances". By Geoffrion, the
+Lagrangian dual optimum is **>= the LP bound** whenever the subproblem lacks the integrality
+property, and a per-profile 0/1 knapsack lacks it. So the dual optimum *cannot* be below the LP
+bound. Measuring it below therefore does not say the relaxation is weak - **it says our
+multipliers are not the optimal ones.**
+
+The suite already encodes this as an invariant, and only ever ran it on the default generator:
+
+```
+poc/tests/test_harness.py:174
+    assert b.lower_bound >= c.lower_bound - 1e-6, "Lagrangian bound below LP bound"
+```
+
+**The iteration cap is not the explanation.** Raising it 16x barely moves the bound and then
+plateaus:
+
+| `ITERATION_CAP` | B bound gap | vs LP, paired |
+|---|---|---|
+| 75 (default) | 12.02% | -2.59 pp |
+| 300 | 11.63% | -2.20 pp |
+| 1200 | 11.63% | -2.20 pp |
+
+Identical at 300 and 1200, so the method has stopped moving rather than run out of budget. That
+is the signature of the **step size** collapsing - `alpha` halves after
+`NON_IMPROVEMENT_PATIENCE` and floors at `MIN_STEP_SCALE`, after which further iterations are
+free and useless. Track B also reports `converged=False` on **12 of 12** heterogeneous
+instances against 4 of 12 uniform.
+
+**So O5 is no longer a tuning nicety. It is load-bearing for T1** and should be reclassified.
+The step-size schedule, tolerance and cap were carried as untuned defaults on the grounds that
+nothing depended on them; on these instances T1's headline answer does.
+
+### B-C3 no longer matches the LP either, and it is the same cause
+
+The prior result was that `B-C3`'s bound equals the LP bound to ~2e-5. Two explanations were
+available and indistinguishable on the old instances: the structural one (relaxing (C3) *and*
+the integrality of `n[m]` leaves nothing the LP does not already have), and a non-structural
+one (the dualised constraint was nearly inert, so the optimal multiplier sat at zero and
+bisection found it trivially).
+
+They make different predictions here, and the measurement separates them:
+
+| generator | agree to 1e-6 relative | max relative difference |
+|---|---|---|
+| uniform | 25/25 | 1.2e-08 |
+| structured | 22/22 | 1.7e-08 |
+| **heterogeneous** | **14/17** | **8.5e-02** |
+
+Where (C3) binds, mu* > 0 and the bisection has to actually locate it. It does not always
+manage. **The structural claim is not refuted** - it remains the right account of why the two
+*should* agree - but the pristine agreement previously reported was partly an artefact of
+mu* = 0, and should not be quoted as evidence of the theory without this caveat.
+
+### What this changes
+
+- **Belief 3 - "the Lagrangian bound is consistently tighter than the LP" - is downgraded from
+  High to generator-dependent.** The 30/30 result stands where price is a multiple of GPU
+  count. It does not hold where it is not.
+- **T1's answer is now conditional**, and the condition is the pricing regime. Chapter 3 should
+  say so rather than quoting 30/30 unqualified.
+- **O5 is promoted** from "medium, untuned defaults" to a blocker on T1.
+- The (C2) arm is unaffected and remains the worst of the three everywhere: **-0.67, -0.09 and
+  -3.10 pp** against the LP, tighter on 0 of 25, 0 of 22 and 0 of 17.
+
+**What is NOT claimed:** that Track B is worse than the LP. The evidence points the other way -
+theory says its dual optimum must be at least the LP bound, and we are failing to reach it.
+The honest statement is that **we cannot currently compute Track B's bound well enough to
+answer T1 on instances where the budget binds.** Fixing the step-size schedule is the next
+step, and it may well restore the advantage.
+
+---
+
 ## Still open
 
 | # | Item | Owner |
 |---|---|---|
-| O5 | Track B's step-size schedule, tolerance, iteration cap — current values are untuned | 075 |
+| O5 | Track B's step-size schedule, tolerance, iteration cap. **No longer a tuning nicety — F34 makes it load-bearing for T1.** The cap is not the problem; the step size collapsing is the candidate | 075 |
 | — | Profile Track B's knapsack subproblem in C/Cython before treating runtime as settled | 075 |
 | — | Rewrite T4's decision criteria: they ask an A-vs-C question the data has moved past | 089 |
 | — | Reconcile `track_a_m1.py` against Cheng & Nguyen's real M1 | 035 |

@@ -157,8 +157,10 @@ def allocate(tasks: list[Task],
     # This arm produces a BOUND. Its relaxed solution ignores (C2) entirely, so it has no
     # primal of its own; greedy's answer is reported as the incumbent and labelled as such.
     if not incumbent.feasible:
+        # This arm's bound never depended on the incumbent in the first place (F34).
         return AllocationResult.failure(
-            STRATEGY, Infeasible("no feasible incumbent", None, "C3"), elapsed)
+            STRATEGY, Infeasible("no feasible incumbent", None, "C3"), elapsed,
+            lower_bound=best_bound if best_bound > -math.inf else None)
 
     result = AllocationResult(
         routing=incumbent.routing, provisioning=incumbent.provisioning,
