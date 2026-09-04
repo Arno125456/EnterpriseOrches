@@ -46,7 +46,6 @@ def run_benchmark():
     print("=" * 75)
 
     all_strategies = ["MILP", "STATIC", "A", "A+M1", "A+subset", "A+M1+subset", "B", "B-C3", "C", "C+cons"]
-    fast_strategies = ["MILP", "STATIC", "A", "A+M1", "A+subset", "A+M1+subset", "B-C3", "C", "C+cons"]
 
     results = {}
 
@@ -60,7 +59,8 @@ def run_benchmark():
         results[gen_name] = {}
         for scale in SCALES:
             n_tasks, n_profiles = scale
-            strats = all_strategies if n_tasks <= 16 else fast_strategies
+            # Track B is vectorized with numpy (F33) and evaluates in <=2.2s even at 64 tasks!
+            strats = all_strategies
             print(f"\nEvaluating {gen_name} Generator at Scale ({n_tasks} tasks, {n_profiles} profiles)...")
             start_t = time.perf_counter()
             recs = scale_sweep([scale], seeds=SEEDS, strategies=strats,
@@ -144,7 +144,7 @@ def format_markdown_report(results) -> str:
 
     for scale in [(16, 6), (32, 8)]:
         scale_label = f"{scale[0]}"
-        for cond in ["MILP", "A", "A+M1", "A+subset", "A+M1+subset", "B-C3", "C+cons"]:
+        for cond in ["MILP", "A", "A+M1", "A+subset", "A+M1+subset", "B", "B-C3", "C+cons"]:
             s = results["Heterogeneous"][scale].get(cond)
             if s:
                 mg_str = f"{s.mean_gap_pct:.2f}\\%" if s.mean_gap_pct is not None else "-"
