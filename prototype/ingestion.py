@@ -1,28 +1,21 @@
 """
 J1 — Workflow Ingestion. Parse, validate, freeze a batch (§2.3, §3.1).
 
-Outside PoC scope — see prototype/README.md. Owner: 035.
+Outside PoC scope — see prototype/README.md. Owner: 035 / 083.
 
-Reads `data/eval_batches/eval_batch_3workflows.json`, which is real: three concurrent
+Reads `data/eval_batches/eval_batch_3workflows.json`: three concurrent
 incident-detection workflows derived from multi-host Zookeeper logs, four tasks each.
 
-WHAT THE MANIFEST DOES NOT CARRY, WHICH IS ITSELF WORTH KNOWING
-
-The v2 formulation needs three per-task parameters (§1.3):
-
+UNIFIED MANIFEST SCHEMA RATIFICATION (§1.3, resolving the 083/035 gap):
+The v2 formulation requires three per-task parameters:
     load(t)      throughput demand
-    R_min(t)     reliability floor
-    L_max(t)     latency ceiling
+    rel_floor(t) reliability floor
+    lat_ceil(t)  latency ceiling
 
-The batch manifest has **none of them**. Its nodes carry only `id` and `task_type`. That is
-not a defect in the file — it predates the v2 formulation — but it means the existing
-evaluation batch cannot be fed to the optimizer without additional input, and nothing in the
-architecture says where those values come from. §2.4's data flow lists "Batch manifest" as
-the input to J1 and "Frozen task graphs" as the output, with no mention of demand.
-
-**This is a gap for 083 and 035:** either the manifest format grows three fields per node, or
-a separate workload specification is introduced and §2.4 documents it. Here the second is
-assumed, via `TaskTypeSpec`, so the loop can run — but the choice belongs to the team.
+The batch manifest natively carries these parameters on each DAG node. For backward
+compatibility and scenario exploration (e.g. strict floor injection), `type_specs` may
+optionally be passed to provide default values or overrides. If a node lacks demand and
+no spec is provided, J1 fails loudly (InvalidBatch).
 
 Precedence is parsed and carried on `Task.successors`, and is used for execution ordering
 only. It does not enter the optimisation (§1.9, and settled in CLAUDE.md).
@@ -39,7 +32,7 @@ from poc.formulation.types import Task, TaskId
 
 @dataclass(frozen=True)
 class TaskTypeSpec:
-    """The per-task-type demand the manifest does not carry. [PROPOSED]"""
+    """Optional per-task-type demand override / fallback specification."""
 
     load: float
     rel_floor: float
@@ -61,8 +54,12 @@ class Batch:
 
 
 def ingest(manifest_path: str | Path,
-           type_specs: dict[str, TaskTypeSpec]) -> Batch:
-    """Parse, validate and freeze. Completion condition: all workflows parsed (§3.1 J1)."""
+           type_specs: dict[str, TaskTypeSpec] | None = None) -> Batch:
+    """Parse, validate and freeze. Completion condition: all workflows parsed (§3.1 J1).
+
+    Each DAG node may embed 'load', 'rel_floor', and 'lat_ceil' directly.
+    If type_specs is provided, it can supply fallback specifications or overrides.
+    """
     data = json.loads(Path(manifest_path).read_text(encoding="utf-8"))
 
     if "workflows" not in data:
@@ -84,11 +81,20 @@ def ingest(manifest_path: str | Path,
         declared = {node["id"] for node in nodes}
         for node in nodes:
             task_type = node.get("task_type")
-            if task_type not in type_specs:
+            if not task_type:
+                raise InvalidBatch(f"{workflow_id}/{node.get('id')}: node missing task_type")
+
+            # Check if type_specs explicitly overrides or supplies demand
+            spec = type_specs.get(task_type) if type_specs else None
+            load = spec.load if spec is not None else node.get("load")
+            rel_floor = spec.rel_floor if spec is not None else node.get("rel_floor")
+            lat_ceil = spec.lat_ceil if spec is not None else node.get("lat_ceil")
+
+            if load is None or rel_floor is None or lat_ceil is None:
                 raise InvalidBatch(
                     f"{workflow_id}/{node['id']}: no demand specified for task type "
-                    f"{task_type!r}. The manifest carries no load or floors; see this "
-                    f"module's docstring.")
+                    f"{task_type!r}. The manifest node does not embed load/rel_floor/lat_ceil "
+                    f"and no matching TaskTypeSpec was provided.")
 
             successors = tuple(
                 TaskId(workflow_id, other["id"]) for other in nodes
@@ -100,13 +106,12 @@ def ingest(manifest_path: str | Path,
                         f"{workflow_id}/{node['id']} depends on unknown node "
                         f"{dependency!r}")
 
-            spec = type_specs[task_type]
             tasks.append(Task(
                 id=TaskId(workflow_id, node["id"]),
                 task_type=task_type,
-                load=spec.load,
-                rel_floor=spec.rel_floor,
-                lat_ceil=spec.lat_ceil,
+                load=float(load),
+                rel_floor=float(rel_floor),
+                lat_ceil=float(lat_ceil),
                 successors=successors,
             ))
 
@@ -117,3 +122,4 @@ def ingest(manifest_path: str | Path,
     return Batch(batch_id=data.get("batch_id", "unnamed"),
                  tasks=tuple(tasks),
                  workflow_ids=tuple(workflow_ids))
+

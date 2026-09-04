@@ -9,11 +9,17 @@
         "nodes": [
           {
             "id": "n1",
-            "task_type": "parse_log_line"
+            "task_type": "parse_log_line",
+            "load": 6.0,
+            "rel_floor": 0.9,
+            "lat_ceil": 200.0
           },
           {
             "id": "n2",
             "task_type": "classify_severity",
+            "load": 4.0,
+            "rel_floor": 0.85,
+            "lat_ceil": 200.0,
             "depends_on": [
               "n1"
             ]
@@ -21,6 +27,9 @@
           {
             "id": "n3",
             "task_type": "enrich_context",
+            "load": 3.0,
+            "rel_floor": 0.8,
+            "lat_ceil": 200.0,
             "depends_on": [
               "n1"
             ]
@@ -28,6 +37,9 @@
           {
             "id": "n4",
             "task_type": "generate_report",
+            "load": 5.0,
+            "rel_floor": 0.85,
+            "lat_ceil": 200.0,
             "depends_on": [
               "n2",
               "n3"
@@ -1323,11 +1335,17 @@
         "nodes": [
           {
             "id": "n1",
-            "task_type": "parse_log_line"
+            "task_type": "parse_log_line",
+            "load": 6.0,
+            "rel_floor": 0.9,
+            "lat_ceil": 200.0
           },
           {
             "id": "n2",
             "task_type": "classify_severity",
+            "load": 4.0,
+            "rel_floor": 0.85,
+            "lat_ceil": 200.0,
             "depends_on": [
               "n1"
             ]
@@ -1335,6 +1353,9 @@
           {
             "id": "n3",
             "task_type": "enrich_context",
+            "load": 3.0,
+            "rel_floor": 0.8,
+            "lat_ceil": 200.0,
             "depends_on": [
               "n1"
             ]
@@ -1342,6 +1363,9 @@
           {
             "id": "n4",
             "task_type": "generate_report",
+            "load": 5.0,
+            "rel_floor": 0.85,
+            "lat_ceil": 200.0,
             "depends_on": [
               "n2",
               "n3"
@@ -2420,11 +2444,17 @@
         "nodes": [
           {
             "id": "n1",
-            "task_type": "parse_log_line"
+            "task_type": "parse_log_line",
+            "load": 6.0,
+            "rel_floor": 0.9,
+            "lat_ceil": 200.0
           },
           {
             "id": "n2",
             "task_type": "classify_severity",
+            "load": 4.0,
+            "rel_floor": 0.85,
+            "lat_ceil": 200.0,
             "depends_on": [
               "n1"
             ]
@@ -2432,6 +2462,9 @@
           {
             "id": "n3",
             "task_type": "enrich_context",
+            "load": 3.0,
+            "rel_floor": 0.8,
+            "lat_ceil": 200.0,
             "depends_on": [
               "n1"
             ]
@@ -2439,6 +2472,9 @@
           {
             "id": "n4",
             "task_type": "generate_report",
+            "load": 5.0,
+            "rel_floor": 0.85,
+            "lat_ceil": 200.0,
             "depends_on": [
               "n2",
               "n3"

@@ -46,16 +46,35 @@ def test_ingests_the_real_batch(batch):
     assert len(batch.workflow_ids) == 3
 
 
+def test_ingests_real_batch_natively_without_specs():
+    """Manifest directly embeds load, rel_floor, lat_ceil (§1.3 unified schema)."""
+    batch = ingest(MANIFEST)
+    assert batch.batch_id == "eval-batch-001"
+    assert len(batch.tasks) == 12
+    assert all(t.load > 0 for t in batch.tasks)
+    assert all(t.rel_floor > 0 for t in batch.tasks)
+    assert all(t.lat_ceil > 0 for t in batch.tasks)
+
+
 def test_precedence_is_parsed_but_not_used_in_optimisation(batch):
     """DAG edges determine execution order only (§1.9)."""
     assert any(t.successors for t in batch.tasks), "expected real DAG edges"
 
 
-def test_missing_demand_is_rejected_loudly():
-    """The manifest carries no load or floors. If a type has no spec, J1 must fail rather
-    than invent one — the gap belongs to 083/035, not to a default."""
+def test_missing_demand_is_rejected_loudly(tmp_path):
+    """If a node carries no load/rel_floor/lat_ceil and no type_spec is provided,
+    J1 must fail loudly rather than inventing arbitrary default values."""
+    import json
+    manifest_file = tmp_path / "incomplete_manifest.json"
+    manifest_file.write_text(json.dumps({
+        "batch_id": "test-incomplete",
+        "workflows": [{
+            "workflow_id": "wf-incomplete",
+            "dag": {"nodes": [{"id": "n1", "task_type": "unknown_task"}]}
+        }]
+    }))
     with pytest.raises(InvalidBatch, match="no demand specified"):
-        ingest(MANIFEST, {"parse_log_line": SPECS["parse_log_line"]})
+        ingest(manifest_file)
 
 
 # --- J4 -------------------------------------------------------------------------
