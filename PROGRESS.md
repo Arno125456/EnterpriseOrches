@@ -194,6 +194,7 @@ Published in [`docs/chapter3_benchmark_results.md`](docs/chapter3_benchmark_resu
 | **Executive Summary** | [`docs/poc_findings_summary.md`](docs/poc_findings_summary.md) | Standing summary of beliefs, confidence levels, and core conclusions |
 | **Chronological Findings** | [`docs/poc_findings.md`](docs/poc_findings.md) | Detailed findings log from F1 to F32, including mathematical proofs and anomalies |
 | **M1 Presentation Slides** | [`docs/M1_Proposal_Presentation_Slides.md`](docs/M1_Proposal_Presentation_Slides.md) | 16-slide presentation outline, visuals, speaker script, and committee Q&A prep |
+| **Interactive HTML Slide Deck** | [`docs/presentation/index.html`](docs/presentation/index.html) | Zero-dependency browser slide presentation with keyboard navigation & speaker notes |
 | **Heterogeneous Fleet Generator** | [`poc/instances/heterogeneous_generator.py`](poc/instances/heterogeneous_generator.py) | Decorrelates price from GPU count (F32), activating the (C3) budget trade-off |
 | **Chapter 3 Benchmarks** | [`docs/chapter3_benchmark_results.md`](docs/chapter3_benchmark_results.md) | Publication-grade Markdown and LaTeX benchmark tables across 3 generators (8 to 64 tasks) |
 | **Closed-Loop Benchmark Runner** | [`scripts/run_closed_loop_benchmark.py`](scripts/run_closed_loop_benchmark.py) | Standalone CLI tool running 20-seed drift simulation with ASCII timeline and 95% CIs |

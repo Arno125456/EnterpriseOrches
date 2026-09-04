@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CapOrches — Milestone M1 Proposal Presentation Deck</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card-bg: #161b22;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --heading: #f0f6fc;
+      --primary: #58a6ff;
+      --primary-hover: #1f6feb;
+      --accent: #3fb950;
+      --warning: #d29922;
+      --danger: #f85149;
+      --code-bg: #090d13;
+      --notes-bg: #1c2128;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* Top Progress Bar */
+    #progress-container {
+      width: 100%;
+      height: 4px;
+      background: var(--border);
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 100;
+    }
+    #progress-bar {
+      height: 100%;
+      background: var(--primary);
+      width: 6.25%;
+      transition: width 0.3s ease;
+    }
+
+    /* Header Nav */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 24px;
+      background: rgba(22, 27, 34, 0.85);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 4px;
+      z-index: 90;
+    }
+    .brand {
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--heading);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: rgba(88, 166, 255, 0.15);
+      color: var(--primary);
+      border: 1px solid rgba(88, 166, 255, 0.3);
+    }
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    button {
+      background: var(--card-bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    button:hover {
+      background: #21262d;
+      border-color: #8b949e;
+      color: var(--heading);
+    }
+    button.active {
+      background: rgba(88, 166, 255, 0.15);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+    #slide-indicator {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--heading);
+      min-width: 90px;
+      text-align: center;
+    }
+
+    /* Main Slide Container */
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 30px 20px 80px 20px;
+      max-width: 1100px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .slide {
+      display: none;
+      width: 100%;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 40px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+      animation: fadeIn 0.25s ease-in-out;
+    }
+    .slide.active { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .slide-header {
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .slide-title {
+      font-size: 1.8rem;
+      color: var(--heading);
+      font-weight: 700;
+      line-height: 1.3;
+    }
+    .slide-speaker {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--accent);
+      background: rgba(63, 185, 80, 0.12);
+      border: 1px solid rgba(63, 185, 80, 0.3);
+      padding: 4px 10px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+
+    .key-message {
+      background: rgba(88, 166, 255, 0.08);
+      border-left: 4px solid var(--primary);
+      padding: 12px 18px;
+      border-radius: 0 6px 6px 0;
+      margin-bottom: 24px;
+      font-size: 1.05rem;
+      color: #e6edf3;
+      line-height: 1.5;
+    }
+
+    .slide-body {
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    /* Content components */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-top: 15px;
+    }
+    .box {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      padding: 18px;
+      border-radius: 8px;
+    }
+    .box h4 {
+      color: var(--primary);
+      margin-bottom: 8px;
+      font-size: 1.05rem;
+    }
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 14px;
+      overflow-x: auto;
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 0.88rem;
+      line-height: 1.45;
+      color: #79c0ff;
+      margin: 12px 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 0.9rem;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 10px 14px;
+      text-align: left;
+    }
+    th {
+      background: #1f242c;
+      color: var(--heading);
+      font-weight: 600;
+    }
+    tr:nth-child(even) { background: rgba(255, 255, 255, 0.02); }
+
+    /* Speaker Notes Drawer */
+    #notes-drawer {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--notes-bg);
+      border-top: 2px solid var(--primary);
+      padding: 16px 24px;
+      max-height: 220px;
+      overflow-y: auto;
+      box-shadow: 0 -8px 24px rgba(0,0,0,0.5);
+      z-index: 80;
+    }
+    #notes-drawer.open { display: block; }
+    .notes-title {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--primary);
+      font-weight: 700;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .notes-content {
+      font-size: 0.95rem;
+      color: #f0f6fc;
+      line-height: 1.5;
+      font-style: italic;
+    }
+
+    /* Q&A Accordion */
+    .qa-item {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin-bottom: 10px;
+      overflow: hidden;
+    }
+    .qa-question {
+      padding: 12px 16px;
+      background: #1a2029;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--primary);
+      display: flex;
+      justify-content: space-between;
+    }
+    .qa-answer {
+      padding: 14px 16px;
+      background: var(--code-bg);
+      font-size: 0.92rem;
+      line-height: 1.5;
+      color: var(--text);
+      display: none;
+    }
+    .qa-item.active .qa-answer { display: block; }
+
+    /* Keyboard Help Footer */
+    footer {
+      position: fixed;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.78rem;
+      color: #6e7681;
+      display: flex;
+      gap: 16px;
+      z-index: 50;
+    }
+    kbd {
+      background: #21262d;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-family: inherit;
+      color: #c9d1d9;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="progress-container"><div id="progress-bar"></div></div>
+
+  <header>
+    <div class="brand">
+      <span>CapOrches</span>
+      <span class="badge">Milestone M1 Proposal</span>
+    </div>
+    <div class="controls">
+      <button id="prev-btn" onclick="prevSlide()">❮ Prev</button>
+      <span id="slide-indicator">Slide 1 / 16</span>
+      <button id="next-btn" onclick="nextSlide()">Next ❯</button>
+      <button id="notes-toggle" onclick="toggleNotes()">📝 Notes (S)</button>
+      <button onclick="toggleFullscreen()">⛶ Full (F)</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Slide 1 -->
+    <div class="slide active" data-speaker="Speaker 035 (Lead)" data-notes="Good afternoon, Prof. Tossaphol and members of the committee. Today, we present CapOrches: our Profile-Guided Multi-Workflow Resource Orchestration Platform. Over the past month, our team has proven our mathematical formulation and closed loop through 646 tests. Today, we share those findings and our Semester 2 implementation plan.">
+      <div class="slide-header">
+        <h1 class="slide-title">Profile-Guided Multi-Workflow Resource Orchestration Platform</h1>
+        <span class="slide-speaker">035 / Lead</span>
+      </div>
+      <div class="key-message">
+        A mathematically grounded, profile-guided orchestration platform that jointly solves model selection and GPU provisioning under hard budgets across concurrent workflow DAGs.
+      </div>
+      <div class="slide-body">
+        <div class="grid-2">
+          <div class="box">
+            <h4>Senior Capstone Project (Milestone M1)</h4>
+            <p><strong>Department:</strong> Computer Engineering, Faculty of Engineering</p>
+            <p><strong>Academic Year:</strong> 2026–2027</p>
+            <p><strong>Faculty Advisor:</strong> Prof. Tossaphol</p>
+            <p><strong>Presentation Date:</strong> 30 September 2026</p>
+          </div>
+          <div class="box">
+            <h4>Student Engineering Team</h4>
+            <p>• <strong>035:</strong> Lead & Heuristic Search (Track A+subset)</p>
+            <p>• <strong>075:</strong> Mathematical Programming & Duality (Track B)</p>
+            <p>• <strong>077:</strong> Systems Architecture & Telemetry Loop</p>
+            <p>• <strong>083:</strong> Software Architecture & Fleet Modeling</p>
+            <p>• <strong>089:</strong> Empirical Methodology & Statistical CIs</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 2 -->
+    <div class="slide" data-speaker="Speaker 077 (Systems)" data-notes="Enterprise software is transitioning to multi-stage agentic workflows—complex DAGs of specialized tasks. In enterprise private clouds, GPUs are expensive and strictly capped. If workflows pick models independently, they over-provision flagship models that sit 70% idle, exhausting budgets and stranding concurrent pipelines. CapOrches solves routing and provisioning jointly across all workflows.">
+      <div class="slide-header">
+        <h1 class="slide-title">The Enterprise Dilemma: LLM Accelerator Scarcity</h1>
+        <span class="slide-speaker">077 / Systems</span>
+      </div>
+      <div class="key-message">
+        Independent, uncoordinated model routing in enterprise clusters causes extreme GPU memory fragmentation, severe under-utilization, and quota collapse.
+      </div>
+      <div class="slide-body">
+        <div class="grid-2">
+          <div class="box">
+            <h4>Current Enterprise Reality</h4>
+            <p>• <strong>Multi-Stage Agentic DAGs:</strong> RAG, code generation, multi-agent debate pipelines submit concurrent batches.</p>
+            <p>• <strong>Ad-Hoc Model Choice:</strong> Developers hard-code 70B models on 4x A100 instances, leading to 70% idle compute headroom.</p>
+            <p>• <strong>Quota Exhaustion:</strong> Concurrent pipelines stall as shared cluster GPU limits ($B$) are breached.</p>
+          </div>
+          <div class="box">
+            <h4>The CapOrches Solution</h4>
+            <p>• <strong>Cross-Workflow Multiplexing:</strong> Packs concurrent tasks into shared serving profile instances.</p>
+            <p>• <strong>Joint Level 1 & Level 2 Solving:</strong> Binds task routing ($x$) and hardware provisioning ($n$) together under global budgets.</p>
+            <p>• <strong>Proven Cost Reduction:</strong> Slashes physical GPU footprint while guaranteeing enterprise SLA floors.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 3 -->
+    <div class="slide" data-speaker="Speaker 083 (Architecture)" data-notes="Our architecture decouples declarative pipelines from physical execution. Workflows specify what they need—throughput, latency ceilings, and reliability floors. Our platform takes this entire batch offline and performs joint optimization: Level 1 routing and Level 2 physical provisioning. Real-time telemetry profiles latency and reliability, closing the loop to adapt future allocations.">
+      <div class="slide-header">
+        <h1 class="slide-title">System Overview: Decoupling Pipelines from Physical Execution</h1>
+        <span class="slide-speaker">083 / Architecture</span>
+      </div>
+      <div class="key-message">
+        Workflows specify declarative logical tasks and SLA constraints; the orchestration platform decides physical instance provisioning and routing.
+      </div>
+      <div class="slide-body">
+        <pre>
++------------------------------------------------------------------------------------+
+| Application Layer: Declarative Workflow DAGs (LangGraph / AutoGen / DSPy)          |
++------------------------------------------------------------------------------------+
+                                         |
+                                         v
++------------------------------------------------------------------------------------+
+| 1. Candidate Pool Filtering Engine (UCB Reliability Floor & Latency Ceilings)       |
+| 2. Joint Allocator Daemon (Level 1: Routing x[t][m], Level 2: Provisioning n[m])   |
+| 3. Distributed Telemetry & Bayesian Profile Store (Decayed Counting with Jeffreys) |
+| 4. Discrete Decision-Space Drift Detector (Update Compatibility C < 0.90)          |
++------------------------------------------------------------------------------------+
+                                         |
+                                         v
++------------------------------------------------------------------------------------+
+| Physical Infrastructure: Kubernetes GPU Pools (Commodity T4, Standard A100, H100)  |
++------------------------------------------------------------------------------------+
+        </pre>
+      </div>
+    </div>
+
+    <!-- Slide 4 -->
+    <div class="slide" data-speaker="Speaker 075 (Math)" data-notes="We formulate resource orchestration as a Modular Capacitated Facility Location Problem with Budget Constraints (MCFLP-B). Profiles are facilities; provisioned instances n[m] are modular units opened; tasks are customers. Constraint C1 guarantees unit assignment. Constraint C2 couples tasks together: aggregate routed load cannot exceed provisioned throughput. Constraint C3 enforces the hard GPU budget.">
+      <div class="slide-header">
+        <h1 class="slide-title">Mathematical Problem Formulation (T0)</h1>
+        <span class="slide-speaker">075 / Math</span>
+      </div>
+      <div class="key-message">
+        Formulated as a Modular Capacitated Facility Location Problem with a Budget Constraint (MCFLP-B), verified by mathematical invariants I1–I5.
+      </div>
+      <div class="slide-body">
+        <div class="box" style="margin-bottom: 15px;">
+          <h4 style="text-align: center;">min Σ n[m] · price(m)</h4>
+        </div>
+        <table>
+          <tr><th>Constraint</th><th>Mathematical Form</th><th>Operational Meaning</th></tr>
+          <tr><td><strong>(C1) Unit Assignment</strong></td><td>Σ_{m ∈ C(t)} x[t][m] = 1, ∀ t</td><td>Every task is served by exactly one eligible profile.</td></tr>
+          <tr><td><strong>(C2) Capacity Coverage</strong></td><td>Σ_{t} x[t][m] · d(t) ≤ n[m] · u(m), ∀ m</td><td><strong>The Coupling Constraint:</strong> Instances handle aggregate load.</td></tr>
+          <tr><td><strong>(C3) Cluster GPU Budget</strong></td><td>Σ_{m} n[m] · g(m) ≤ B</td><td>Total physical GPUs cannot exceed cluster capacity.</td></tr>
+          <tr><td><strong>Variables</strong></td><td>x[t][m] ∈ {0, 1}, n[m] ∈ ℤ⁺</td><td>Discrete integer decisions; no fractional physical servers.</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Slide 5 -->
+    <div class="slide" data-speaker="Speaker 083 (Architecture)" data-notes="Ahead of T0, we resolved whether reliability is an objective or a constraint. In enterprise clouds, reliability is a contract: an SLA requires 99.5% success. Achieving 99.9% provides diminishing value, but dropping to 99.0% breaches contract. Treating reliability as a multi-objective trade-off requires arbitrary dollar-per-reliability hyperparameters. Pre-filtering candidates C(t) preserves single-objective facility location with provable dual bounds.">
+      <div class="slide-header">
+        <h1 class="slide-title">SLA Floor vs. Multi-Objective Optimization</h1>
+        <span class="slide-speaker">083 / Architecture</span>
+      </div>
+      <div class="key-message">
+        Reliability is enforced as an SLA feasibility floor (Option A), preserving single-objective tractability and avoiding arbitrary dollar-to-reliability trade-off hyperparameters.
+      </div>
+      <div class="slide-body">
+        <div class="grid-2">
+          <div class="box" style="border-color: var(--accent);">
+            <h4 style="color: var(--accent);">Option A: SLA Feasibility Floor (Recommended & Adopted)</h4>
+            <p>• <strong>Definition:</strong> C(t) = { m ∈ M : rel(m) ≥ R_min(t) ∧ lat(m) ≤ L_max(t) }</p>
+            <p>• <strong>Contractual Alignment:</strong> Reflects real enterprise SLAs (either compliant or breached).</p>
+            <p>• <strong>Mathematical Tractability:</strong> Preserves standard MCFLP-B form with valid Lagrangian dual bounds.</p>
+            <p>• <strong>No Tuning Noise:</strong> Zero arbitrary trade-off weighting factors.</p>
+          </div>
+          <div class="box" style="border-color: var(--danger);">
+            <h4 style="color: var(--danger);">Option B: Multi-Objective Weighted Cost</h4>
+            <p>• <strong>Definition:</strong> min Cost - γ · Reliability</p>
+            <p>• <strong>Contract Breach Risk:</strong> Legal to sacrifice SLA compliance if dollar savings exceed penalty.</p>
+            <p>• <strong>Hyperparameter Sensitivity:</strong> Solvers swing radically based on arbitrary γ choice.</p>
+            <p>• <strong>Destroyed Duality:</strong> Breaks clean facility location decomposition.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 6 -->
+    <div class="slide" data-speaker="Speaker 089 (Methodology)" data-notes="Rather than spending months building an unvalidated system, our PoC defined four research questions: T1 through T4. Over the past month, we implemented all 10 planned build steps, built a matched-condition testing harness, and validated every claim across 646 automated tests.">
+      <div class="slide-header">
+        <h1 class="slide-title">The Proof-of-Concept Mandate: Research Questions T1–T4</h1>
+        <span class="slide-speaker">089 / Methodology</span>
+      </div>
+      <div class="key-message">
+        The September PoC retired foundational mathematical and algorithmic unknowns before committing to full Semester 2 implementation.
+      </div>
+      <div class="slide-body">
+        <table>
+          <tr><th>Question</th><th>Focus</th><th>Key Empirical Finding</th></tr>
+          <tr><td><strong>T0</strong></td><td>Problem Formulation</td><td>Formalized as MCFLP-B; 5 mathematical invariants I1–I5 validated.</td></tr>
+          <tr><td><strong>T1</strong></td><td>Lagrangian Duality</td><td>(C1) knapsack relaxation sits a paired <strong>12.57 pp [9.49, 15.64]</strong> tighter than LP bound (F30).</td></tr>
+          <tr><td><strong>T2</strong></td><td>Heuristic Search</td><td>Subset consolidation (A+subset) breaks aggregate coupling, cutting gap from 32% to 1.57% (F20).</td></tr>
+          <tr><td><strong>T3</strong></td><td>Budget Operating Regions</td><td>Heterogeneous fleet decorrelates price from GPU count (r = -0.01), actively shaping cost (F32).</td></tr>
+          <tr><td><strong>T4</strong></td><td>Solver Tractability</td><td>Track C+cons delivers flat <strong>0.106 ± 0.020 s</strong> predictability vs. exact solver's 12.3s heavy tails (F29).</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Slide 7 -->
+    <div class="slide" data-speaker="Speaker 035 (Lead)" data-notes="In Track A, plain greedy assigns tasks by marginal cost. On our fixture, plain greedy gets trapped at cost 300 against optimum 280 because tasks t1 and t2 appear cheaper individually on m1, but together they fit on m2 for less total cost. Feasibility lookahead (A+M1) eliminates budget starvation by checking remaining tasks, but cannot escape the aggregate coupling trap.">
+      <div class="slide-header">
+        <h1 class="slide-title">Track A: Greedy Construction & Feasibility Lookahead</h1>
+        <span class="slide-speaker">035 / Lead</span>
+      </div>
+      <div class="key-message">
+        Plain greedy fails under aggregate coupling; feasibility lookahead (A+M1) eliminates budget starvation but cannot overcome coupled task placement.
+      </div>
+      <div class="slide-body">
+        <div class="grid-2">
+          <div class="box">
+            <h4>The Aggregate Coupling Trap (Finding F8)</h4>
+            <p>• On adversarial fixture (3 tasks, 2 profiles):</p>
+            <p>• Plain greedy commits t1 and t2 to m1 individually.</p>
+            <p>• Misses that t1 and t2 together fit on m2, resulting in cost 300 vs. true optimum <strong>280</strong>.</p>
+            <p>• Multi-start random restart does not escape the trap (F9).</p>
+          </div>
+          <div class="box">
+            <h4>M1 Feasibility Lookahead (Paper P3)</h4>
+            <p>• Before assigning task t to profile m, checks that all remaining unassigned tasks have ≥1 admissible profile.</p>
+            <p>• Eliminates budget starvation on tight instances.</p>
+            <p>• Executes with zero asymptotic runtime overhead.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 8 -->
+    <div class="slide" data-speaker="Speaker 035 (Lead)" data-notes="Lookahead solved feasibility, but not aggregate coupling. Improving the fixture requires moving two tasks together. Single-task moves worsen cost locally. We designed a multi-move subset consolidation neighborhood (A+subset), evaluating joint moves of size k <= 2. A+subset immediately achieves the exact global optimum of 280 on the fixture, slashing average gap from 32.37% to 1.57% on structured benchmarks.">
+      <div class="slide-header">
+        <h1 class="slide-title">T2 Algorithmic Breakthrough: Subset Consolidation (A+subset)</h1>
+        <span class="slide-speaker">035 / Lead</span>
+      </div>
+      <div class="key-message">
+        Exploring a 2-subset relocation neighborhood breaks the aggregate-coupling trap, achieving the exact 280 optimum on the fixture and slashing error by 20×.
+      </div>
+      <div class="slide-body">
+        <pre>
+Adversarial Fixture (3 Tasks, 2 Profiles):
+- Greedy Single-Move: Moves t1 -> Cost worsens locally (+40) -> REJECTED.
+- Greedy Single-Move: Moves t2 -> Cost worsens locally (+40) -> REJECTED.
+- Subset Consolidation (k=2): Joint move {t1, t2} -> m2 opens ONE instance!
+  Cost drops from 300 to 280 (TRUE GLOBAL OPTIMUM REACHED).
+        </pre>
+        <div class="box">
+          <h4>Empirical Benchmark Impact (Finding F20)</h4>
+          <p>• <strong>Mean Optimality Gap:</strong> Slashed from <strong>32.37% down to 1.57%</strong> on structured instances.</p>
+          <p>• <strong>Runtime:</strong> Evaluates all 2-subsets in <strong>< 15 milliseconds</strong> at 32 tasks.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 9 -->
+    <div class="slide" data-speaker="Speaker 075 (Math)" data-notes="Track B investigates Lagrangian duality. By dualizing assignment constraints C1 with multipliers lambda, the problem decouples into independent 0/1 knapsacks per profile. Because it retains integer instance steps, it captures discrete step-functions that LP relaxes, sitting a paired 12.57 pp closer to optimum. Furthermore, by vectorizing the knapsack DP with NumPy, we slashed solve time from 7.16s to 0.062s—a 115x speedup that makes dual bounding viable at runtime.">
+      <div class="slide-header">
+        <h1 class="slide-title">Track B: Lagrangian Duality & 115× Speedup (T1)</h1>
+        <span class="slide-speaker">075 / Math</span>
+      </div>
+      <div class="key-message">
+        Dualizing (C1) yields independent 0/1 knapsacks, sitting a paired 12.57 pp [9.49, 15.64] closer to optimum. NumPy vectorization slashes solve time by 115× (F33).
+      </div>
+      <div class="slide-body">
+        <div class="grid-2">
+          <div class="box">
+            <h4>Dual Bound Tightness (Finding F30)</h4>
+            <p>• <strong>Knapsack Decomposition:</strong> Captures discrete step-function n[m] ∈ ℤ⁺.</p>
+            <p>• <strong>Strict Dominance:</strong> Tighter than continuous LP on 100% of tested instances.</p>
+            <p>• <strong>Paired Difference:</strong> <strong>12.57 pp [9.49, 15.64]</strong> closer to true integer optimum.</p>
+          </div>
+          <div class="box">
+            <h4>115× Speedup via Vectorized DP (Finding F33)</h4>
+            <p>• <strong>cProfile Diagnosis:</strong> 97.5% of runtime was nested pure-Python loops in knapsack DP.</p>
+            <p>• <strong>NumPy Vectorization:</strong> Sliced array operations: best[w:] = np.maximum(...).</p>
+            <p>• <strong>Runtime:</strong> Plunged from <strong>7.16s to 0.062s (62 ms)</strong> at 16 tasks!</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 10 -->
+    <div class="slide" data-speaker="Speaker 075 (Math)" data-notes="To complete T1, we also built the budget relaxation arm B-C3: dualizing the scalar GPU budget constraint C3 with multiplier mu. Under continuous instances, the problem decomposes per task. Because mu is a scalar, the dual function is a 1D concave curve solved via bisection in under 1 millisecond. Crucially, its bound matches the LP bound to 2e-5, providing direct empirical proof of linear programming duality.">
+      <div class="slide-header">
+        <h1 class="slide-title">Track B-C3 & Validation of Linear Programming Duality</h1>
+        <span class="slide-speaker">075 / Math</span>
+      </div>
+      <div class="key-message">
+        Dualizing the GPU budget (C3) decouples per task, solves via 1D bisection in <1 ms, and empirically confirms LP duality (|Z_dual - Z_LP| ≤ 2×10⁻⁵).
+      </div>
+      <div class="slide-body">
+        <div class="grid-2">
+          <div class="box">
+            <h4>Mathematical Decomposition (Finding F21)</h4>
+            <p>• Dualizes Σ n[m] g(m) ≤ B with scalar multiplier μ ≥ 0.</p>
+            <p>• Decomposes into independent 1-task subproblems.</p>
+            <p>• Solved via 1D bisection search in <strong>< 1 millisecond</strong>.</p>
+          </div>
+          <div class="box">
+            <h4>Empirical Duality Confirmation</h4>
+            <p>• Optimal dual bound matches continuous LP bound to <strong>5 decimal places</strong>.</p>
+            <p>• Differences of both signs (within ±0.00002) confirm exact LP duality under discrete instance recovery.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 11 -->
+    <div class="slide" data-speaker="Speaker 089 (Methodology)" data-notes="Track C solves the continuous LP relaxation using CBC. The LP returns an integer routing 96% of the time. The real challenge is capacity repair: the LP prices capacity by continuous rate, opening instances that sit mostly empty. We built C+cons, a consolidation repair pass that re-packs tasks into existing headroom. On diagnosed worst cases, C+cons halved cost, providing a paired improvement of 5.31% [0.56, 10.07] that eliminates severe tail failures.">
+      <div class="slide-header">
+        <h1 class="slide-title">Track C: Continuous LP Relaxation & Consolidation Repair</h1>
+        <span class="slide-speaker">089 / Methodology</span>
+      </div>
+      <div class="key-message">
+        The LP relaxation yields integer routings 96% of the time; multi-move consolidation repair (C+cons) eliminates capacity waste, providing tail protection (+5.31% [0.56, 10.07]).
+      </div>
+      <div class="slide-body">
+        <div class="box" style="margin-bottom: 15px;">
+          <h4>The Capacity Repair Challenge (Finding F6 & F17)</h4>
+          <p>• In 96% of instances, LP routing x[t][m] is naturally 0 or 1.</p>
+          <p>• However, fractional instance ceiling n[m] = ⌈load / thr⌉ creates massive empty headroom.</p>
+        </div>
+        <div class="box">
+          <h4>Consolidation Repair (C+cons, Finding F30)</h4>
+          <p>• Evaluates multi-move re-packing of tasks from under-utilized instances into open headroom.</p>
+          <p>• Slashes cost in half on worst-case instances.</p>
+          <p>• Delivers <strong>5.31% [0.56, 10.07]</strong> mean paired improvement, acting as tail protection.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 12 -->
+    <div class="slide" data-speaker="Speaker 089 (Methodology)" data-notes="Here we present our publication-grade scaling benchmarks across 8, 16, 32, and 64 tasks across all three generators. At 32 tasks, Track B is within 0.82% to 2.27% of optimum in under 0.74s. Track C+cons delivers bounded execution in 45ms. Crucially, the defensible claim is bounded predictability: at 128 tasks, Track C returns in 0.106s, whereas exact MILP averages 12.3s with unbounded heavy tails.">
+      <div class="slide-header">
+        <h1 class="slide-title">Multi-Scale Scaling Benchmarks (8 to 64 Tasks)</h1>
+        <span class="slide-speaker">089 / Methodology</span>
+      </div>
+      <div class="key-message">
+        Track C delivers bounded runtime predictability (0.106 ± 0.020 s at 128 tasks, F29) eliminating exact solver heavy tails (12.3 ± 10.3 s).
+      </div>
+      <div class="slide-body">
+        <table>
+          <tr><th>Strategy</th><th>Uniform Gap (32t)</th><th>Structured Gap (32t)</th><th>Hetero Gap (32t)</th><th>Time (32t)</th><th>Time (64t)</th></tr>
+          <tr><td><strong>MILP (Exact)</strong></td><td>0.00%</td><td>0.00%</td><td>0.00%</td><td>0.248s</td><td>6.651s</td></tr>
+          <tr><td><strong>B (Lagrangian)</strong></td><td>0.45%</td><td>2.27%</td><td>0.82%</td><td>0.493s</td><td>1.343s</td></tr>
+          <tr><td><strong>C+cons (LP Repair)</strong></td><td>3.97%</td><td>8.02%</td><td>4.10%</td><td>0.038s</td><td>0.046s</td></tr>
+          <tr><td><strong>A+subset (Heuristic)</strong></td><td>2.20%</td><td>13.15%</td><td>10.73%</td><td>0.014s</td><td>0.036s</td></tr>
+          <tr><td><strong>STATIC</strong></td><td>12.05%</td><td>10.33%</td><td><strong>Infeasible (0/5)</strong></td><td>0.000s</td><td>0.000s</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Slide 13 -->
+    <div class="slide" data-speaker="Speaker 077 (Systems)" data-notes="The closed loop is our core scientific thesis. Under empirical parameter drift, static allocators fail silently, delivering 0.560 reliability against a 0.95 floor. CapOrches maintains 0.995 reliability—a paired gain of +0.434 [0.410, 0.458]. UCB filtering prevents noise-induced overpayment, recovering the exact 400.0 optimum with zero variance.">
+      <div class="slide-header">
+        <h1 class="slide-title">The Core Differentiator: Closed-Loop Drift Protection</h1>
+        <span class="slide-speaker">077 / Systems</span>
+      </div>
+      <div class="key-message">
+        Static allocation silently breaches SLA floors under drift (0.560 delivered vs 0.95 floor); CapOrches maintains 0.995 (+0.434 [0.410, 0.458], n=20).
+      </div>
+      <div class="slide-body">
+        <div class="grid-2">
+          <div class="box">
+            <h4>Decayed Counting with Jeffreys Prior (F19)</h4>
+            <p>• Beta(0.5, 0.5) prior with decay γ = 0.995 (N_eff = 200).</p>
+            <p>• Eliminates artificial reliability ceilings of aggressive EMA.</p>
+            <p>• Achieves smooth, noise-resilient tracking.</p>
+          </div>
+          <div class="box">
+            <h4>Upper Confidence Bound (UCB) Filtering (F25)</h4>
+            <p>• Point estimates cause 40% noise-induced cost overpayment.</p>
+            <p>• UCB filtering excludes profiles only when confident below floor.</p>
+            <p>• Recovers exact <strong>400.0 global optimum</strong> with zero variance.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 14 -->
+    <div class="slide" data-speaker="Speaker 077 (Systems)" data-notes="With the mathematical and algorithmic foundations proven, our Semester 2 implementation path is clear. We will construct the production orchestration service: a DAG ingestion API, OpenTelemetry stream monitoring (R7), circuit breakers and fallback routing (R8), OpenAI-compatible reverse proxy (R9), and a Kubernetes GPU provisioning adapter. Because profile sharing is 84% to 100%, scoped re-optimization is formally excised.">
+      <div class="slide-header">
+        <h1 class="slide-title">Semester 2 Architecture: Planned Scope for R7–R9</h1>
+        <span class="slide-speaker">077 / Systems</span>
+      </div>
+      <div class="key-message">
+        Semester 1 de-risked all algorithmic and mathematical unknowns (R1–R6); Semester 2 focuses on systems engineering for telemetry, fallback, and proxying.
+      </div>
+      <div class="slide-body">
+        <table>
+          <tr><th>Module</th><th>Req</th><th>Semester 2 Planned Engineering</th></tr>
+          <tr><td><strong>Distributed Telemetry</strong></td><td><strong>R7</strong></td><td>OpenTelemetry / Prometheus streaming pipeline capturing TTFT, TPOT, and error codes.</td></tr>
+          <tr><td><strong>Runtime Reliability</strong></td><td><strong>R8</strong></td><td>Per-pod circuit breakers and immediate local retry on secondary compliant candidate profile.</td></tr>
+          <tr><td><strong>Framework Proxy</strong></td><td><strong>R9</strong></td><td>OpenAI-compatible HTTP/gRPC reverse proxy intercepting LangGraph, AutoGen, CrewAI calls.</td></tr>
+          <tr><td><strong>Scoped Re-Optimization</strong></td><td>—</td><td><strong>Pruned per Finding F18:</strong> 84–100% profile overlap makes global re-solving strictly superior.</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Slide 15 -->
+    <div class="slide" data-speaker="Speaker 089 (Methodology)" data-notes="Our project risk profile is exceptionally low because high-risk unknowns were eliminated in the PoC. Algorithmic tractability is proven. Mathematical formulation is ratified. Telemetry estimation noise is guarded by Bayesian priors. Hardware testbed is containerized and ready for worker deployment.">
+      <div class="slide-header">
+        <h1 class="slide-title">Risk Analysis & Mitigation Matrix</h1>
+        <span class="slide-speaker">089 / Methodology</span>
+      </div>
+      <div class="key-message">
+        Every major algorithmic, mathematical, and telemetry risk has already been eliminated and experimentally verified during the Proof-of-Concept.
+      </div>
+      <div class="slide-body">
+        <table>
+          <tr><th>Identified Risk</th><th>Impact</th><th>Engineered Mitigation Strategy</th></tr>
+          <tr><td><strong>Formulation Disagreement</strong></td><td>Low</td><td>Mitigated via formal T0 Ratification briefing and sign-off record (8 Sep).</td></tr>
+          <tr><td><strong>Solver Timeouts / Hangs</strong></td><td>Low</td><td><strong>Eliminated in PoC:</strong> Track C+cons delivers bounded 0.106s runtime; CBC bounded (F28).</td></tr>
+          <tr><td><strong>Telemetry Noise Volatility</strong></td><td>Low</td><td><strong>Eliminated in PoC:</strong> Decayed counting with Jeffreys prior + UCB filtering (F19, F25).</td></tr>
+          <tr><td><strong>GPU Hardware Contention</strong></td><td>Med</td><td>Containerized testbed deploying vLLM on local A100/L4 GPUs or cloud GPU fallback.</td></tr>
+          <tr><td><strong>Framework Incompatibility</strong></td><td>Low</td><td>R9 reverse proxy adheres strictly to standard OpenAI REST/v1 completions schema.</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Slide 16 -->
+    <div class="slide" data-speaker="Speaker 035 (Lead)" data-notes="In summary, our PoC phase has transformed an ambitious concept into a verified, mathematically grounded engineering platform. All 10 build steps are complete, 646 tests pass green, and the closed loop has demonstrated its critical differentiator: preventing silent reliability floor failures under drift. We welcome the committee's questions.">
+      <div class="slide-header">
+        <h1 class="slide-title">Conclusion & Committee Defense Q&A</h1>
+        <span class="slide-speaker">035 / Lead</span>
+      </div>
+      <div class="key-message">
+        CapOrches is scientifically verified, mathematically ratified, and completely de-risked for Semester 2 production implementation.
+      </div>
+      <div class="slide-body">
+        <div class="qa-item active">
+          <div class="qa-question" onclick="toggleQA(this)">Q1: "Why not simply use an existing workflow engine like Apache Airflow or Ray?" <span>▼</span></div>
+          <div class="qa-answer">General-purpose orchestrators are schedulers, not resource optimizers—they treat tasks as black boxes and bind to pre-existing compute. Ray schedules CPU/GPU cores without model profile awareness. None solve joint model routing and instance provisioning under hard GPU budgets across concurrent workflow DAGs.</div>
+        </div>
+        <div class="qa-item">
+          <div class="qa-question" onclick="toggleQA(this)">Q2: "Why treat reliability as an SLA floor constraint rather than optimizing it in the objective?" <span>▼</span></div>
+          <div class="qa-answer">In enterprise cloud environments, reliability is a contract: an SLA requires 99.5% success. Achieving 99.9% provides diminishing returns, while dropping to 99.0% breaches contract. Objective weighting would require arbitrary dollar-per-reliability hyperparameters. Floor filtering preserves single-objective facility location with provable dual bounds.</div>
+        </div>
+        <div class="qa-item">
+          <div class="qa-question" onclick="toggleQA(this)">Q3: "Why did you abandon scoped re-optimization after proposing it in Semester 1?" <span>▼</span></div>
+          <div class="qa-answer">In Finding F18, empirical measurement revealed that profile sharing across concurrent workflows ranges from 84% to 100%. Because almost every workflow shares profiles, scoped re-optimization either cascades to touch all workflows anyway, or artificially constrains search space and worsens allocations. Global solving takes <60ms with C+cons, so scoped solving was dead-weight.</div>
+        </div>
+        <div class="qa-item">
+          <div class="qa-question" onclick="toggleQA(this)">Q4: "What is the concrete advantage of Track B's Lagrangian relaxation if Track C is faster?" <span>▼</span></div>
+          <div class="qa-answer">Track B is a high-fidelity dual bound generator. In optimization, you cannot know how good a heuristic is without a lower bound on the true optimum. While LP relaxation bounds are loose due to fractional instances, Track B preserves discrete integer instance step-functions, producing bounds that sit a paired 12.57 pp closer to optimum. Vectorized DP makes it evaluate in milliseconds.</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="notes-drawer">
+    <div class="notes-title">
+      <span id="notes-speaker-role">SPEAKER NOTES: Role 035 (Lead)</span>
+      <span>Press 'S' to hide</span>
+    </div>
+    <div id="notes-text" class="notes-content">
+      Good afternoon, Prof. Tossaphol and members of the committee...
+    </div>
+  </div>
+
+  <footer>
+    <span>Navigate: <kbd>◀</kbd> <kbd>▶</kbd> or <kbd>Space</kbd></span>
+    <span>Speaker Notes: <kbd>S</kbd></span>
+    <span>Fullscreen: <kbd>F</kbd></span>
+  </footer>
+
+  <script>
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+    const progressBar = document.getElementById('progress-bar');
+    const slideIndicator = document.getElementById('slide-indicator');
+    const notesDrawer = document.getElementById('notes-drawer');
+    const notesText = document.getElementById('notes-text');
+    const notesRole = document.getElementById('notes-speaker-role');
+    const notesToggleBtn = document.getElementById('notes-toggle');
+
+    function updateSlide(index) {
+      if (index < 0 || index >= totalSlides) return;
+      slides[currentSlide].classList.remove('active');
+      currentSlide = index;
+      slides[currentSlide].classList.add('active');
+
+      // Update progress & indicator
+      const progressPct = ((currentSlide + 1) / totalSlides) * 100;
+      progressBar.style.width = progressPct + '%';
+      slideIndicator.textContent = `Slide ${currentSlide + 1} / ${totalSlides}`;
+
+      // Update speaker notes
+      const activeSlide = slides[currentSlide];
+      const speaker = activeSlide.getAttribute('data-speaker') || 'Speaker';
+      const notes = activeSlide.getAttribute('data-notes') || 'No notes for this slide.';
+      notesRole.textContent = `SPEAKER SCRIPT: ${speaker}`;
+      notesText.textContent = `"${notes}"`;
+
+      // Update buttons
+      document.getElementById('prev-btn').disabled = currentSlide === 0;
+      document.getElementById('next-btn').disabled = currentSlide === totalSlides - 1;
+    }
+
+    function nextSlide() { updateSlide(currentSlide + 1); }
+    function prevSlide() { updateSlide(currentSlide - 1); }
+
+    function toggleNotes() {
+      notesDrawer.classList.toggle('open');
+      notesToggleBtn.classList.toggle('active');
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {});
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+      }
+    }
+
+    function toggleQA(element) {
+      const parent = element.parentElement;
+      parent.classList.toggle('active');
+    }
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        prevSlide();
+      } else if (e.key === 's' || e.key === 'S') {
+        toggleNotes();
+      } else if (e.key === 'f' || e.key === 'F') {
+        toggleFullscreen();
+      } else if (e.key === 'Home') {
+        updateSlide(0);
+      } else if (e.key === 'End') {
+        updateSlide(totalSlides - 1);
+      }
+    });
+
+    // Initialize
+    updateSlide(0);
+  </script>
+</body>
+</html>
