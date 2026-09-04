@@ -2197,6 +2197,95 @@ step, and it may well restore the advantage.
 
 ---
 
+## F35 - F34's headline was a confound. T1's answer stands; the incumbent is what fails.
+
+**This corrects F34, published earlier the same day.** F34 reported that Track B's bound
+advantage "does not survive" on the heterogeneous generator and downgraded belief 3 to
+generator-dependent. That was wrong, and the error was mine: I pooled instances that should
+have been split.
+
+### The split F34 should have made
+
+Partitioning the same paired instances by whether Track B recovered a feasible primal:
+
+| generator | B found a primal | B found none |
+|---|---|---|
+| uniform | **+5.22 pp [4.36, 6.05]**, tighter on **24/24** | n=1 |
+| structured | **+13.46 pp [10.32, 16.71]**, tighter on **22/22** | n=0 |
+| heterogeneous | **+5.84 pp [3.86, 7.64]**, tighter on **7/7** | **-7.42 pp [-12.95, -2.26]**, tighter on 3/10 |
+
+**Track B's bound is tighter than the LP's on 53 of 53 instances where it has an incumbent** -
+on all three generators, including the one F34 said it failed on. The advantage is not
+generator-dependent at all.
+
+What *is* generator-dependent is how often Track B finds a primal: 24 of 25 uniform, 22 of 22
+structured, **7 of 17 heterogeneous**. F34 pooled those two populations and reported the
+average of a real effect and an artefact.
+
+### Why the no-incumbent case collapses
+
+Track B's step rule is Polyak's: `step = alpha * (UB - L(lambda)) / ||g||^2`. It aims the
+multipliers at the gap between the current dual value and a known feasible cost. **With no
+incumbent there is no UB and the rule has nothing to aim at.** The bound then stalls wherever
+it happens to be - below the LP bound, which the dual optimum could never be, and which is why
+F34 correctly concluded the multipliers were suboptimal while incorrectly concluding the
+relaxation was.
+
+So F34's diagnosis was right and its headline was wrong. The theory argument in it stands
+unchanged: by Geoffrion the dual optimum is >= the LP bound, so a shortfall is always our
+multipliers, never the relaxation.
+
+### The fix that was attempted, and how much it bought
+
+The old no-incumbent fallback substituted `best_bound + |best_bound| + 1` for the missing
+upper bound. That is not an upper bound on anything - it is a number the same order of
+magnitude as the bound itself, so the step was proportional to `|L(lambda)|` rather than to a
+primal-dual gap. Replaced with a diminishing step on the normalised subgradient, which is the
+textbook choice when no target exists, scaled by the price of one instance.
+
+**It helped, and only marginally.** Heterogeneous paired difference moved from -2.17 to -1.96
+pp; the mean bound gap from 11.09% to 10.88%. Kept, because it is correct where the old rule
+was not and it costs nothing, but **it is not the answer.** The change is deliberately scoped
+to the no-incumbent path so that every previously published Track B number is untouched:
+uniform moved +5.20 -> +5.23 pp and structured +13.44 -> +13.46, which is bootstrap noise on
+an unchanged code path.
+
+### What would actually fix it, and why it is a decision rather than a patch
+
+The dual does not need *its own* primal - any feasible allocation is a valid upper bound.
+Track C and `A+subset` succeed on many instances where Track B's repair fails, so handing
+Track B one of their solutions as an incumbent would give Polyak's rule a target and, on this
+evidence, recover the advantage.
+
+**This is not a free change, and it should not be made silently.** `track_b_lagr.py` already
+warns that `warm_start=True` seeds the incumbent from plain greedy, and that any T4 statement
+of the form "B beats A" must therefore be read off `warm_start=False`
+(`tracks/track_b_cold.py`). Feeding B a *better* track's solution deepens exactly that
+entanglement: B's bound quality would then depend on Track C's primal quality, and the two
+tracks stop being independently comparable. That is 075's and 089's call, not a tuning tweak.
+
+**O5 stays promoted** - the step schedule genuinely is load-bearing when no incumbent exists -
+but the primary lever is the incumbent, not the schedule.
+
+### What this changes back
+
+- **Belief 3 is restored to High**, with its scope stated precisely: the Lagrangian bound is
+  tighter than the LP bound wherever Track B has an incumbent, 53/53 across three generators.
+- **T1's answer stands.** Relaxing (C1) is the right arm. The (C2) arm remains worst
+  everywhere, tighter on 0 of 25, 0 of 22 and 0 of 17.
+- **The real open problem is Track B's feasibility, not its bound** - 7 of 17 on the
+  heterogeneous generator. That is a T4 question and it is now the interesting one.
+
+### The lesson, which is the same one twice in one day
+
+F32 found a claim that averaged over instances it should have split. F34 did it again, in the
+opposite direction, and it was mine rather than inherited. **Pooling two populations with
+different mechanisms produces a number that describes neither.** The check that catches it is
+cheap: before reporting a pooled difference, ask what would make an instance behave
+differently, and split on it.
+
+---
+
 ## Still open
 
 | # | Item | Owner |

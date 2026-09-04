@@ -75,6 +75,13 @@ MIN_STEP_SCALE = 1e-4
 NON_IMPROVEMENT_PATIENCE = 6    # halve alpha after this many iterations without progress
 SCALE = 100                     # float loads -> integer knapsack weights
 
+# [O5 — F35] Used ONLY when no feasible incumbent exists yet, so the Polyak rule has no
+# target to aim at. See the step selection in allocate() for why the previous surrogate was
+# worse than having no rule at all. Deliberately scoped to that path: every published Track B
+# number was measured with an incumbent present, and changing the step there would move all
+# of them.
+NO_INCUMBENT_STEP_DECAY = 0.5   # exponent k^-d on the diminishing step; 0.5 is the classic
+
 
 def _knapsack_best_values(values, weights, capacity):
     """Max total value for every capacity 0..capacity. Classic 0/1 knapsack DP.
@@ -228,6 +235,10 @@ def allocate(tasks: list[Task],
     else:
         best_result, upper_bound = None, None
 
+    # lambda[t] is a cost per task, so the natural scale for a step in lambda is the cost of
+    # one instance. Used only by the no-incumbent step rule above.
+    lambda_scale = max((p.price for p in profiles.values()), default=1.0)
+
     best_bound = -math.inf
     alpha = INITIAL_STEP_SCALE
     since_improvement = 0
@@ -284,8 +295,24 @@ def allocate(tasks: list[Task],
             converged = True
             break
 
-        reference = upper_bound if upper_bound is not None else best_bound + abs(best_bound) + 1.0
-        step = alpha * max(reference - bound, 1e-9) / norm_sq
+        if upper_bound is not None:
+            # Polyak's rule, aimed at a real incumbent. Unchanged.
+            step = alpha * max(upper_bound - bound, 1e-9) / norm_sq
+        else:
+            # NO INCUMBENT. The previous code substituted `best_bound + |best_bound| + 1`
+            # for the missing upper bound, which is not an upper bound on anything — it is
+            # a number the same order of magnitude as the bound itself. The resulting step
+            # was proportional to |L(lambda)| rather than to a primal-dual gap, so the
+            # multipliers overshot, the bound stopped improving, alpha halved to its floor
+            # and the method stalled at a poor dual point. That is the stall F34 measured:
+            # 12 of 12 heterogeneous instances non-converged, with the bound sitting BELOW
+            # the LP bound, which the dual optimum cannot do.
+            #
+            # With no upper bound, the textbook choice is a diminishing step on the
+            # NORMALISED subgradient, which converges without needing a target. Scaled by
+            # the price of one instance so the step is in the units lambda is measured in.
+            step = (alpha * lambda_scale
+                    / (iterations ** NO_INCUMBENT_STEP_DECAY * math.sqrt(norm_sq)))
         for task in tasks:
             lam[task.id] += step * gradient[task.id]
 

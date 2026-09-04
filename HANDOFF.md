@@ -15,7 +15,7 @@ document is the detail behind those steps.
 The proof-of-concept is complete: all four tests answered against the plan's *methods*, not
 just its deliverables. 593 tests pass, reproducible from a clean clone. The optimizer works
 and Track C is the result. Beyond the PoC, the closed loop was built and run end to end, and
-it produced the project's strongest claim. Thirty-four findings are recorded, of which several
+it produced the project's strongest claim. Thirty-five findings are recorded, of which several
 correct earlier ones — **the corrections are as important as the results, and three headline
 numbers were retracted after a statistical audit.**
 
@@ -124,7 +124,7 @@ a tail.** A **fourth** was found on 4 Sep, in `mickie`-origin documents the audi
 | do not say | say instead |
 |---|---|
 | "~110× faster than the exact solver" | median speedup is **5×**; argue **bounded latency** — 0.106 ±0.020 s vs 12.3 ±10.3 s |
-| "the bound is 3–6× tighter than the LP" | paired difference **12.6 pp [9.5, 15.6]**; median ratio ~2–2.5× — **and say "where price tracks GPU count"**, because on the heterogeneous generator the advantage is not established at all (F34) |
+| "the bound is 3–6× tighter than the LP" | paired difference **12.6 pp [9.5, 15.6]**; median ratio ~2–2.5×. The advantage itself is solid — **53/53 across three generators wherever Track B has an incumbent** (F35). What is weak is Track B's *feasibility*, 7 of 17 on heterogeneous |
 | "consolidation halves Track C's gap" | **median improvement is 0.00%** — it fixes a rare, severe failure |
 | "subset consolidation is a **twenty-fold** improvement" (F20, slides) | **it was never worse — 0 of 72 paired instances**, better on 54. Paired difference **11.46 pp [6.68, 17.24]** structured, **9.30 pp [6.69, 12.42]** uniform; median per-instance ratio **1.53×** / **1.95×** (F32) |
 | "A+subset holds the gap **<2% at all scales**" (chapter3) | **withdrawn.** The gap *grows* with scale — 2.35% at 8t to 14.30% at 64t structured. `chapter3_benchmark_results.md`'s own tables already said so; six of its eight cells are above 2% (F32) |

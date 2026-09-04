@@ -48,7 +48,7 @@ That is enough to hold a conversation about the project.
 
 | document | use it when |
 |---|---|
-| [`poc_findings.md`](poc_findings.md) | The full chronological log, 34 findings **including superseded ones**. Do not quote from it without checking the summary's corrections table |
+| [`poc_findings.md`](poc_findings.md) | The full chronological log, 35 findings **including superseded ones**. Do not quote from it without checking the summary's corrections table |
 | [`PoC_and_Validation_Plan.md`](PoC_and_Validation_Plan.md) | The September plan — scope, deliverables, schedule, risks |
 
 ### Archive
