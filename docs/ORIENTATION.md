@@ -47,7 +47,7 @@ first place.
 coupling*. Capacity is bought in **whole instances**, not per task. So the cost of putting a
 task somewhere depends on whether that profile already has spare room — which depends on
 decisions you have not made yet. Two tasks that are each individually expensive to move can be
-cheap to move *together*. Section 6 works through the smallest example we have.
+cheap to move *together*. **Section 6** works through the smallest example we have, by hand.
 
 ---
 
@@ -71,6 +71,21 @@ seeds. That is finding F24.
 
 The optimiser exists *because the loop needs one that is fast enough to re-run*. It is the
 engine, not the contribution. `proposal_narrative.md` is the argument chain in full.
+
+### 3.1 What came from where
+
+Chapter 2 is the weakest part of the written proposal, so knowing the provenance of each idea
+matters. Full version in `System_Architecture_v2.md` §9.
+
+| source | what we took |
+|---|---|
+| **Chaudhry et al. (2026), Murakkab** | The capacity model — instances provisioned against routed load under a GPU budget — the DAG workflow representation, and the MILP baseline. Our §1 formulation **is** their model, which is why the MILP condition *is* the Murakkab comparison |
+| **Cheng & Nguyen (2026)** | Feasibility-first-then-minimise-cost, marginal activation-cost ranking, multi-start construction. Track A's ancestry |
+| **de la Torre & Halappanavar (2023)** | Lagrangian relaxation with subgradient updates. Track B's method |
+| **Capacitated facility location literature** | The problem class itself, and relaxing the assignment constraints as the classical decomposition |
+| **Hua et al. (2026), AgentOpt** | Transport-layer interception and call-context attribution — how profiling would attach to real execution |
+| **Hatherley (2025)** | The compatibility score. **Not yet reconciled** — the paper is not in the repo, and this is an open item |
+| ~~Topcuoglu et al. (2002); Zhao & Sakellariou~~ | **No longer used.** HEFT and upward-rank were an early error: they order tasks by a quantity absent from our objective, since we have no makespan term |
 
 ---
 
@@ -117,7 +132,45 @@ enough to run every time J9 fires.
 where aggregate coupling is made concrete: `cost_to_admit()` returns `extra_instances = 0`
 when existing headroom already covers a task. Get that wrong and every result is wrong.
 
-### 4.3 One design correction worth knowing
+### 4.3 The nine requirements — and the three with no implementation
+
+The project has nine requirements, traced in `System_Architecture_v2.md` §8 from requirement
+to job to component to test. **Three of them have no implementation at all**, and they are
+listed rather than quietly dropped — they must be presented as planned work, not omitted.
+
+| | requirement | state |
+|---|---|---|
+| R1 | Per-task allocation | **Built** — J3, the Optimizer |
+| R2 | Multiple concurrent workflows | **Built** — this is what (C2) couples |
+| R3 | Non-exact alternatives to the MILP | **Built** — Tracks A, B, C |
+| R4 | Profile-guided, self-updating profiles | **Built** (prototype) — J6/J7 |
+| R5 | Re-optimise on drift | **Built** (prototype) — J8/J9 |
+| R6 | Evaluate against an exact baseline | **Built** — the harness |
+| **R7** | **Execution monitoring** | **Absent** |
+| **R8** | **Improve reliability** | **Absent** — scoped by O10's answer: it is a floor, not an objective |
+| **R9** | **Multi-agent framework integration** | **Absent** — blocked on O11, an open advisor question |
+
+R7–R9 come from the advisor's original brief. Chapter 4 has to cover them as Semester 2 scope.
+
+### 4.4 Ten principles the design holds to
+
+Abbreviated from `System_Architecture_v2.md` §2.2. Several explain *why* the code looks
+the way it does:
+
+| | |
+|---|---|
+| P1 | Offline batch, not streaming — no admission control, no mid-run rebalancing |
+| P2 | Eligibility is separate from selection — the resolver returns pools, never winners |
+| **P3** | **Feasibility first, cost second** — floors filter `C(t)` and are never weighted against cost |
+| P4 | One decision rule, three coordination strategies — every track calls the same inner rule |
+| P5 | Tracks are swappable; none is privileged |
+| P6 | Profiles are measured, not declared — no hand-tuned tables |
+| P7 | Re-optimisation is event-driven — drift triggers it, not a clock |
+| P8 | Structure is immutable after ingestion — drift re-enters the Optimizer only |
+| **P9** | **Complete or nothing** — a partial assignment is never valid output |
+| **P10** | **Reproducible given a fixed seed** — randomised restarts are seeded, not banned |
+
+### 4.5 One design correction worth knowing
 
 An earlier version of the design had a "slot ledger" decremented per task assignment. **That
 was wrong and is settled.** Capacity is consumed by *instances*, not by assignments — tasks
@@ -276,7 +329,32 @@ trusts you less than one you hand it to. This project has unusually good materia
 
 ---
 
-## 10. What actually exists right now
+## 10. Who does what
+
+**Team members are referred to by number throughout this repo** — `035`, `075`, `077`, `083`,
+`089` — and nothing else explains that, so: they are the five capstone engineers. The advisor
+is Prof. Tossaphol.
+
+| | PoC responsibility | owns |
+|---|---|---|
+| **035** | Greedy construction, T2, T4 | Track A |
+| **075** | Formulation draft, Lagrangian, Track C, T1 | Track B |
+| **077** | PoC report, results write-up | Phase C (deferred to Semester 2) |
+| **083** | Instance generators, repo, architecture updates | Infrastructure |
+| **089** | MILP reference, T3, T4 support | Evaluation |
+
+Phase C is out of PoC scope entirely, so 077 has no implementation work in September — owning
+the report is real work, but it is worth knowing that is the arrangement.
+
+**Deliverables** run D1 to D12 against dated owners; the full table is in
+`PoC_and_Validation_Plan.md` §5.2, with ownership in §5.5. The two that matter for reading
+this repo are **D1**, the
+formulation ratification on **8 September**, and **D11**, the consolidated PoC report, which
+is `D11_poc_report.md`.
+
+---
+
+## 11. What actually exists right now
 
 ```
 647 tests pass, 4 skip          35 findings recorded, including superseded ones
@@ -304,7 +382,26 @@ production, framework integration, monitoring.
 
 ---
 
-## 11. Where to look next
+## 12. After M1 — what is parked for Semester 2
+
+Deliberately not built, and tracked so it is not silently forgotten. `PLAN.md` holds the live
+list; the rule there is **add to it rather than build**.
+
+| | |
+|---|---|
+| **Real execution** | Replace `prototype/simulator.py`. This is the big one — every loop result currently rests on simulated observations |
+| **R7, R8, R9** | Execution monitoring, the reliability pillar, framework integration. All three are requirements with no implementation (§4.3) |
+| **Confidence-bound eligibility** | Built and measured, off by default. Needs 077's sign-off |
+| **Track B's subproblem in C/Cython** | Its "~100× slower" runtime finding is about a pure-Python DP and should not be treated as settled until profiled |
+| **More seeds and intervals** | On the findings that still lack them |
+
+Two things that *were* on this list came off it, both because a question turned out to be
+answerable now rather than later: the **subset-move neighbourhood** (shipped in the step-1
+merge) and the **price-decorrelated generator** (built, and it reversed T3's answer).
+
+---
+
+## 13. Where to look next
 
 **Read in this order if you want the full picture:**
 
@@ -354,7 +451,7 @@ python scripts/audit_budget_binding.py   # the T3 result, from scratch
 
 ---
 
-## 12. Glossary
+## 14. Glossary
 
 | term | meaning |
 |---|---|
